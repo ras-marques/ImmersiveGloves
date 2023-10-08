@@ -37,11 +37,30 @@ print(sm.frequency)
 frame_id = 0
 first_header_32bits  = (1 << 24) + (frame_id << 16) + (3 << 8) + (0 << 0)
 second_header_32bits = (10 << 24) + (0 << 16) + (0 << 8) + (0 << 0)
-fullframe = array.array('L',[first_header_32bits, second_header_32bits, 0, 0, 255])
+
+system_button = 1        # 1   0
+a_button = 0             # 1   1
+b_button = 0             # 1   2
+trigger_button = 0       # 1   3
+grip_button = 0          # 1   4
+thumbstick_button = 0    # 1   5
+menu_button = 0          # 1   6
+thumbstick_enable = 1    # 1   7
+thumbstick_x_axis = 700  # 10  8
+thumbstick_y_axis = 120  # 10  18
+trigger_axis = 400       # 10  28
+index_axis = 100         # 10  38
+middle_axis = 450        # 10  48
+ring_axis = 300          # 10  58
+pinky_axis = 20          # 10  68
+
+first_data_32_bits = (system_button << 31) + (a_button << 30) + (b_button << 29) + (trigger_button << 28) + (grip_button << 27) + (thumbstick_button << 26) + (menu_button << 25) + (thumbstick_enable << 24) + (thumbstick_x_axis << 14) + (thumbstick_y_axis << 4) + (trigger_axis >> 6)
+second_data_32_bits = ((trigger_axis << 25) & 0xFFFF)  + (index_axis << 15) + (middle_axis << 5) + (ring_axis >> 5)
+third_data_32_bits = ((ring_axis << 26) & 0xFFFF) + (pinky_axis << 16)
 
 while True:
     first_header_32bits  = (1 << 24) + (frame_id << 16) + (3 << 8) + (0 << 0)
-    fullframe = array.array('L',[first_header_32bits, second_header_32bits, 0, 0, 255])
+    fullframe = array.array('L',[first_header_32bits, second_header_32bits, first_data_32_bits, second_data_32_bits, third_data_32_bits])
     #fullframe = array.array('L',[first_header_32bits])
     print(fullframe)
     sm.write(fullframe)
