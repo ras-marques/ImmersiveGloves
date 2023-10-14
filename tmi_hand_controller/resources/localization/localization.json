@@ -1,0 +1,17 @@
+[
+    {
+        "language_tag": "en_US",
+        "tmi_hand_controller": "Tundra Labs TMI Hand Controller",
+        "tmi_hand_controller_raw": "Tundra Labs TMI Hand Controller Raw",
+        "/input/system": "System",
+        "/input/a": "A Button",
+        "/input/b": "B Button",
+        "/input/trigger": "Trigger",
+        "/input/grip": "Grip",
+        "/input/thumbstick": "Thumbstick",
+        "/input/index": "Index Finger",
+        "/input/middle": "Middle Finger",
+        "/input/ring": "Ring Finger",
+        "/input/pinky": "Pinky Finger"
+    }
+]
