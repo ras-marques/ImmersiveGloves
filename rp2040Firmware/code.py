@@ -219,18 +219,18 @@ frame_id = 0
 first_header_32bits  = (1 << 24) + (frame_id << 16) + (3 << 8) + (0 << 0)
 second_header_32bits = (10 << 24) + (0 << 16) + (0 << 8) + (0 << 0)
 
-system_button = 1        # 1   0
-a_button = 1             # 1   1
-b_button = 1             # 1   2
-trigger_button = 1       # 1   3
+system_button = 0        # 1   0
+a_button = 0             # 1   1
+b_button = 0             # 1   2
+trigger_button = 0       # 1   3
 grip_button = 0          # 1   4
 thumbstick_button = 0    # 1   5
 menu_button = 0          # 1   6
 thumbstick_enable = 0    # 1   7
 thumbstick_x_axis = 0    # 10  8
 thumbstick_y_axis = 0    # 10  18
-trigger_axis = 90         # 10  28
-index_axis = 127           # 10  38
+trigger_axis = 0         # 10  28
+index_axis = 0           # 10  38
 middle_axis = 0          # 10  48
 ring_axis = 0            # 10  58
 pinky_axis = 0           # 10  68
@@ -258,20 +258,115 @@ while True:
 #         index_axis = int(682 * -indexAngle / 180)
 #     elif indexAngle <= 180 and indexAngle >= 90:
 #         index_axis = int(682 - (341 / 90) * (indexAngle - 180))
+
+    index_axis = index_axis + 10
+    print(index_axis)
+
 #     
 #     print(index_axis)
 # #     print(middleCurlAmount*180/3.14)
 # #     print(ringCurlAmount*180/3.14)
 # #     print(pinkyCurlAmount*180/3.14)
     
-    first_header_32bits  = (1 << 24) + (frame_id << 16) + (3 << 8) + (0 << 0)
-    first_data_32_bits = (system_button << 31) + (a_button << 30) + (b_button << 29) + (trigger_button << 28) + (grip_button << 27) + (thumbstick_button << 26) + (menu_button << 25) + (thumbstick_enable << 24) + (thumbstick_x_axis << 14) + (thumbstick_y_axis << 4)
-    second_data_32_bits = (trigger_axis << 24) + (index_axis << 16)# + (middle_axis << 4) + (ring_axis >> 6)
-    print(f"{second_data_32_bits:032b}")
-    third_data_32_bits = 0 #((ring_axis << 26) & 0xFFFF) + (pinky_axis << 16)
+#     trigger_axis = trigger_axis + 1  #ok
+#     print(trigger_axis)              #ok
+#     index_axis = index_axis + 1      #ok
+#     print(index_axis)                #ok
+#     middle_axis = middle_axis + 1    #ok
+#     print(middle_axis)               #ok
+#     ring_axis = ring_axis + 1        #ok
+#     print(ring_axis)                 #ok
+#     pinky_axis = pinky_axis + 1      #ok
+#     print(pinky_axis)                #ok
+    
+    thumbstick_x_axis_inverted = 0
+    thumbstick_y_axis_inverted = 0
+    trigger_axis_inverted = 0
+    index_axis_inverted = 0
+    middle_axis_inverted = 0
+    ring_axis_inverted = 0
+    pinky_axis_inverted = 0
+    for i in range(10):
+        bit = (thumbstick_x_axis >> i) & 1  # Get the ith bit from the original_value
+        thumbstick_x_axis_inverted |= (bit << (9 - i))  # Set the bit in the reversed_value
+        bit = (thumbstick_y_axis >> i) & 1  # Get the ith bit from the original_value
+        thumbstick_y_axis_inverted |= (bit << (9 - i))  # Set the bit in the reversed_value
+        bit = (trigger_axis >> i) & 1  # Get the ith bit from the original_value
+        trigger_axis_inverted |= (bit << (9 - i))  # Set the bit in the reversed_value
+        bit = (index_axis >> i) & 1  # Get the ith bit from the original_value
+        index_axis_inverted |= (bit << (9 - i))  # Set the bit in the reversed_value
+        bit = (middle_axis >> i) & 1  # Get the ith bit from the original_value
+        middle_axis_inverted |= (bit << (9 - i))  # Set the bit in the reversed_value
+        bit = (ring_axis >> i) & 1  # Get the ith bit from the original_value
+        ring_axis_inverted |= (bit << (9 - i))  # Set the bit in the reversed_value
+        bit = (pinky_axis >> i) & 1  # Get the ith bit from the original_value
+        pinky_axis_inverted |= (bit << (9 - i))  # Set the bit in the reversed_value
+    
+    first_header_32bits = (1 << 24) + (frame_id << 16) + (3 << 8) + (0 << 0)
+    first_data_32_bits  = (system_button << 31) + (a_button << 30) + (b_button << 29) + (trigger_button << 28) + (grip_button << 27) + (thumbstick_button << 26) + (menu_button << 25) + (thumbstick_enable << 24) + (thumbstick_x_axis_inverted << 14) + (thumbstick_y_axis_inverted << 4) + (trigger_axis_inverted >> 6)
+    second_data_32_bits = (trigger_axis_inverted << 26) + (index_axis_inverted << 16) + (middle_axis_inverted << 6) + (ring_axis_inverted >> 4)
+    third_data_32_bits  = (ring_axis_inverted << 28) + (pinky_axis_inverted << 18)
+    
+    byte1 = ((first_data_32_bits >> 24) & 0xFF)
+    byte2 = ((first_data_32_bits >> 16) & 0xFF)
+    byte3 = ((first_data_32_bits >> 8) & 0xFF)
+    byte4 = ((first_data_32_bits >> 0) & 0xFF)
+    byte1Inverted = 0
+    byte2Inverted = 0
+    byte3Inverted = 0
+    byte4Inverted = 0
+    
+    for i in range(8):
+        bit = (byte1 >> i) & 1  # Get the ith bit from the original_value
+        byte1Inverted |= (bit << (7 - i))  # Set the bit in the reversed_value
+        bit = (byte2 >> i) & 1  # Get the ith bit from the original_value
+        byte2Inverted |= (bit << (7 - i))  # Set the bit in the reversed_value
+        bit = (byte3 >> i) & 1  # Get the ith bit from the original_value
+        byte3Inverted |= (bit << (7 - i))  # Set the bit in the reversed_value
+        bit = (byte4 >> i) & 1  # Get the ith bit from the original_value
+        byte4Inverted |= (bit << (7 - i))  # Set the bit in the reversed_value
+    first_data_32_bits  = (byte1Inverted << 24) + (byte2Inverted << 16) + (byte3Inverted << 8) + (byte4Inverted << 0)
+    
+    byte1 = ((second_data_32_bits >> 24) & 0xFF)
+    byte2 = ((second_data_32_bits >> 16) & 0xFF)
+    byte3 = ((second_data_32_bits >> 8) & 0xFF)
+    byte4 = ((second_data_32_bits >> 0) & 0xFF)
+    byte1Inverted = 0
+    byte2Inverted = 0
+    byte3Inverted = 0
+    byte4Inverted = 0
+    for i in range(8):
+        bit = (byte1 >> i) & 1  # Get the ith bit from the original_value
+        byte1Inverted |= (bit << (7 - i))  # Set the bit in the reversed_value
+        bit = (byte2 >> i) & 1  # Get the ith bit from the original_value
+        byte2Inverted |= (bit << (7 - i))  # Set the bit in the reversed_value
+        bit = (byte3 >> i) & 1  # Get the ith bit from the original_value
+        byte3Inverted |= (bit << (7 - i))  # Set the bit in the reversed_value
+        bit = (byte4 >> i) & 1  # Get the ith bit from the original_value
+        byte4Inverted |= (bit << (7 - i))  # Set the bit in the reversed_value
+    second_data_32_bits = (byte1Inverted << 24) + (byte2Inverted << 16) + (byte3Inverted << 8) + (byte4Inverted << 0)
+
+    byte1 = ((third_data_32_bits >> 24) & 0xFF)
+    byte2 = ((third_data_32_bits >> 16) & 0xFF)
+    byte3 = ((third_data_32_bits >> 8) & 0xFF)
+    byte4 = ((third_data_32_bits >> 0) & 0xFF)
+    byte1Inverted = 0
+    byte2Inverted = 0
+    byte3Inverted = 0
+    byte4Inverted = 0
+    for i in range(8):
+        bit = (byte1 >> i) & 1  # Get the ith bit from the original_value
+        byte1Inverted |= (bit << (7 - i))  # Set the bit in the reversed_value
+        bit = (byte2 >> i) & 1  # Get the ith bit from the original_value
+        byte2Inverted |= (bit << (7 - i))  # Set the bit in the reversed_value
+        bit = (byte3 >> i) & 1  # Get the ith bit from the original_value
+        byte3Inverted |= (bit << (7 - i))  # Set the bit in the reversed_value
+        bit = (byte4 >> i) & 1  # Get the ith bit from the original_value
+        byte4Inverted |= (bit << (7 - i))  # Set the bit in the reversed_value
+    third_data_32_bits = (byte1Inverted << 24) + (byte2Inverted << 16) + (byte3Inverted << 8) + (byte4Inverted << 0)
     
     fullframe = array.array('L',[first_header_32bits, second_header_32bits, first_data_32_bits, second_data_32_bits, third_data_32_bits])
-    print(fullframe)
+#     print(fullframe)
     
     sm.write(fullframe)
     time.sleep(0.01)
