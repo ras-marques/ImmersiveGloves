@@ -10,6 +10,26 @@ import rp2pio
 import adafruit_pioasm
 import bitbangio
 
+# Define the original vectors
+plus_x = np.array([0.040157785345831698, -0.031960816476036769, -0.99868207493931216])
+plus_z = np.array([0.78140480358183417, -0.62191029879265614, 0.051323885123897739])
+
+# Define the rotation matrix for a 90-degree rotation about the x-axis
+R_x = np.array([[1, 0, 0],
+               [0, 0, -1],
+               [0, 1, 0]])
+
+# Apply the rotation to the vectors
+rotated_plus_x = np.dot(R_x, plus_x)
+rotated_plus_z = np.dot(R_x, plus_z)
+
+# Print the rotated vectors
+print("Rotated plus_x:", rotated_plus_x)
+print("Rotated plus_z:", rotated_plus_z)
+
+while True:
+    pass
+
 # probepin = adafruit_pioasm.assemble("""
 # .program spidebug
 # .wrap_target:
@@ -230,10 +250,10 @@ thumbstick_enable = 0    # 1   7
 thumbstick_x_axis = 0    # 10  8
 thumbstick_y_axis = 0    # 10  18
 trigger_axis = 0         # 10  28
-index_axis = 0           # 10  38
-middle_axis = 0          # 10  48
-ring_axis = 0            # 10  58
-pinky_axis = 0           # 10  68
+index_axis = 200           # 10  38
+middle_axis = 400          # 10  48
+ring_axis = 600            # 10  58
+pinky_axis = 800           # 10  68
 
 while True:
 #     handQuaternion = Quaternion(bnoRef.quaternion[3],bnoRef.quaternion[0],bnoRef.quaternion[1],bnoRef.quaternion[2])
@@ -259,7 +279,11 @@ while True:
 #     elif indexAngle <= 180 and indexAngle >= 90:
 #         index_axis = int(682 - (341 / 90) * (indexAngle - 180))
 
+    #trigger_axis = trigger_axis + 1
     index_axis = index_axis + 10
+    middle_axis = middle_axis + 10
+    ring_axis = ring_axis + 10
+    pinky_axis = pinky_axis + 10
     print(index_axis)
 
 #     

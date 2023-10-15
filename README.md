@@ -27,12 +27,18 @@ Windows 10 PC - Windows 11 probably works, never tried VR on Linux
 - Finally install the bindings and configuration files for the new repurposed Tundra Tracker for the gloves in SteamVR, by copying the folder tmi_hand_controller on the repository to {Steam}\steamapps\common\SteamVR\drivers\
 
 ### Flash the RP2040 board
-- Install Thonny
+- Download the latest stable version of circuitpython version from here https://circuitpython.org/board/raspberry_pi_pico/
+- Connect your tundra development board to the Tundra Tracker and then to your PC using the included USB board.
+- With the Tracker OFF, press the button on the USB board and while it is pressed, power up the Tundra Tracker, this will let you put the RP2040 in the development board in bootloader mode.
+- A window should appear on your PC showing the new drive that is emulated by the RP2040. Copy the circuitpython file you downloaded earlier into this folder. The RP2040 will reboot automatically.
+- Like before, a new window should appear on your PC showing another drive but now with a different structure. This is where you will put your program that processes the sensor data and sends it to the computer. Just copy the contents of the rp2040Firmware folder into the root of this new folder that appeared.
 
 ## Important resources that made this project possible
  
 Tundra Labs have a repo with some documentation on how to use their development board https://github.com/tundra-labs/rp2040_examples
 
+CircuitPython allowed me to easily get the inertial sensors working without me having to program everything from scratch, you can learn more about this here https://learn.adafruit.com/adafruit-9-dof-orientation-imu-fusion-breakout-bno085/python-circuitpython
+
 Finally Functional's Open VR Driver Tutorial that was a great introduction on how OpenVR inputs work https://www.youtube.com/watch?v=LzEIOBnbC8k
 
-CircuitPython allowed me to easily get the inertial sensors working without me having to program everything from scratch, you can learn more about this here https://learn.adafruit.com/adafruit-9-dof-orientation-imu-fusion-breakout-bno085/python-circuitpython
+OpenVR repository has lots of documentation, it takes a while to figure out the parts that are important for this project, but it's worth the effort https://github.com/ValveSoftware/openvr
