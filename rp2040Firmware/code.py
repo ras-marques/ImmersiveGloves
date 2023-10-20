@@ -10,26 +10,6 @@ import rp2pio
 import adafruit_pioasm
 import bitbangio
 
-# Define the original vectors
-plus_x = np.array([0.040157785345831698, -0.031960816476036769, -0.99868207493931216])
-plus_z = np.array([0.78140480358183417, -0.62191029879265614, 0.051323885123897739])
-
-# Define the rotation matrix for a 90-degree rotation about the x-axis
-R_x = np.array([[1, 0, 0],
-               [0, 0, -1],
-               [0, 1, 0]])
-
-# Apply the rotation to the vectors
-rotated_plus_x = np.dot(R_x, plus_x)
-rotated_plus_z = np.dot(R_x, plus_z)
-
-# Print the rotated vectors
-print("Rotated plus_x:", rotated_plus_x)
-print("Rotated plus_z:", rotated_plus_z)
-
-while True:
-    pass
-
 # probepin = adafruit_pioasm.assemble("""
 # .program spidebug
 # .wrap_target:
@@ -219,21 +199,48 @@ def rotationMatrixToEulerAngles(R) :
  
     return np.array([x*180/3.14, y*180/3.14, z*180/3.14])
 
+indexActive = True
+middleActive = True
+ringActive = True
+pinkyActive = True
 
-# i2c_0 = bitbangio.I2C(board.GP5, board.GP4, frequency = 100000, timeout = 2000)
-# i2c_1 = bitbangio.I2C(board.GP7, board.GP6, frequency = 100000, timeout = 2000)
-# 
-# bnoRef = BNO08X_I2C(i2c_0, None, 0x4B)
-# bnoIndex = BNO08X_I2C(i2c_1, None, 0x4A)
-# # bnoMiddle = BNO08X_I2C(i2c_2, None, 0x4B)
-# # bnoRing = BNO08X_I2C(i2c_3, None, 0x4B)
-# # bnoPinky = BNO08X_I2C(i2c_4, None, 0x4B)
-# 
-# bnoRef.enable_feature(BNO_REPORT_ROTATION_VECTOR)
-# bnoIndex.enable_feature(BNO_REPORT_ROTATION_VECTOR)
-# bnoMiddle.enable_feature(BNO_REPORT_ROTATION_VECTOR)
-# bnoRing.enable_feature(BNO_REPORT_ROTATION_VECTOR)
-# bnoPinky.enable_feature(BNO_REPORT_ROTATION_VECTOR)
+i2c_0 = 0
+i2c_1 = 0
+i2c_2 = 0
+i2c_3 = 0
+i2c_4 = 0
+i2c_5 = 0
+bnoRef = 0
+# bnoThumb = BNO08X_I2C(i2c_1, None, 0x4B)
+bnoIndex = 0
+bnoMiddle = 0
+bnoRing = 0
+bnoPinky = 0
+
+i2c_0 = bitbangio.I2C(board.GP16, board.GP17, frequency = 400000, timeout = 8000)
+bnoRef = BNO08X_I2C(i2c_0, None, 0x4B)
+bnoRef.enable_feature(BNO_REPORT_ROTATION_VECTOR)
+
+# i2c_1 = bitbangio.I2C(board.GP10, board.GP11, frequency = 100000, timeout = 2000)
+# bnoThumb = BNO08X_I2C(i2c_1, None, 0x4B)
+# bnoThumb.enable_feature(BNO_REPORT_ROTATION_VECTOR)
+
+if indexActive:
+    i2c_2 = bitbangio.I2C(board.GP8, board.GP9, frequency = 400000, timeout = 8000)
+    bnoIndex = BNO08X_I2C(i2c_2, None, 0x4B)
+    bnoIndex.enable_feature(BNO_REPORT_ROTATION_VECTOR)
+if middleActive:
+    i2c_3 = bitbangio.I2C(board.GP6, board.GP7, frequency = 400000, timeout = 8000)
+    bnoMiddle = BNO08X_I2C(i2c_3, None, 0x4B)
+    bnoMiddle.enable_feature(BNO_REPORT_ROTATION_VECTOR)
+if ringActive:
+    i2c_4 = bitbangio.I2C(board.GP4, board.GP5, frequency = 400000, timeout = 8000)
+    bnoRing = BNO08X_I2C(i2c_4, None, 0x4B)
+    bnoRing.enable_feature(BNO_REPORT_ROTATION_VECTOR)
+if pinkyActive:
+    i2c_5 = bitbangio.I2C(board.GP0, board.GP1, frequency = 400000, timeout = 8000)
+    bnoPinky = BNO08X_I2C(i2c_5, None, 0x4B)
+    bnoPinky.enable_feature(BNO_REPORT_ROTATION_VECTOR)
 
 frame_id = 0
 first_header_32bits  = (1 << 24) + (frame_id << 16) + (3 << 8) + (0 << 0)
@@ -255,53 +262,63 @@ middle_axis = 400          # 10  48
 ring_axis = 600            # 10  58
 pinky_axis = 800           # 10  68
 
+thumb_axis = 0
+
 while True:
-#     handQuaternion = Quaternion(bnoRef.quaternion[3],bnoRef.quaternion[0],bnoRef.quaternion[1],bnoRef.quaternion[2])
-#     indexQuaternion = Quaternion(bnoIndex.quaternion[3],bnoIndex.quaternion[0],bnoIndex.quaternion[1],bnoIndex.quaternion[2])
-# #     middleQuaternion = Quaternion(bnoMiddle.quaternion[3],bnoMiddle.quaternion[0],bnoMiddle.quaternion[1],bnoMiddle.quaternion[2])
-# #     ringQuaternion = Quaternion(bnoRing.quaternion[3],bnoRing.quaternion[0],bnoRing.quaternion[1],bnoRing.quaternion[2])
-# #     pinkyQuaternion = Quaternion(bnoPinky.quaternion[3],bnoPinky.quaternion[0],bnoPinky.quaternion[1],bnoPinky.quaternion[2])
-# 
-#     indexToHandQuaternion = quaternion_multiply(handQuaternion, quaternion_conjugate(indexQuaternion))
-# #     middleToHandQuaternion = quaternion_multiply(handQuaternion, quaternion_conjugate(middleQuaternion))
-# #     ringToHandQuaternion = quaternion_multiply(handQuaternion, quaternion_conjugate(ringQuaternion))
-# #     pinkyToHandQuaternion = quaternion_multiply(handQuaternion, quaternion_conjugate(pinkyQuaternion))
-# 
-#     indexCurlAmount = getCurl(indexToHandQuaternion)
-# #     middleCurlAmount = getCurl(middleToHandQuaternion)
-# #     ringCurlAmount = getCurl(ringToHandQuaternion)
-# #     pinkyCurlAmount = getCurl(pinkyQuaternion)
-#     indexAngle = int(indexCurlAmount*180/3.14)
-#     print(indexAngle)
-#     
-#     if indexAngle <= 0 and indexAngle >= -180:
-#         index_axis = int(682 * -indexAngle / 180)
-#     elif indexAngle <= 180 and indexAngle >= 90:
-#         index_axis = int(682 - (341 / 90) * (indexAngle - 180))
-
-    #trigger_axis = trigger_axis + 1
-    index_axis = index_axis + 10
-    middle_axis = middle_axis + 10
-    ring_axis = ring_axis + 10
-    pinky_axis = pinky_axis + 10
-    print(index_axis)
-
-#     
-#     print(index_axis)
-# #     print(middleCurlAmount*180/3.14)
-# #     print(ringCurlAmount*180/3.14)
-# #     print(pinkyCurlAmount*180/3.14)
+    handQuaternion = Quaternion(bnoRef.quaternion[3],bnoRef.quaternion[0],bnoRef.quaternion[1],bnoRef.quaternion[2])
     
-#     trigger_axis = trigger_axis + 1  #ok
-#     print(trigger_axis)              #ok
-#     index_axis = index_axis + 1      #ok
-#     print(index_axis)                #ok
-#     middle_axis = middle_axis + 1    #ok
-#     print(middle_axis)               #ok
-#     ring_axis = ring_axis + 1        #ok
-#     print(ring_axis)                 #ok
-#     pinky_axis = pinky_axis + 1      #ok
-#     print(pinky_axis)                #ok
+#     thumbQuaternion = Quaternion(bnoThumb.quaternion[3],bnoThumb.quaternion[0],bnoThumb.quaternion[1],bnoThumb.quaternion[2])
+#     thumbToHandQuaternion = quaternion_multiply(handQuaternion, quaternion_conjugate(thumbQuaternion))
+#     thumbCurlAmount = getCurl(thumbToHandQuaternion)
+#     thumbAngle = int(thumbCurlAmount*180/3.14)
+#     if thumbAngle <= 0 and thumbAngle >= -180:
+#         thumb_axis = int(682 * -thumbAngle / 180)
+#     elif thumbAngle <= 180 and thumbAngle >= 90:
+#         thumb_axis = int(682 - (341 / 90) * (thumbAngle - 180))
+
+    if indexActive:
+        indexQuaternion = Quaternion(bnoIndex.quaternion[3],bnoIndex.quaternion[0],bnoIndex.quaternion[1],bnoIndex.quaternion[2])
+        indexToHandQuaternion = quaternion_multiply(handQuaternion, quaternion_conjugate(indexQuaternion))
+        indexCurlAmount = getCurl(indexToHandQuaternion)
+        indexAngle = int(indexCurlAmount*180/3.14)
+        if indexAngle <= 0 and indexAngle >= -180:
+            index_axis = int(682 * -indexAngle / 180)
+        elif indexAngle <= 180 and indexAngle >= 90:
+            index_axis = int(682 - (341 / 90) * (indexAngle - 180))
+#         print("indexAngle: " + str(indexAngle))
+    
+    if middleActive:
+        middleQuaternion = Quaternion(bnoMiddle.quaternion[3],bnoMiddle.quaternion[0],bnoMiddle.quaternion[1],bnoMiddle.quaternion[2])
+        middleToHandQuaternion = quaternion_multiply(handQuaternion, quaternion_conjugate(middleQuaternion))
+        middleCurlAmount = getCurl(middleToHandQuaternion)
+        middleAngle = int(middleCurlAmount*180/3.14)
+        if middleAngle <= 0 and middleAngle >= -180:
+            middle_axis = int(682 * -middleAngle / 180)
+        elif middleAngle <= 180 and middleAngle >= 90:
+            middle_axis = int(682 - (341 / 90) * (middleAngle - 180))
+#         print("middleAngle: " + str(middleAngle))
+    
+    if ringActive:
+        ringQuaternion = Quaternion(bnoRing.quaternion[3],bnoRing.quaternion[0],bnoRing.quaternion[1],bnoRing.quaternion[2])
+        ringToHandQuaternion = quaternion_multiply(handQuaternion, quaternion_conjugate(ringQuaternion))
+        ringCurlAmount = getCurl(ringToHandQuaternion)
+        ringAngle = int(ringCurlAmount*180/3.14)
+        if ringAngle <= 0 and ringAngle >= -180:
+            ring_axis = int(682 * -ringAngle / 180)
+        elif ringAngle <= 180 and ringAngle >= 90:
+            ring_axis = int(682 - (341 / 90) * (ringAngle - 180))
+#         print("ringAngle: " + str(ringAngle))
+
+    if pinkyActive:
+        pinkyQuaternion = Quaternion(bnoPinky.quaternion[3],bnoPinky.quaternion[0],bnoPinky.quaternion[1],bnoPinky.quaternion[2])
+        pinkyToHandQuaternion = quaternion_multiply(handQuaternion, quaternion_conjugate(pinkyQuaternion))
+        pinkyCurlAmount = getCurl(pinkyQuaternion)
+        pinkyAngle = int(pinkyCurlAmount*180/3.14)
+        if pinkyAngle <= 0 and pinkyAngle >= -180:
+            pinky_axis = int(682 * -pinkyAngle / 180)
+        elif pinkyAngle <= 180 and pinkyAngle >= 90:
+            pinky_axis = int(682 - (341 / 90) * (pinkyAngle - 180))
+#         print("pinkyAngle: " + str(pinkyAngle))
     
     thumbstick_x_axis_inverted = 0
     thumbstick_y_axis_inverted = 0

@@ -33,7 +33,9 @@
           "order" : 5
         },
         "/input/grip" : {
-          "type" : "button",
+          "type" : "trigger",
+		  "input_activity_path" : "/input/finger/middle",
+		  "input_activity_threshold" : 0.1,
           "click" : true,
           "touch" : true,
           "binding_image_point" : [ 18, 37  ],
