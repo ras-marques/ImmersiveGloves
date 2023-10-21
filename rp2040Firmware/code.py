@@ -4,11 +4,15 @@ import busio
 from adafruit_bno08x.i2c import BNO08X_I2C
 #from adafruit_bno08x import BNO_REPORT_ACCELEROMETER
 from adafruit_bno08x import BNO_REPORT_ROTATION_VECTOR
+# import pyquaternion
 from ulab import numpy as np
 import time
 import rp2pio
 import adafruit_pioasm
 import bitbangio
+import usb_cdc
+
+serial = usb_cdc.data
 
 # probepin = adafruit_pioasm.assemble("""
 # .program spidebug
@@ -156,10 +160,10 @@ def quaternion_rotation_matrix(Q):
              frame to a point in the global reference frame.
     """
     # Extract the values from Q
-    q0 = Q[0]
-    q1 = Q[1]
-    q2 = Q[2]
-    q3 = Q[3]
+    q0 = Q.w
+    q1 = Q.x
+    q2 = Q.y
+    q3 = Q.z
      
     # First row of the rotation matrix
     r00 = 2 * (q0 * q0 + q1 * q1) - 1
@@ -200,9 +204,9 @@ def rotationMatrixToEulerAngles(R) :
     return np.array([x*180/3.14, y*180/3.14, z*180/3.14])
 
 indexActive = True
-middleActive = True
-ringActive = True
-pinkyActive = True
+middleActive = False
+ringActive = False
+pinkyActive = False
 
 i2c_0 = 0
 i2c_1 = 0
@@ -266,6 +270,14 @@ thumb_axis = 0
 
 while True:
     handQuaternion = Quaternion(bnoRef.quaternion[3],bnoRef.quaternion[0],bnoRef.quaternion[1],bnoRef.quaternion[2])
+    string = "{:10.4f}".format(handQuaternion.w) + "{:10.4f}".format(handQuaternion.x) + "{:10.4f}".format(handQuaternion.y) + "{:10.4f}".format(handQuaternion.z)
+    print(string)
+    serial.write(string.encode())
+    serial.write(b'\n\r')
+    
+    handRotationMatrix = quaternion_rotation_matrix(handQuaternion)
+#     euler_angles = rotationMatrixToEulerAngles(rotation_matrix)
+#     print(euler_angles)
     
 #     thumbQuaternion = Quaternion(bnoThumb.quaternion[3],bnoThumb.quaternion[0],bnoThumb.quaternion[1],bnoThumb.quaternion[2])
 #     thumbToHandQuaternion = quaternion_multiply(handQuaternion, quaternion_conjugate(thumbQuaternion))
@@ -278,7 +290,43 @@ while True:
 
     if indexActive:
         indexQuaternion = Quaternion(bnoIndex.quaternion[3],bnoIndex.quaternion[0],bnoIndex.quaternion[1],bnoIndex.quaternion[2])
+#         indexRotationMatrix = quaternion_rotation_matrix(indexQuaternion)
+#         relative_rot_matrix = np.dot(indexRotationMatrix, np.linalg.inv(handRotationMatrix))
+#         euler_angles = rotationMatrixToEulerAngles(relative_rot_matrix)
+#         print(euler_angles)
+
+#         w_bh, x_bh, y_bh, z_bh = bnoRef.quaternion[3],bnoRef.quaternion[0],bnoRef.quaternion[1],bnoRef.quaternion[2]
+#         w_if, x_if, y_if, z_if = bnoIndex.quaternion[3],bnoIndex.quaternion[0],bnoIndex.quaternion[1],bnoIndex.quaternion[2]
+#         
+#         # Convert quaternions to rotation matrices
+#         rot_matrix_bh = np.array([
+#             [1 - 2*(y_bh**2 + z_bh**2), 2*(x_bh*y_bh - w_bh*z_bh), 2*(x_bh*z_bh + w_bh*y_bh)],
+#             [2*(x_bh*y_bh + w_bh*z_bh), 1 - 2*(x_bh**2 + z_bh**2), 2*(y_bh*z_bh - w_bh*x_bh)],
+#             [2*(x_bh*z_bh - w_bh*y_bh), 2*(y_bh*z_bh + w_bh*x_bh), 1 - 2*(x_bh**2 + y_bh**2)]
+#         ])
+# 
+#         rot_matrix_if = np.array([
+#             [1 - 2*(y_if**2 + z_if**2), 2*(x_if*y_if - w_if*z_if), 2*(x_if*z_if + w_if*y_if)],
+#             [2*(x_if*y_if + w_if*z_if), 1 - 2*(x_if**2 + z_if**2), 2*(y_if*z_if - w_if*x_if)],
+#             [2*(x_if*z_if - w_if*y_if), 2*(y_if*z_if + w_if*x_if), 1 - 2*(x_if**2 + y_if**2)]
+#         ])
+# 
+#         # Calculate the relative rotation matrix
+#         relative_rot_matrix = np.dot(rot_matrix_if, np.linalg.inv(rot_matrix_bh))
+# 
+#         # Extract Euler angles (in radians)
+#         roll, pitch, yaw = np.arctan2(relative_rot_matrix[2, 1], relative_rot_matrix[2, 2]), -np.asin(relative_rot_matrix[2, 0]), np.arctan2(relative_rot_matrix[1, 0], relative_rot_matrix[0, 0])
+#         
+#         print(str(roll) + " " + str(pitch) + " " + str(yaw))
+        
         indexToHandQuaternion = quaternion_multiply(handQuaternion, quaternion_conjugate(indexQuaternion))
+#         print(str(indexToHandQuaternion.w) + " " + str(indexToHandQuaternion.x) + " " + str(indexToHandQuaternion.y) + " " + str(indexToHandQuaternion.z))
+        
+#         indexToHandQuaternion = quaternion_multiply(quaternion_conjugate(handQuaternion), indexQuaternion)
+#         rotation_matrix = quaternion_rotation_matrix(indexToHandQuaternion)
+#         euler_angles = rotationMatrixToEulerAngles(rotation_matrix)
+#         print(euler_angles)
+        
         indexCurlAmount = getCurl(indexToHandQuaternion)
         indexAngle = int(indexCurlAmount*180/3.14)
         if indexAngle <= 0 and indexAngle >= -180:
