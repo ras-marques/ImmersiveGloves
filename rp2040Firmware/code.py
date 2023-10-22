@@ -122,6 +122,7 @@ sm = rp2pio.StateMachine(
 
 print(sm.frequency)
 
+# confirmed ok
 class Quaternion:
     def __init__(self, w, x, y, z):
         self.w = w
@@ -129,9 +130,11 @@ class Quaternion:
         self.y = y
         self.z = z
 
+# confirmed ok
 def quaternion_conjugate(q):
     return Quaternion(q.w, -q.x, -q.y, -q.z)
 
+# confirmed ok
 def quaternion_multiply(q1, q2):
     w1, x1, y1, z1 = q1.w, q1.x, q1.y, q1.z
     w2, x2, y2, z2 = q2.w, q2.x, q2.y, q2.z
@@ -204,9 +207,9 @@ def rotationMatrixToEulerAngles(R) :
     return np.array([x*180/3.14, y*180/3.14, z*180/3.14])
 
 indexActive = True
-middleActive = False
-ringActive = False
-pinkyActive = False
+middleActive = True
+ringActive = True
+pinkyActive = True
 
 i2c_0 = 0
 i2c_1 = 0
@@ -268,14 +271,22 @@ pinky_axis = 800           # 10  68
 
 thumb_axis = 0
 
+handQuaternionThatWorks = Quaternion(np.sqrt(2)/2,0,0,-np.sqrt(2)/2)
+
 while True:
     handQuaternion = Quaternion(bnoRef.quaternion[3],bnoRef.quaternion[0],bnoRef.quaternion[1],bnoRef.quaternion[2])
-    string = "{:10.4f}".format(handQuaternion.w) + "{:10.4f}".format(handQuaternion.x) + "{:10.4f}".format(handQuaternion.y) + "{:10.4f}".format(handQuaternion.z)
-    print(string)
-    serial.write(string.encode())
-    serial.write(b'\n\r')
+    relativeQuaternion = quaternion_multiply(handQuaternionThatWorks, quaternion_conjugate(handQuaternion))
+    handQuaternion = quaternion_multiply(relativeQuaternion, handQuaternion)
+#     newHandQuaternionString = "{:10.4f}".format(newHandQuaternion.w) + "{:10.4f}".format(newHandQuaternion.x) + "{:10.4f}".format(newHandQuaternion.y) + "{:10.4f}".format(newHandQuaternion.z)
+#     print(newHandQuaternionString)
+#     handQuaternionString = "{:10.4f}".format(handQuaternion.w) + "{:10.4f}".format(handQuaternion.x) + "{:10.4f}".format(handQuaternion.y) + "{:10.4f}".format(handQuaternion.z)
+#     print(handQuaternionString)
+
+#     print(string)
+#     serial.write(string.encode())
+#     serial.write(b'\n\r')
     
-    handRotationMatrix = quaternion_rotation_matrix(handQuaternion)
+#     handRotationMatrix = quaternion_rotation_matrix(handQuaternion)
 #     euler_angles = rotationMatrixToEulerAngles(rotation_matrix)
 #     print(euler_angles)
     
@@ -290,6 +301,9 @@ while True:
 
     if indexActive:
         indexQuaternion = Quaternion(bnoIndex.quaternion[3],bnoIndex.quaternion[0],bnoIndex.quaternion[1],bnoIndex.quaternion[2])
+        indexQuaternionString = "{:10.4f}".format(indexQuaternion.w) + "{:10.4f}".format(indexQuaternion.x) + "{:10.4f}".format(indexQuaternion.y) + "{:10.4f}".format(indexQuaternion.z)
+        indexQuaternion = quaternion_multiply(relativeQuaternion, indexQuaternion)
+        
 #         indexRotationMatrix = quaternion_rotation_matrix(indexQuaternion)
 #         relative_rot_matrix = np.dot(indexRotationMatrix, np.linalg.inv(handRotationMatrix))
 #         euler_angles = rotationMatrixToEulerAngles(relative_rot_matrix)
@@ -320,15 +334,27 @@ while True:
 #         print(str(roll) + " " + str(pitch) + " " + str(yaw))
         
         indexToHandQuaternion = quaternion_multiply(handQuaternion, quaternion_conjugate(indexQuaternion))
-#         print(str(indexToHandQuaternion.w) + " " + str(indexToHandQuaternion.x) + " " + str(indexToHandQuaternion.y) + " " + str(indexToHandQuaternion.z))
+        
+#         initial_quaternion = np.array([bnoRef.quaternion[3],bnoRef.quaternion[0],bnoRef.quaternion[1],bnoRef.quaternion[2]])
+#         final_quaternion = np.array([bnoIndex.quaternion[3],bnoIndex.quaternion[0],bnoIndex.quaternion[1],bnoIndex.quaternion[2]])
+#         relative_quaternion = np.dot(initial_quaternion, final_quaternion)
+#         print(relative_quaternion)
+        
+        indexToHandQuaternionString = "{:10.4f}".format(indexToHandQuaternion.w) + "{:10.4f}".format(indexToHandQuaternion.x) + "{:10.4f}".format(indexToHandQuaternion.y) + "{:10.4f}".format(indexToHandQuaternion.z)
+#         print(handQuaternionString + " " + indexQuaternionString + " " + indexToHandQuaternionString)
         
 #         indexToHandQuaternion = quaternion_multiply(quaternion_conjugate(handQuaternion), indexQuaternion)
 #         rotation_matrix = quaternion_rotation_matrix(indexToHandQuaternion)
 #         euler_angles = rotationMatrixToEulerAngles(rotation_matrix)
 #         print(euler_angles)
+
+#         indexToHandQuaternionModified = quaternion_multiply(handQuaternion, indexToHandQuaternion)
         
         indexCurlAmount = getCurl(indexToHandQuaternion)
+#         indexCurlAmount = getCurl(indexToHandQuaternionModified)
         indexAngle = int(indexCurlAmount*180/3.14)
+#         print(indexAngle)
+        
         if indexAngle <= 0 and indexAngle >= -180:
             index_axis = int(682 * -indexAngle / 180)
         elif indexAngle <= 180 and indexAngle >= 90:
@@ -337,6 +363,7 @@ while True:
     
     if middleActive:
         middleQuaternion = Quaternion(bnoMiddle.quaternion[3],bnoMiddle.quaternion[0],bnoMiddle.quaternion[1],bnoMiddle.quaternion[2])
+        middleQuaternion = quaternion_multiply(relativeQuaternion, middleQuaternion)
         middleToHandQuaternion = quaternion_multiply(handQuaternion, quaternion_conjugate(middleQuaternion))
         middleCurlAmount = getCurl(middleToHandQuaternion)
         middleAngle = int(middleCurlAmount*180/3.14)
@@ -348,6 +375,7 @@ while True:
     
     if ringActive:
         ringQuaternion = Quaternion(bnoRing.quaternion[3],bnoRing.quaternion[0],bnoRing.quaternion[1],bnoRing.quaternion[2])
+        ringQuaternion = quaternion_multiply(relativeQuaternion, ringQuaternion)
         ringToHandQuaternion = quaternion_multiply(handQuaternion, quaternion_conjugate(ringQuaternion))
         ringCurlAmount = getCurl(ringToHandQuaternion)
         ringAngle = int(ringCurlAmount*180/3.14)
@@ -359,14 +387,16 @@ while True:
 
     if pinkyActive:
         pinkyQuaternion = Quaternion(bnoPinky.quaternion[3],bnoPinky.quaternion[0],bnoPinky.quaternion[1],bnoPinky.quaternion[2])
+        pinkyQuaternion = quaternion_multiply(relativeQuaternion, pinkyQuaternion)
         pinkyToHandQuaternion = quaternion_multiply(handQuaternion, quaternion_conjugate(pinkyQuaternion))
-        pinkyCurlAmount = getCurl(pinkyQuaternion)
+        pinkyCurlAmount = getCurl(pinkyToHandQuaternion)
         pinkyAngle = int(pinkyCurlAmount*180/3.14)
         if pinkyAngle <= 0 and pinkyAngle >= -180:
             pinky_axis = int(682 * -pinkyAngle / 180)
         elif pinkyAngle <= 180 and pinkyAngle >= 90:
             pinky_axis = int(682 - (341 / 90) * (pinkyAngle - 180))
-#         print("pinkyAngle: " + str(pinkyAngle))
+        print("pinkyAngle: " + str(pinkyAngle))
+        print("pinky_axis: " + str(pinky_axis))
     
     thumbstick_x_axis_inverted = 0
     thumbstick_y_axis_inverted = 0
