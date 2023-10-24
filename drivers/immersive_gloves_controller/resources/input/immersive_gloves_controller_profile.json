@@ -1,7 +1,7 @@
 {
     "jsonid": "input_profile",
-    "controller_type": "tmi_hand_controller",
-    "legacy_profile": "tmi_hand_controller",
+    "controller_type": "immersive_gloves_controller",
+    "legacy_profile": "immersive_gloves_controller",
     "compatibility_mode_controller_type": "knuckles",
     "input_bindingui_mode": "controller_handed",
     "input_bindingui_left": {

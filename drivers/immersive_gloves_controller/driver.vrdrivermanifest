@@ -1,6 +1,6 @@
 {
 	"alwaysActivate": true,
-	"name" : "tmi_hand_controller",
+	"name" : "immersive_gloves_controller",
 	"directory" : "",
 	"resourceOnly" : false,
 	"hmd_presence" : []

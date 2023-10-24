@@ -1,0 +1,20 @@
+[
+    {
+        "language_tag": "en_US",
+        "immersive_gloves_controller": "Immersive Devices Immersive Gloves Controller",
+        "immersive_gloves_controller_raw": "Immersive Devices Immersive Gloves Controller Raw",
+        "/input/system": "System",
+        "/input/a": "A Button",
+        "/input/b": "B Button",
+        "/input/trigger": "Trigger",
+        "/input/grip": "Grip",
+        "/input/thumbstick": "Thumbstick",
+        "/input/index": "Index Finger",
+        "/input/middle": "Middle Finger",
+        "/input/ring": "Ring Finger",
+        "/input/pinky": "Pinky Finger",
+		"/input/indexmiddlesplay": "Index Middle Splay",
+        "/input/middleringsplay": "Middle Ring Splay",
+        "/input/ringpinkysplay": "Ring Pinky Splay"
+    }
+]
