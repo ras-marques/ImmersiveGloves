@@ -1,0 +1,3 @@
+[submodule "driverProject/immersive_gloves_controller/lib/openvr"]
+	path = driverProject/immersive_gloves_controller/lib/openvr
+	url = https://github.com/ValveSoftware/openvr

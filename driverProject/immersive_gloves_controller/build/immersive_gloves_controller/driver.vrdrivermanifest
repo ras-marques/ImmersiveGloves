@@ -1,0 +1,7 @@
+{
+  "alwaysActivate": true,
+  "name": "immersive_gloves_controller",
+  "directory": "",
+  "resourceOnly": false,
+  "hmd_presence": []
+}
