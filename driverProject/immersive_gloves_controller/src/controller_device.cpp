@@ -11,22 +11,19 @@ vr::EVRInitError ControllerDevice::Activate(uint32_t unObjectId) {
 	vr::VRProperties()->SetStringProperty(container, vr::Prop_ModelNumber_String, "MySampleControllerModel_1");
 
 	vr::VRProperties()->SetStringProperty(container, vr::Prop_InputProfilePath_String,
-		"{sample}/resources/input/sample_profile.json");
+		"{immersive_gloves_controller}/input/immersive_gloves_controller_profile.json");
 
-	vr::VRDriverInput()->CreateBooleanComponent(container, "/input/a/click", &input_handles_[kInputHandle_A_click]);
-	vr::VRDriverInput()->CreateBooleanComponent(container, "/input/a/touch", &input_handles_[kInputHandle_A_touch]);
-
-	vr::VRDriverInput()->CreateScalarComponent(container, "/input/trigger/value", &input_handles_[kInputHandle_trigger_value],
+	vr::VRDriverInput()->CreateScalarComponent(container, "/input/index/value", &input_handles_[kInputHandle_index_value],
 		vr::VRScalarType_Absolute, vr::VRScalarUnits_NormalizedOneSided);
-	vr::VRDriverInput()->CreateBooleanComponent(container, "/input/trigger/click", &input_handles_[kInputHandle_trigger_click]);
 
-	vr::VRDriverInput()->CreateScalarComponent(container, "/input/joystick/x", &input_handles_[kInputHandle_joystick_x],
-		vr::VRScalarType_Absolute, vr::VRScalarUnits_NormalizedTwoSided);
-	vr::VRDriverInput()->CreateScalarComponent(container, "/input/joystick/y", &input_handles_[kInputHandle_joystick_y],
-		vr::VRScalarType_Absolute, vr::VRScalarUnits_NormalizedTwoSided);
-	vr::VRDriverInput()->CreateBooleanComponent(container, "/input/joystick/click", &input_handles_[kInputHandle_joystick_click]);
+	vr::VRDriverInput()->CreateScalarComponent(container, "/input/middle/value", &input_handles_[kInputHandle_middle_value],
+		vr::VRScalarType_Absolute, vr::VRScalarUnits_NormalizedOneSided);
 
-	vr::VRDriverInput()->CreateHapticComponent(container, "/output/haptic", &input_handles_[kInputHandle_haptic]);
+	vr::VRDriverInput()->CreateScalarComponent(container, "/input/ring/value", &input_handles_[kInputHandle_ring_value],
+		vr::VRScalarType_Absolute, vr::VRScalarUnits_NormalizedOneSided);
+
+	vr::VRDriverInput()->CreateScalarComponent(container, "/input/pinky/value", &input_handles_[kInputHandle_pinky_value],
+		vr::VRScalarType_Absolute, vr::VRScalarUnits_NormalizedOneSided);
 
 	device_id_ = unObjectId;
 	return vr::VRInitError_None;
@@ -35,22 +32,20 @@ vr::EVRInitError ControllerDevice::Activate(uint32_t unObjectId) {
 void ControllerDevice::RunFrame() {
 	vr::VRServerDriverHost()->TrackedDevicePoseUpdated(device_id_, GetPose(), sizeof(vr::DriverPose_t));
 
-	vr::VRDriverInput()->UpdateBooleanComponent(input_handles_[kInputHandle_A_click], 1, 0.0);
-	vr::VRDriverInput()->UpdateBooleanComponent(input_handles_[kInputHandle_A_touch], 1, 0.0);
-	vr::VRDriverInput()->UpdateScalarComponent(input_handles_[kInputHandle_trigger_value], 0.5, 0.0);
-	vr::VRDriverInput()->UpdateScalarComponent(input_handles_[kInputHandle_joystick_x], 0.5, 0.0);
-	vr::VRDriverInput()->UpdateScalarComponent(input_handles_[kInputHandle_joystick_y], 0.5, 0.0);
-	vr::VRDriverInput()->UpdateBooleanComponent(input_handles_[kInputHandle_joystick_click], 1, 0.0);
+	vr::VRDriverInput()->UpdateScalarComponent(input_handles_[kInputHandle_index_value], 1, 0.0);
+	vr::VRDriverInput()->UpdateScalarComponent(input_handles_[kInputHandle_middle_value], 0.75, 0.0);
+	vr::VRDriverInput()->UpdateScalarComponent(input_handles_[kInputHandle_ring_value], 0.5, 0.0);
+	vr::VRDriverInput()->UpdateScalarComponent(input_handles_[kInputHandle_pinky_value], 0.25, 0.0);
 }
 
 void ControllerDevice::HandleEvent(const vr::VREvent_t& vrevent) {
 	switch (vrevent.eventType) {
-	case vr::VREvent_Input_HapticVibration: {
-		if (vrevent.data.hapticVibration.componentHandle == input_handles_[kInputHandle_haptic]) {
-			vr::VRDriverLog()->Log("Buzz!");
-		}
-		break;
-	}
+	//case vr::VREvent_Input_HapticVibration: {
+	//	if (vrevent.data.hapticVibration.componentHandle == input_handles_[kInputHandle_haptic]) {
+	//		vr::VRDriverLog()->Log("Buzz!");
+	//	}
+	//	break;
+	//}
 	}
 }
 

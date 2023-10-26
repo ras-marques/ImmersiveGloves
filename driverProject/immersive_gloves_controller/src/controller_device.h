@@ -4,14 +4,10 @@
 #include "openvr_driver.h"
 
 enum InputHandles {
-	kInputHandle_A_click,
-	kInputHandle_A_touch,
-	kInputHandle_trigger_value,
-	kInputHandle_trigger_click,
-	kInputHandle_joystick_x,
-	kInputHandle_joystick_y,
-	kInputHandle_joystick_click,
-	kInputHandle_haptic,
+	kInputHandle_index_value,
+	kInputHandle_middle_value,
+	kInputHandle_ring_value,
+	kInputHandle_pinky_value,
 	kInputHandle_COUNT
 };
 
