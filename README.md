@@ -2,6 +2,8 @@
 
 I want to share how I am making vr gloves using a Tundra Tracker, an interface board and some inertial sensors. These gloves do not have force feedback but haptics are a possibility.
 
+[![Video](https://img.youtube.com/vi/IRRQcPaeXkk/maxresdefault.jpg)](https://www.youtube.com/watch?v=IRRQcPaeXkk
+
 A DIY solution could be achievable for around 100 EURO/USD for each glove if you already have the Tundra Tracker and considering the simplest version of the glove with 6 inertial sensors.
 In the future I want to get the gloves working with 5 more sensors, so 11 on each hand, but some more software development will be needed.
 
