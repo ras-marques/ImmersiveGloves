@@ -48,7 +48,7 @@
     },
     "input_components": {
         "/input/index/value": {
-            "bit_offset": 38,
+            "bit_offset": 0,
             "bit_width": 10,
             "type": "scalar",
             "min": 0,
@@ -56,7 +56,7 @@
             "unit": "onesided"
         },
         "/input/middle/value": {
-            "bit_offset": 48,
+            "bit_offset": 10,
             "bit_width": 10,
             "type": "scalar",
             "min": 0,
@@ -64,7 +64,7 @@
             "unit": "onesided"
         },
         "/input/ring/value": {
-            "bit_offset": 58,
+            "bit_offset": 20,
             "bit_width": 10,
             "type": "scalar",
             "min": 0,
@@ -72,7 +72,7 @@
             "unit": "onesided"
         },
         "/input/pinky/value": {
-            "bit_offset": 68,
+            "bit_offset": 30,
             "bit_width": 10,
             "type": "scalar",
             "min": 0,

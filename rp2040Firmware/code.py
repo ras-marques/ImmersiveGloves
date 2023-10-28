@@ -412,6 +412,8 @@ while True:
 #         print("pinkyAngle: " + str(pinkyAngle))
 #         print("pinky_axis: " + str(pinky_axis))
     
+    print("index: " + str(index_axis) + "\tmiddle: " + str(middle_axis) + "\tring: " + str(ring_axis) + "\tpinky: " + str(pinky_axis))
+    
 #     thumbstick_x_axis_inverted = 0
 #     thumbstick_y_axis_inverted = 0
 #     trigger_axis_inverted = 0

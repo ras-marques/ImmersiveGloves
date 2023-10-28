@@ -30,16 +30,23 @@ vr::EVRInitError ControllerDevice::Activate(uint32_t unObjectId) {
 }
 
 void ControllerDevice::RunFrame() {
-	vr::VRServerDriverHost()->TrackedDevicePoseUpdated(device_id_, GetPose(), sizeof(vr::DriverPose_t));
+	//vr::VRServerDriverHost()->TrackedDevicePoseUpdated(device_id_, GetPose(), sizeof(vr::DriverPose_t));
 
-	vr::VRDriverInput()->UpdateScalarComponent(input_handles_[kInputHandle_index_value], 1, 0.0);
-	vr::VRDriverInput()->UpdateScalarComponent(input_handles_[kInputHandle_middle_value], 0.75, 0.0);
-	vr::VRDriverInput()->UpdateScalarComponent(input_handles_[kInputHandle_ring_value], 0.5, 0.0);
-	vr::VRDriverInput()->UpdateScalarComponent(input_handles_[kInputHandle_pinky_value], 0.25, 0.0);
+	//vr::VRDriverInput()->UpdateScalarComponent(input_handles_[kInputHandle_index_value], 1, 0.0);
+	//vr::VRDriverInput()->UpdateScalarComponent(input_handles_[kInputHandle_middle_value], 0.75, 0.0);
+	//vr::VRDriverInput()->UpdateScalarComponent(input_handles_[kInputHandle_ring_value], 0.5, 0.0);
+	//vr::VRDriverInput()->UpdateScalarComponent(input_handles_[kInputHandle_pinky_value], 0.25, 0.0);
 }
 
 void ControllerDevice::HandleEvent(const vr::VREvent_t& vrevent) {
+	char logstring[50] = {};
+	sprintf_s(logstring, "trackedDeviceIndex %d - vrevent.eventType %d", vrevent.trackedDeviceIndex, vrevent.eventType);
+	vr::VRDriverLog()->Log(logstring);
+
 	switch (vrevent.eventType) {
+	case vr::VREvent_PropertyChanged: {
+		vr::VRDriverLog()->Log("Buzz!");
+	}
 	//case vr::VREvent_Input_HapticVibration: {
 	//	if (vrevent.data.hapticVibration.componentHandle == input_handles_[kInputHandle_haptic]) {
 	//		vr::VRDriverLog()->Log("Buzz!");

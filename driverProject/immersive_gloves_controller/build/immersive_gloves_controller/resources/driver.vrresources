@@ -1,7 +1,7 @@
 {
 	"jsonid" : "vrresources",
 	"statusicons" : {
-		"Tracker" : {
+		"Controller" : {
 			"Prop_NamedIconPathDeviceOff_String" : "{immersive_gloves_controller}/icons/tracker_status_off.png",
 			"Prop_NamedIconPathDeviceSearching_String" : "{immersive_gloves_controller}/icons/tracker_status_searching.gif",
 			"Prop_NamedIconPathDeviceSearchingAlert_String" : "{immersive_gloves_controller}/icons/tracker_status_searching_alert.gif",
