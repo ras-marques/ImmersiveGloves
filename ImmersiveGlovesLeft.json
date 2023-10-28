@@ -21,7 +21,7 @@
 	  "mapped_input" : true
    },
    "head" : {
-      "plus_x" : [ 0, 0, 1 ],
+      "plus_x" : [ 0, 0, -1 ],
       "plus_z" : [ 0, 1, 0 ],
       "position" : [ 0, 0, 0 ]
    },
@@ -76,9 +76,10 @@
    "device_class" : "controller",
    "device_serial_number" : "IMMRSV-GLV-LEFT",
    "manufacturer" : "Immersive Devices",
-   "model_number" : "Immersive Gloves Controller",
+   "model_number" : "Immersive Gloves Left",
    "render_model" : "{immersive_gloves_controller}/immersive_gloves_controller",
    "resource_root" : "immersive_gloves_controller",
    "input_profile" : "{immersive_gloves_controller}/input/immersive_gloves_controller_profile.json",
-   "revision" : 1
+   "revision" : 1,
+   "tracked_controller_role" : "left_hand"
 }

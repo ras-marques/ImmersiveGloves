@@ -1,7 +1,5 @@
 ﻿C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppBuild.targets(517,5): warning MSB8004: Output Directory does not end with a trailing slash.  This build instance will add the slash as it is required to allow proper evaluation of the Output Directory.
   device_provider.cpp
-C:\Users\Ruben\Desktop\repositories\ImmersiveGloves\driverProject\immersive_gloves_controller\src\device_provider.cpp(29,19): warning C4101: 'vrevent': unreferenced local variable
-     Creating library C:\Users\Ruben\Desktop\repositories\ImmersiveGloves\driverProject\immersive_gloves_controller\build\immersive_gloves_controller\bin\win64\driver_immersive_gloves_controller.lib and object C:\Users\Ruben\Desktop\repositories\ImmersiveGloves\driverProject\immersive_gloves_controller\build\immersive_gloves_controller\bin\win64\driver_immersive_gloves_controller.exp
   immersive_gloves_controller.vcxproj -> C:\Users\Ruben\Desktop\repositories\ImmersiveGloves\driverProject\immersive_gloves_controller\build\immersive_gloves_controller\bin\win64\driver_immersive_gloves_controller.dll
   C:\Users\Ruben\Desktop\repositories\ImmersiveGloves\driverProject\immersive_gloves_controller\immersive_gloves_controller\driver.vrdrivermanifest
   1 File(s) copied
