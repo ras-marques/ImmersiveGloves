@@ -42,6 +42,10 @@ I am also designing a custom interface board for the Tundra Tracker, but I am st
 - A window should appear on your PC showing the new drive that is emulated by the RP2040. Copy the circuitpython file you downloaded earlier into this folder. The RP2040 will reboot automatically.
 - Like before, a new window should appear on your PC showing another drive but now with a different structure. This is where you will put your program that processes the sensor data and sends it to the computer. Just copy the contents of the rp2040Firmware folder into the root of this new folder that appeared.
 
+### SteamVR tweaks
+- This is a problem currently, but I don't yet know how to make things the right way. The driver expects the Tundra Tracker from the left glove to be the 8th device to be added to the list, and the right glove tracker to be the 9th. I am speaking about that small SteamVR window that lists the Headset, Base Stations and controllers. This will be fixed in the near future, hopefully.
+- Go to Controller Settings and mark the Tundra Trackers as Disabled. This will not prevent the driver from getting the Tracker position and rotation (pose) and will ensure the driver takes care of representing the hands in the right place and rotation.
+
 ## Important resources that made this project possible
  
 Tundra Labs have a repo with some documentation on how to use their development board https://github.com/tundra-labs/rp2040_examples
