@@ -26,11 +26,14 @@ vr::EVRInitError ControllerDevice::Activate(uint32_t unObjectId) {
 		vr::VRScalarType_Absolute, vr::VRScalarUnits_NormalizedOneSided);
 
 	device_id_ = unObjectId;
+	char logstring[50] = {};
+	sprintf_s(logstring, "device_id_: %d", device_id_);
+	vr::VRDriverLog()->Log(logstring);
 	return vr::VRInitError_None;
 }
 
 void ControllerDevice::RunFrame() {
-	//vr::VRServerDriverHost()->TrackedDevicePoseUpdated(device_id_, GetPose(), sizeof(vr::DriverPose_t));
+	vr::VRServerDriverHost()->TrackedDevicePoseUpdated(device_id_, GetPose(), sizeof(vr::DriverPose_t));
 
 	//vr::VRDriverInput()->UpdateScalarComponent(input_handles_[kInputHandle_index_value], 1, 0.0);
 	//vr::VRDriverInput()->UpdateScalarComponent(input_handles_[kInputHandle_middle_value], 0.75, 0.0);
@@ -39,8 +42,8 @@ void ControllerDevice::RunFrame() {
 }
 
 void ControllerDevice::HandleEvent(const vr::VREvent_t& vrevent) {
-	char logstring[50] = {};
-	sprintf_s(logstring, "trackedDeviceIndex %d - vrevent.eventType %d", vrevent.trackedDeviceIndex, vrevent.eventType);
+	char logstring[100] = {};
+	sprintf_s(logstring, "device_id_ %d - trackedDeviceIndex %d - vrevent.eventType %d", device_id_, vrevent.trackedDeviceIndex, vrevent.eventType);
 	vr::VRDriverLog()->Log(logstring);
 
 	switch (vrevent.eventType) {
@@ -101,18 +104,43 @@ vr::DriverPose_t ControllerDevice::GetPose() {
 
 	pose.qRotation.w = 1.f;
 
-	vr::TrackedDevicePose_t hmd_pose{};
-	vr::VRServerDriverHost()->GetRawTrackedDevicePoses(0.f, &hmd_pose, 1);
+	//declare an array of poses for all tracked devices
+	vr::TrackedDevicePose_t poses[vr::k_unMaxTrackedDeviceCount];
+	//fill the array of poses
+	vr::VRServerDriverHost()->GetRawTrackedDevicePoses(0.f, poses, vr::k_unMaxTrackedDeviceCount);
 
-	const vr::HmdQuaternion_t hmd_orientation = HmdQuaternion_FromMatrix(hmd_pose.mDeviceToAbsoluteTracking);
-	pose.qRotation = hmd_orientation;
+	//now, this must be improved later, but currently, the left glove must be the 8th device to be added to steam vr list of devices, and the right glove must be the 9th
+	//this works on my system specifically, since this is my list of devices:
+	// 0 - headset
+	// 1 - IMMRSV-GLV-LEFT - the virtual device I add that will receive data from the tracker of the left glove
+	// 2 - IMMRSV-GLV-RIGHT - the virtual device I add that will receive data from the tracker of the right glove
+	// 3 - Base Station 1
+	// 4 - Base Station 2
+	// 5 - Base Station 3
+	// 6 - Base Station 4
+	// 7 - Tracker from the left glove
+	// 8 - Tracker from the right glove
+	if (role_ == vr::TrackedControllerRole_LeftHand) {
+		//compute the orientation of the glove in respect to the headset using poses[7]
+		const vr::HmdQuaternion_t hmd_orientation = HmdQuaternion_FromMatrix(poses[7].mDeviceToAbsoluteTracking);
+		//fill the qRotation part of the pose
+		pose.qRotation = hmd_orientation;
 
-	pose.vecPosition[0] = role_ == vr::TrackedControllerRole_LeftHand
-		? hmd_pose.mDeviceToAbsoluteTracking.m[0][3] - 0.2f
-		: hmd_pose.mDeviceToAbsoluteTracking.m[0][3] + 0.2f;
+		//fill the vecPosition part of the pose using the poses[7]
+		pose.vecPosition[0] = poses[7].mDeviceToAbsoluteTracking.m[0][3];
+		pose.vecPosition[1] = poses[7].mDeviceToAbsoluteTracking.m[1][3];
+		pose.vecPosition[2] = poses[7].mDeviceToAbsoluteTracking.m[2][3];
+	} else if (role_ == vr::TrackedControllerRole_RightHand) {
+		//compute the orientation of the glove in respect to the headset using poses[8]
+		const vr::HmdQuaternion_t hmd_orientation = HmdQuaternion_FromMatrix(poses[8].mDeviceToAbsoluteTracking);
+		//fill the qRotation part of the pose
+		pose.qRotation = hmd_orientation;
 
-	pose.vecPosition[1] = hmd_pose.mDeviceToAbsoluteTracking.m[1][3];
-	pose.vecPosition[2] = hmd_pose.mDeviceToAbsoluteTracking.m[2][3] - 0.5f;
+		//fill the vecPosition part of the pose using poses[8]
+		pose.vecPosition[0] = poses[8].mDeviceToAbsoluteTracking.m[0][3];
+		pose.vecPosition[1] = poses[8].mDeviceToAbsoluteTracking.m[1][3];
+		pose.vecPosition[2] = poses[8].mDeviceToAbsoluteTracking.m[2][3];
+	}
 
 	return pose;
 }

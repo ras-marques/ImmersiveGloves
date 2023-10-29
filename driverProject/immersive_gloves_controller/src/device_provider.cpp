@@ -5,17 +5,17 @@ vr::EVRInitError DeviceProvider::Init(vr::IVRDriverContext* pDriverContext) {
     vr::VRDriverLog()->Log("Hello world!");
 
     my_left_device_ = std::make_unique<ControllerDevice>(vr::TrackedControllerRole_LeftHand);
-    //vr::VRServerDriverHost()->TrackedDeviceAdded("IMMRSV-GLV-LEFT",
-    //    vr::TrackedDeviceClass_Controller,
-    //    my_left_device_.get());
+    vr::VRServerDriverHost()->TrackedDeviceAdded("IMMRSV-GLV-LEFT",
+        vr::TrackedDeviceClass_Controller,
+        my_left_device_.get());
     //vr::VRServerDriverHost()->TrackedDeviceAdded("LHR-F7EE4E80",
     //    vr::TrackedDeviceClass_Controller,
     //    my_left_device_.get());
 
     my_right_device_ = std::make_unique<ControllerDevice>(vr::TrackedControllerRole_RightHand);
-    //vr::VRServerDriverHost()->TrackedDeviceAdded("IMMRSV-GLV-RIGHT",
-    //    vr::TrackedDeviceClass_Controller,
-    //    my_right_device_.get());
+    vr::VRServerDriverHost()->TrackedDeviceAdded("IMMRSV-GLV-RIGHT",
+        vr::TrackedDeviceClass_Controller,
+        my_right_device_.get());
 
     return vr::VRInitError_None;
 }
