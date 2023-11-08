@@ -25,6 +25,8 @@ public:
 
 	void RunFrame();
 	void HandleEvent(const vr::VREvent_t& vrevent);
+	void SetTrackerId(short deviceId, bool isRightHand);
+	vr::ETrackedControllerRole GetDeviceRole() const;
 
 private:
 	std::array<vr::VRInputComponentHandle_t, kInputHandle_COUNT> input_handles_;

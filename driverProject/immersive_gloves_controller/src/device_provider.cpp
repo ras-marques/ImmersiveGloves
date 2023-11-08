@@ -17,6 +17,17 @@ vr::EVRInitError DeviceProvider::Init(vr::IVRDriverContext* pDriverContext) {
         vr::TrackedDeviceClass_Controller,
         my_right_device_.get());
 
+    m_trackerDiscovery = std::make_unique<TrackerDiscovery>(pDriverContext);
+    m_trackerDiscovery->StartDiscovery([&](vr::ETrackedControllerRole role, int deviceId) {
+        if (my_left_device_ != nullptr && my_left_device_->GetDeviceRole() == role) {
+            my_left_device_->SetTrackerId(deviceId, false);
+        }
+
+        if (my_right_device_ != nullptr && my_right_device_->GetDeviceRole() == role) {
+            my_right_device_->SetTrackerId(deviceId, true);
+        }
+    });
+
     return vr::VRInitError_None;
 }
 

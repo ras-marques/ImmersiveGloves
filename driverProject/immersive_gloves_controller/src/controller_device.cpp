@@ -59,6 +59,14 @@ void ControllerDevice::HandleEvent(const vr::VREvent_t& vrevent) {
 	}
 }
 
+void ControllerDevice::SetTrackerId(short deviceId, bool isRightHand) {
+	//m_controllerPose->SetShadowEteeTracker(deviceId, isRightHand);
+}
+
+vr::ETrackedControllerRole ControllerDevice::GetDeviceRole() const {
+	return role_;
+}
+
 void ControllerDevice::Deactivate() {
 }
 
