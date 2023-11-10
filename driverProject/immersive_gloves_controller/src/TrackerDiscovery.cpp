@@ -3,14 +3,16 @@
 #include <array>
 
 #include "Hooks/InterfaceHookInjector.h"
-#include "Util/DriverLog.h"
+//#include "Util/DriverLog.h"
 
-static const std::string isRightHandedInputName = "/input/is_right_handed/click";
-static const std::string trackerConnectionInputName = "/input/tracker_connection/click";
+static const std::string indexValueInputName = "/input/index/value";
+static const std::string middleValueInputName = "/input/middle/value";
+static const std::string ringValueInputName = "/input/ring/value";
+static const std::string pinkyValueInputName = "/input/pinky/value";
 
-std::string eteeTrackerLeftSerNum, eteeTrackerRightSerNum;
+std::string tundraTrackerLeftSerNum, tundraTrackerRightSerNum;
 
-static std::array<std::string, 2> expectedInputNames = {isRightHandedInputName, trackerConnectionInputName};
+static std::array<std::string, 4> expectedInputNames = { indexValueInputName, middleValueInputName, ringValueInputName, pinkyValueInputName };
 
 int TrackerDiscovery::FindTrackerDeviceIdByContainer(vr::PropertyContainerHandle_t ulContainer) {
   if (m_propertyContainerDeviceIdMap.count(ulContainer) > 0) return m_propertyContainerDeviceIdMap.at(ulContainer);
@@ -18,11 +20,15 @@ int TrackerDiscovery::FindTrackerDeviceIdByContainer(vr::PropertyContainerHandle
   vr::ETrackedPropertyError err;
   std::string manufacturer = vr::VRProperties()->GetStringProperty(ulContainer, vr::ETrackedDeviceProperty::Prop_ManufacturerName_String, &err);
 
-  if (manufacturer != "TG0") return -1;  // only look for etee trackers
+  //char logstring[50] = {};
+  //sprintf_s(logstring, "manufacturer %s", manufacturer);
+  vr::VRDriverLog()->Log(manufacturer.c_str());
+
+  if (manufacturer != "Immersive Devices") return -1;  // only look for Immersive Gloves Controllers
 
   for (int i = 0; i < vr::k_unMaxTrackedDeviceCount; i++) {
     if (vr::VRProperties()->TrackedDeviceToPropertyContainer(i) == ulContainer) {
-      DriverLog("Etee tracker discovered with id: %i", i);
+      //DriverLog("Etee tracker discovered with id: %i", i);
       m_propertyContainerDeviceIdMap.insert({ulContainer, i});
       return i;
     }
@@ -51,8 +57,11 @@ void TrackerDiscovery::CreateBooleanComponent(vr::PropertyContainerHandle_t ulCo
 }
 
 void TrackerDiscovery::CreateScalarComponent(vr::PropertyContainerHandle_t ulContainer, const char* pchName, vr::VRInputComponentHandle_t* pHandle) {
+    vr::VRDriverLog()->Log(pchName);
     if (std::find(expectedInputNames.begin(), expectedInputNames.end(), std::string(pchName)) != expectedInputNames.end()) {
         int deviceId = FindTrackerDeviceIdByContainer(ulContainer);
+
+
         if (deviceId != -1) {
             m_inputComponentDeviceIdMap.insert_or_assign(*pHandle, InputComponentInfo(std::string(pchName), deviceId));
         }
@@ -61,9 +70,9 @@ void TrackerDiscovery::CreateScalarComponent(vr::PropertyContainerHandle_t ulCon
 
 void TrackerDiscovery::UpdateHandSerialNumber(bool isRight, std::string serialNum) {
   if (isRight) {
-    eteeTrackerRightSerNum = serialNum;
+    tundraTrackerRightSerNum = serialNum;
   } else {
-    eteeTrackerLeftSerNum = serialNum;
+    tundraTrackerLeftSerNum = serialNum;
   } 
 }
 
@@ -78,29 +87,29 @@ void TrackerDiscovery::UpdateBooleanComponent(vr::VRInputComponentHandle_t ulCom
     std::string deviceSerialNumber = vr::VRProperties()->GetStringProperty(container, vr::ETrackedDeviceProperty::Prop_SerialNumber_String);
 
     // If the tracker data values have changed
-    DriverLog(
-        "Tracker was updated: Id: %i, Serial Number: %s, Name: %s, Value: %s",
-        inputInfo.deviceId,
-        deviceSerialNumber.c_str(),
-        inputInfo.name.c_str(),
-        bNewValue ? "True" : "False");
+    //DriverLog(
+    //    "Tracker was updated: Id: %i, Serial Number: %s, Name: %s, Value: %s",
+    //    inputInfo.deviceId,
+    //    deviceSerialNumber.c_str(),
+    //    inputInfo.name.c_str(),
+    //    bNewValue ? "True" : "False");
 
     if (!m_trackerIdStatus.count(inputInfo.deviceId)) m_trackerIdStatus[inputInfo.deviceId] = {};
 
     TrackerStatus& status = m_trackerIdStatus.at(inputInfo.deviceId);
 
     // If the input being read is isRightHanded
-    if (inputInfo.name == isRightHandedInputName) {
-      status.role = bNewValue ? vr::TrackedControllerRole_RightHand : vr::TrackedControllerRole_LeftHand;
+    //if (inputInfo.name == isRightHandedInputName) {
+    //  status.role = bNewValue ? vr::TrackedControllerRole_RightHand : vr::TrackedControllerRole_LeftHand;
 
-      bool isRightHandedVal = bNewValue ? true : false;
-      UpdateHandSerialNumber(isRightHandedVal, deviceSerialNumber);  // Update serial number of handed trackers
-    }
+    //  bool isRightHandedVal = bNewValue ? true : false;
+    //  UpdateHandSerialNumber(isRightHandedVal, deviceSerialNumber);  // Update serial number of handed trackers
+    //}
 
     // If the input being read is trackerConnection
-    if (inputInfo.name == trackerConnectionInputName) {
-      status.trackerConnected = bNewValue;
-    }
+    //if (inputInfo.name == trackerConnectionInputName) {
+    //  status.trackerConnected = bNewValue;
+    //}
 
     inputInfo.lastValue = bNewValue;
 
@@ -114,41 +123,35 @@ void TrackerDiscovery::UpdateBooleanComponent(vr::VRInputComponentHandle_t ulCom
 // and the controller data is sent through SPI to the tracker and subsequently to SteamVR
 void TrackerDiscovery::UpdateScalarComponent(vr::VRInputComponentHandle_t ulComponent, float fNewValue, double fTimeOffset) {
     if (m_inputComponentDeviceIdMap.count(ulComponent) > 0) {
+
+        char logstring[50] = {};
+        if ((int)(ulComponent) == 1) sprintf_s(logstring, "index %f ", fNewValue);
+        else if ((int)(ulComponent) == 2) sprintf_s(logstring, "middle %f ", fNewValue);
+        else if ((int)(ulComponent) == 3) sprintf_s(logstring, "ring %f ", fNewValue);
+        else if ((int)(ulComponent) == 4) sprintf_s(logstring, "pinky %f ", fNewValue);
+        vr::VRDriverLog()->Log(logstring);
+
         InputComponentInfo& inputInfo = m_inputComponentDeviceIdMap.at(ulComponent);
+        vr::VRDriverLog()->Log(inputInfo.name.c_str()); //this prints /input/index/value, /input/middle/value, etc
 
         // Check the device serial number
         vr::PropertyContainerHandle_t container = vr::VRProperties()->TrackedDeviceToPropertyContainer(inputInfo.deviceId);
         std::string deviceSerialNumber = vr::VRProperties()->GetStringProperty(container, vr::ETrackedDeviceProperty::Prop_SerialNumber_String);
+        int role = vr::VRProperties()->GetInt32Property(container, vr::ETrackedDeviceProperty::Prop_ControllerRoleHint_Int32);
+        //this will be 1 if left, 2 if right
 
-        // If the tracker data values have changed
-        DriverLog(
-            "Tracker was updated: Id: %i, Serial Number: %s, Name: %s, Value: %f",
-            inputInfo.deviceId,
-            deviceSerialNumber.c_str(),
-            inputInfo.name.c_str(),
-            fNewValue);
+        if (!m_trackerIdStatus.count(inputInfo.deviceId)) m_trackerIdStatus[inputInfo.deviceId] = {}; // I don't know what this does...
 
-        if (!m_trackerIdStatus.count(inputInfo.deviceId)) m_trackerIdStatus[inputInfo.deviceId] = {};
+        TrackerStatus& status = m_trackerIdStatus.at(inputInfo.deviceId);
+        if (role == 1) {
+            status.role = vr::TrackedControllerRole_LeftHand;
+            UpdateHandSerialNumber(false, deviceSerialNumber);  // Update serial number of handed trackers
+        }
+        else if (role == 2) {
+            status.role = vr::TrackedControllerRole_RightHand;
+            UpdateHandSerialNumber(true, deviceSerialNumber);  // Update serial number of handed trackers
+        }
 
-        //TrackerStatus& status = m_trackerIdStatus.at(inputInfo.deviceId);
-
-        // If the input being read is isRightHanded
-        //if (inputInfo.name == isRightHandedInputName) {
-        //    status.role = bNewValue ? vr::TrackedControllerRole_RightHand : vr::TrackedControllerRole_LeftHand;
-
-        //    bool isRightHandedVal = bNewValue ? true : false;
-        //    UpdateHandSerialNumber(isRightHandedVal, deviceSerialNumber);  // Update serial number of handed trackers
-        //}
-
-        //// If the input being read is trackerConnection
-        //if (inputInfo.name == trackerConnectionInputName) {
-        //    status.trackerConnected = bNewValue;
-        //}
-
-        //inputInfo.lastValue = bNewValue;
-
-        //if (!status.trackerConnected || !status.role) return;  // only update state if a tracker is connected
-
-        //m_callback(status.role, inputInfo.deviceId);
+        m_callback(status.role, inputInfo.deviceId);
     }
 }

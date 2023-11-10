@@ -169,7 +169,6 @@
   <ItemGroup>
     <ClCompile Include="src\controller_device.cpp" />
     <ClCompile Include="src\device_provider.cpp" />
-    <ClCompile Include="src\DriverLog.cpp" />
     <ClCompile Include="src\hmd_driver_factory.cpp" />
     <ClCompile Include="src\Hooking.cpp" />
     <ClCompile Include="src\InterfaceHookInjector.cpp" />
@@ -182,7 +181,6 @@
     <ClInclude Include="src\Hooks\HookReceiver.h" />
     <ClInclude Include="src\Hooks\InterfaceHookInjector.h" />
     <ClInclude Include="src\TrackerDiscovery.h" />
-    <ClInclude Include="src\Util\DriverLog.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

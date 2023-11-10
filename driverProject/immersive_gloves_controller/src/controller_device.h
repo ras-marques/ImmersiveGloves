@@ -2,6 +2,7 @@
 
 #include <array>
 #include "openvr_driver.h"
+//#include <fileapi.h>
 
 enum InputHandles {
 	kInputHandle_index_value,
@@ -29,6 +30,27 @@ public:
 	vr::ETrackedControllerRole GetDeviceRole() const;
 
 private:
+	struct InputData {
+		float flexion[5][4];
+		float splay[5];
+		float joyX;
+		float joyY;
+		bool joyButton;
+		bool trgButton;
+		bool aButton;
+		bool bButton;
+		bool grab;
+		bool pinch;
+		bool menu;
+		bool calibrate;
+
+		float trgValue;
+	};
+
+	void* hPipeLeft;
+	void* hPipeRight;
+	//DWORD dwWritten;
+
 	std::array<vr::VRInputComponentHandle_t, kInputHandle_COUNT> input_handles_;
 
 	vr::ETrackedControllerRole role_;

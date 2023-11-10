@@ -11,7 +11,7 @@ void IHook::Register(IHook *hook)
 {
 	hooks[hook->name] = hook;
 
-	DriverLog("Registed: %s", hook->name.c_str());
+	//DriverLog("Registed: %s", hook->name.c_str());
 }
 
 void IHook::Unregister(IHook *hook)

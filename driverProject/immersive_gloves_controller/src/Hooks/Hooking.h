@@ -5,7 +5,7 @@
 #include <map>
 #include <string>
 
-#include "../Util/DriverLog.h"
+//#include "../Util/DriverLog.h"
 
 class IHook {
  public:
@@ -42,18 +42,18 @@ class Hook : public IHook {
 
     auto err = MH_CreateHook(targetFunc, detourFunction, (LPVOID *)&originalFunc);
     if (err != MH_OK) {
-      DriverLog("Failed to create hook for %s, error: %s", name.c_str(), MH_StatusToString(err));
+      //DriverLog("Failed to create hook for %s, error: %s", name.c_str(), MH_StatusToString(err));
       return false;
     }
 
     err = MH_EnableHook(targetFunc);
     if (err != MH_OK) {
-      DriverLog("Failed to enable hook for %s, error: %s", name.c_str(), MH_StatusToString(err));
+      //DriverLog("Failed to enable hook for %s, error: %s", name.c_str(), MH_StatusToString(err));
       MH_RemoveHook(targetFunc);
       return false;
     }
 
-    DriverLog("Enabled hook for %s", name.c_str());
+    //DriverLog("Enabled hook for %s", name.c_str());
     enabled = true;
     return true;
   }

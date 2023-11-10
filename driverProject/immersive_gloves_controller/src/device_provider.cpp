@@ -8,9 +8,6 @@ vr::EVRInitError DeviceProvider::Init(vr::IVRDriverContext* pDriverContext) {
     vr::VRServerDriverHost()->TrackedDeviceAdded("IMMRSV-GLV-LEFT",
         vr::TrackedDeviceClass_Controller,
         my_left_device_.get());
-    //vr::VRServerDriverHost()->TrackedDeviceAdded("LHR-F7EE4E80",
-    //    vr::TrackedDeviceClass_Controller,
-    //    my_left_device_.get());
 
     my_right_device_ = std::make_unique<ControllerDevice>(vr::TrackedControllerRole_RightHand);
     vr::VRServerDriverHost()->TrackedDeviceAdded("IMMRSV-GLV-RIGHT",
@@ -19,6 +16,8 @@ vr::EVRInitError DeviceProvider::Init(vr::IVRDriverContext* pDriverContext) {
 
     m_trackerDiscovery = std::make_unique<TrackerDiscovery>(pDriverContext);
     m_trackerDiscovery->StartDiscovery([&](vr::ETrackedControllerRole role, int deviceId) {
+        vr::VRDriverLog()->Log("Callback!");
+
         if (my_left_device_ != nullptr && my_left_device_->GetDeviceRole() == role) {
             my_left_device_->SetTrackerId(deviceId, false);
         }

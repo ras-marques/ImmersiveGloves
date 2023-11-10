@@ -33,9 +33,6 @@
     <ClCompile Include="src\InterfaceHookInjector.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\DriverLog.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\device_provider.h">
@@ -54,9 +51,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\Hooks\InterfaceHookInjector.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Util\DriverLog.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

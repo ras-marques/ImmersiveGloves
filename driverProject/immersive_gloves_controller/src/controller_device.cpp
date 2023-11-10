@@ -5,25 +5,40 @@ ControllerDevice::ControllerDevice(vr::ETrackedControllerRole role) : role_(role
 vr::EVRInitError ControllerDevice::Activate(uint32_t unObjectId) {
 	vr::VRDriverLog()->Log("ControllerDevice::Activate");
 
-	const vr::PropertyContainerHandle_t container = vr::VRProperties()->TrackedDeviceToPropertyContainer(unObjectId);
-	vr::VRProperties()->SetInt32Property(container, vr::Prop_ControllerRoleHint_Int32, role_);
+	//hPipeLeft = CreateFile(TEXT("\\\\.\\pipe\\vrapplication\\input\\glove\\v2\\left"),
+	//	GENERIC_READ | GENERIC_WRITE,
+	//	0,
+	//	NULL,
+	//	OPEN_EXISTING,
+	//	0,
+	//	NULL);
+	//hPipeRight = CreateFile(TEXT("\\\\.\\pipe\\vrapplication\\input\\glove\\v2\\right"),
+	//	GENERIC_READ | GENERIC_WRITE,
+	//	0,
+	//	NULL,
+	//	OPEN_EXISTING,
+	//	0,
+	//	NULL);
 
-	vr::VRProperties()->SetStringProperty(container, vr::Prop_ModelNumber_String, "MySampleControllerModel_1");
+	//const vr::PropertyContainerHandle_t container = vr::VRProperties()->TrackedDeviceToPropertyContainer(unObjectId);
+	//vr::VRProperties()->SetInt32Property(container, vr::Prop_ControllerRoleHint_Int32, role_);
 
-	vr::VRProperties()->SetStringProperty(container, vr::Prop_InputProfilePath_String,
-		"{immersive_gloves_controller}/input/immersive_gloves_controller_profile.json");
+	//vr::VRProperties()->SetStringProperty(container, vr::Prop_ModelNumber_String, "MySampleControllerModel_1");
 
-	vr::VRDriverInput()->CreateScalarComponent(container, "/input/index/value", &input_handles_[kInputHandle_index_value],
-		vr::VRScalarType_Absolute, vr::VRScalarUnits_NormalizedOneSided);
+	//vr::VRProperties()->SetStringProperty(container, vr::Prop_InputProfilePath_String,
+	//	"{immersive_gloves_controller}/input/immersive_gloves_controller_profile.json");
 
-	vr::VRDriverInput()->CreateScalarComponent(container, "/input/middle/value", &input_handles_[kInputHandle_middle_value],
-		vr::VRScalarType_Absolute, vr::VRScalarUnits_NormalizedOneSided);
+	//vr::VRDriverInput()->CreateScalarComponent(container, "/input/index/value", &input_handles_[kInputHandle_index_value],
+	//	vr::VRScalarType_Absolute, vr::VRScalarUnits_NormalizedOneSided);
 
-	vr::VRDriverInput()->CreateScalarComponent(container, "/input/ring/value", &input_handles_[kInputHandle_ring_value],
-		vr::VRScalarType_Absolute, vr::VRScalarUnits_NormalizedOneSided);
+	//vr::VRDriverInput()->CreateScalarComponent(container, "/input/middle/value", &input_handles_[kInputHandle_middle_value],
+	//	vr::VRScalarType_Absolute, vr::VRScalarUnits_NormalizedOneSided);
 
-	vr::VRDriverInput()->CreateScalarComponent(container, "/input/pinky/value", &input_handles_[kInputHandle_pinky_value],
-		vr::VRScalarType_Absolute, vr::VRScalarUnits_NormalizedOneSided);
+	//vr::VRDriverInput()->CreateScalarComponent(container, "/input/ring/value", &input_handles_[kInputHandle_ring_value],
+	//	vr::VRScalarType_Absolute, vr::VRScalarUnits_NormalizedOneSided);
+
+	//vr::VRDriverInput()->CreateScalarComponent(container, "/input/pinky/value", &input_handles_[kInputHandle_pinky_value],
+	//	vr::VRScalarType_Absolute, vr::VRScalarUnits_NormalizedOneSided);
 
 	device_id_ = unObjectId;
 	char logstring[50] = {};
@@ -33,7 +48,7 @@ vr::EVRInitError ControllerDevice::Activate(uint32_t unObjectId) {
 }
 
 void ControllerDevice::RunFrame() {
-	vr::VRServerDriverHost()->TrackedDevicePoseUpdated(device_id_, GetPose(), sizeof(vr::DriverPose_t));
+	//vr::VRServerDriverHost()->TrackedDevicePoseUpdated(device_id_, GetPose(), sizeof(vr::DriverPose_t));
 
 	//vr::VRDriverInput()->UpdateScalarComponent(input_handles_[kInputHandle_index_value], 1, 0.0);
 	//vr::VRDriverInput()->UpdateScalarComponent(input_handles_[kInputHandle_middle_value], 0.75, 0.0);
@@ -42,21 +57,21 @@ void ControllerDevice::RunFrame() {
 }
 
 void ControllerDevice::HandleEvent(const vr::VREvent_t& vrevent) {
-	char logstring[100] = {};
-	sprintf_s(logstring, "device_id_ %d - trackedDeviceIndex %d - vrevent.eventType %d", device_id_, vrevent.trackedDeviceIndex, vrevent.eventType);
-	vr::VRDriverLog()->Log(logstring);
+	//char logstring[100] = {};
+	//sprintf_s(logstring, "device_id_ %d - trackedDeviceIndex %d - vrevent.eventType %d", device_id_, vrevent.trackedDeviceIndex, vrevent.eventType);
+	//vr::VRDriverLog()->Log(logstring);
 
-	switch (vrevent.eventType) {
-	case vr::VREvent_PropertyChanged: {
-		vr::VRDriverLog()->Log("Buzz!");
-	}
+	//switch (vrevent.eventType) {
+	//case vr::VREvent_PropertyChanged: {
+	//	vr::VRDriverLog()->Log("Buzz!");
+	//}
 	//case vr::VREvent_Input_HapticVibration: {
 	//	if (vrevent.data.hapticVibration.componentHandle == input_handles_[kInputHandle_haptic]) {
 	//		vr::VRDriverLog()->Log("Buzz!");
 	//	}
 	//	break;
 	//}
-	}
+	//}
 }
 
 void ControllerDevice::SetTrackerId(short deviceId, bool isRightHand) {
