@@ -46,15 +46,15 @@ public:
 	void SetTrackerId(short deviceId, bool isRightHand);
 	vr::ETrackedControllerRole GetDeviceRole() const;
 	void WritePipe();
+	void PrintDeviceId();
 
-	InputData leftData, rightData;
+	InputData data;
+	HANDLE hPipe;
+	DWORD dwWritten;
 
 private:
 	std::array<vr::VRInputComponentHandle_t, kInputHandle_COUNT> input_handles_;
 
 	vr::ETrackedControllerRole role_;
 	vr::TrackedDeviceIndex_t device_id_;
-
-	HANDLE hPipeLeft, hPipeRight;
-	DWORD dwWritten;
 };

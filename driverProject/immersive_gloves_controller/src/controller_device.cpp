@@ -5,21 +5,6 @@ ControllerDevice::ControllerDevice(vr::ETrackedControllerRole role) : role_(role
 vr::EVRInitError ControllerDevice::Activate(uint32_t unObjectId) {
 	vr::VRDriverLog()->Log("ControllerDevice::Activate");
 
-	hPipeLeft = CreateFile(TEXT("\\\\.\\pipe\\vrapplication\\input\\glove\\v2\\left"),
-		GENERIC_READ | GENERIC_WRITE,
-		0,
-		NULL,
-		OPEN_EXISTING,
-		0,
-		NULL);
-	hPipeRight = CreateFile(TEXT("\\\\.\\pipe\\vrapplication\\input\\glove\\v2\\right"),
-		GENERIC_READ | GENERIC_WRITE,
-		0,
-		NULL,
-		OPEN_EXISTING,
-		0,
-		NULL);
-
 	//hPipeLeft = CreateFile(TEXT("\\\\.\\pipe\\vrapplication\\input\\glove\\v2\\left"),
 	//	GENERIC_READ | GENERIC_WRITE,
 	//	0,
@@ -71,26 +56,48 @@ void ControllerDevice::RunFrame() {
 	//vr::VRDriverInput()->UpdateScalarComponent(input_handles_[kInputHandle_pinky_value], 0.25, 0.0);
 }
 
-void ControllerDevice::WritePipe() {
-	vr::VRDriverLog()->Log("WRITING");
-	if (role_ == vr::TrackedControllerRole_LeftHand) {
-		char logstring[50] = {};
-		sprintf_s(logstring, "left %f %f %f %f", leftData.flexion[1][0], leftData.flexion[2][0], leftData.flexion[3][0], leftData.flexion[4][0]);
-		vr::VRDriverLog()->Log(logstring);
+void ControllerDevice::PrintDeviceId() {
+	char logstring[50] = {};
+	sprintf_s(logstring, "print device_id_ id: %d", device_id_);
+	vr::VRDriverLog()->Log(logstring);
+}
 
-		WriteFile(hPipeLeft,
-			&leftData,
+void ControllerDevice::WritePipe() {
+	//vr::VRDriverLog()->Log("WRITING");
+	char logstring[50] = {};
+	sprintf_s(logstring, "id: %d %f %f %f %f", device_id_, data.flexion[1][0], data.flexion[2][0], data.flexion[3][0], data.flexion[4][0]);
+	vr::VRDriverLog()->Log(logstring);
+
+	if (hPipe != INVALID_HANDLE_VALUE) {
+		WriteFile(hPipe,
+			&data,
 			sizeof(InputData),
 			&dwWritten,
 			NULL);
 	}
-	else if (role_ == vr::TrackedControllerRole_RightHand) {
-		char logstring[50] = {};
-		sprintf_s(logstring, "right %f %f %f %f", rightData.flexion[1][0], rightData.flexion[2][0], rightData.flexion[3][0], rightData.flexion[4][0]);
-		vr::VRDriverLog()->Log(logstring);
-
-		WriteFile(hPipeRight,
-			&rightData,
+	else {
+		vr::VRDriverLog()->Log("Tried to write to pipe but handle is invalid! Recreating pipe");
+		CloseHandle(hPipe);
+		if (role_ == vr::TrackedControllerRole_LeftHand) {
+			hPipe = CreateFile(TEXT("\\\\.\\pipe\\vrapplication\\input\\glove\\v2\\left"),
+				GENERIC_READ | GENERIC_WRITE,
+				0,
+				NULL,
+				OPEN_EXISTING,
+				0,
+				NULL);
+		}
+		else if (role_ == vr::TrackedControllerRole_RightHand) {
+			hPipe = CreateFile(TEXT("\\\\.\\pipe\\vrapplication\\input\\glove\\v2\\right"),
+				GENERIC_READ | GENERIC_WRITE,
+				0,
+				NULL,
+				OPEN_EXISTING,
+				0,
+				NULL);
+		}
+		WriteFile(hPipe,
+			&data,
 			sizeof(InputData),
 			&dwWritten,
 			NULL);

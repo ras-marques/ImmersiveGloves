@@ -14,62 +14,81 @@ vr::EVRInitError DeviceProvider::Init(vr::IVRDriverContext* pDriverContext) {
         vr::TrackedDeviceClass_Controller,
         my_right_device_.get());
     
+    my_left_device_->hPipe = CreateFile(TEXT("\\\\.\\pipe\\vrapplication\\input\\glove\\v2\\left"),
+        GENERIC_READ | GENERIC_WRITE,
+        0,
+        NULL,
+        OPEN_EXISTING,
+        0,
+        NULL);
+
+    my_right_device_->hPipe = CreateFile(TEXT("\\\\.\\pipe\\vrapplication\\input\\glove\\v2\\right"),
+        GENERIC_READ | GENERIC_WRITE,
+        0,
+        NULL,
+        OPEN_EXISTING,
+        0,
+        NULL);
+
+    /*my_left_device_->PrintDeviceId();
+    my_right_device_->PrintDeviceId();*/
+
     m_trackerDiscovery = std::make_unique<TrackerDiscovery>(pDriverContext);
     m_trackerDiscovery->StartDiscovery([&](vr::ETrackedControllerRole role, int deviceId, int componentIndex, float data) {
-        vr::VRDriverLog()->Log("Callback!");
+        //vr::VRDriverLog()->Log("Callback!");
         if (role == 1) {
             float flex = data;
             if (componentIndex == 1) {
-                my_left_device_->leftData.flexion[1][0] = flex;
-                my_left_device_->leftData.flexion[1][1] = flex;
-                my_left_device_->leftData.flexion[1][2] = flex;
-                my_left_device_->leftData.flexion[1][3] = flex;
+                my_left_device_->data.flexion[1][0] = flex;
+                my_left_device_->data.flexion[1][1] = flex;
+                my_left_device_->data.flexion[1][2] = flex;
+                my_left_device_->data.flexion[1][3] = flex;
             }
             else if (componentIndex == 2) {
-                my_left_device_->leftData.flexion[2][0] = flex;
-                my_left_device_->leftData.flexion[2][1] = flex;
-                my_left_device_->leftData.flexion[2][2] = flex;
-                my_left_device_->leftData.flexion[2][3] = flex;
+                my_left_device_->data.flexion[2][0] = flex;
+                my_left_device_->data.flexion[2][1] = flex;
+                my_left_device_->data.flexion[2][2] = flex;
+                my_left_device_->data.flexion[2][3] = flex;
             }
             else if (componentIndex == 3) {
-                my_left_device_->leftData.flexion[3][0] = flex;
-                my_left_device_->leftData.flexion[3][1] = flex;
-                my_left_device_->leftData.flexion[3][2] = flex;
-                my_left_device_->leftData.flexion[3][3] = flex;
+                my_left_device_->data.flexion[3][0] = flex;
+                my_left_device_->data.flexion[3][1] = flex;
+                my_left_device_->data.flexion[3][2] = flex;
+                my_left_device_->data.flexion[3][3] = flex;
             }
             else if (componentIndex == 4) {
-                my_left_device_->leftData.flexion[4][0] = flex;
-                my_left_device_->leftData.flexion[4][1] = flex;
-                my_left_device_->leftData.flexion[4][2] = flex;
-                my_left_device_->leftData.flexion[4][3] = flex;
+                my_left_device_->data.flexion[4][0] = flex;
+                my_left_device_->data.flexion[4][1] = flex;
+                my_left_device_->data.flexion[4][2] = flex;
+                my_left_device_->data.flexion[4][3] = flex;
             }
             my_left_device_->WritePipe();
         }
         else if (role == 2) {
             float flex = data;
             if (componentIndex == 1) {
-                my_right_device_->rightData.flexion[1][0] = flex;
-                my_right_device_->rightData.flexion[1][1] = flex;
-                my_right_device_->rightData.flexion[1][2] = flex;
-                my_right_device_->rightData.flexion[1][3] = flex;
+                my_right_device_->data.flexion[1][0] = flex;
+                my_right_device_->data.flexion[1][1] = flex;
+                my_right_device_->data.flexion[1][2] = flex;
+                my_right_device_->data.flexion[1][3] = flex;
             }
             else if (componentIndex == 2) {
-                my_right_device_->rightData.flexion[2][0] = flex;
-                my_right_device_->rightData.flexion[2][1] = flex;
-                my_right_device_->rightData.flexion[2][2] = flex;
-                my_right_device_->rightData.flexion[2][3] = flex;
+                my_right_device_->data.flexion[2][0] = flex;
+                my_right_device_->data.flexion[2][1] = flex;
+                my_right_device_->data.flexion[2][2] = flex;
+                my_right_device_->data.flexion[2][3] = flex;
             }
             else if (componentIndex == 3) {
-                my_right_device_->rightData.flexion[3][0] = flex;
-                my_right_device_->rightData.flexion[3][1] = flex;
-                my_right_device_->rightData.flexion[3][2] = flex;
-                my_right_device_->rightData.flexion[3][3] = flex;
+                my_right_device_->data.flexion[3][0] = flex;
+                my_right_device_->data.flexion[3][1] = flex;
+                my_right_device_->data.flexion[3][2] = flex;
+                my_right_device_->data.flexion[3][3] = flex;
             }
             else if (componentIndex == 4) {
-                my_right_device_->rightData.flexion[4][0] = flex;
-                my_right_device_->rightData.flexion[4][1] = flex;
-                my_right_device_->rightData.flexion[4][2] = flex;
-                my_right_device_->rightData.flexion[4][3] = flex;
+                my_right_device_->data.flexion[4][0] = flex;
+                my_right_device_->data.flexion[4][1] = flex;
+                my_right_device_->data.flexion[4][2] = flex;
+                my_right_device_->data.flexion[4][3] = flex;
             }
             my_right_device_->WritePipe();
         }
