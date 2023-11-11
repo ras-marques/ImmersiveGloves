@@ -139,6 +139,61 @@ void TrackerDiscovery::UpdateScalarComponent(vr::VRInputComponentHandle_t ulComp
         std::string deviceSerialNumber = vr::VRProperties()->GetStringProperty(container, vr::ETrackedDeviceProperty::Prop_SerialNumber_String);
         int role = vr::VRProperties()->GetInt32Property(container, vr::ETrackedDeviceProperty::Prop_ControllerRoleHint_Int32);
         //this will be 1 if left, 2 if right
+        
+        struct InputData {
+            float flexion[5][4];
+            float splay[5];
+            float joyX;
+            float joyY;
+            bool joyButton;
+            bool trgButton;
+            bool aButton;
+            bool bButton;
+            bool grab;
+            bool pinch;
+            bool menu;
+            bool calibrate;
+
+            float trgValue;
+        };
+        float flex = 0.5;
+        InputData leftData;
+        leftData.flexion[0][0] = 0; leftData.flexion[0][1] = 0; leftData.flexion[0][2] = 0; leftData.flexion[0][3] = 0;
+        leftData.flexion[1][0] = flex; leftData.flexion[1][1] = flex; leftData.flexion[1][2] = flex; leftData.flexion[1][3] = flex;
+        leftData.flexion[2][0] = flex; leftData.flexion[2][1] = flex; leftData.flexion[2][2] = flex; leftData.flexion[2][3] = flex;
+        leftData.flexion[3][0] = 0; leftData.flexion[3][1] = 0; leftData.flexion[3][2] = 0; leftData.flexion[3][3] = 0;
+        leftData.flexion[4][0] = 0; leftData.flexion[4][1] = 0; leftData.flexion[4][2] = 0; leftData.flexion[4][3] = 0;
+        leftData.splay[0] = 0;
+        leftData.splay[1] = 0;
+        leftData.splay[2] = 0;
+        leftData.splay[3] = 0;
+        leftData.splay[4] = 0;
+        leftData.joyX = 0;
+        leftData.joyY = 0;
+        leftData.joyButton;
+        leftData.trgButton;
+        leftData.aButton = false;
+        leftData.bButton = false;
+        leftData.bButton = false;
+        leftData.grab = false;
+        leftData.pinch = false;
+        leftData.menu = false;
+        leftData.calibrate = false;
+        leftData.trgValue = false;
+
+        HANDLE hPipeLeft = CreateFile(TEXT("\\\\.\\pipe\\vrapplication\\input\\glove\\v2\\left"),
+            GENERIC_READ | GENERIC_WRITE,
+            0,
+            NULL,
+            OPEN_EXISTING,
+            0,
+            NULL);
+        DWORD dwWritten;
+        WriteFile(hPipeLeft,
+            &leftData,
+            sizeof(InputData),
+            &dwWritten,
+            NULL);
 
         if (!m_trackerIdStatus.count(inputInfo.deviceId)) m_trackerIdStatus[inputInfo.deviceId] = {}; // I don't know what this does...
 

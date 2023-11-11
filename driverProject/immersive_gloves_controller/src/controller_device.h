@@ -30,25 +30,25 @@ public:
 	vr::ETrackedControllerRole GetDeviceRole() const;
 
 private:
-	struct InputData {
-		float flexion[5][4];
-		float splay[5];
-		float joyX;
-		float joyY;
-		bool joyButton;
-		bool trgButton;
-		bool aButton;
-		bool bButton;
-		bool grab;
-		bool pinch;
-		bool menu;
-		bool calibrate;
+	//struct InputData {
+	//	float flexion[5][4];
+	//	float splay[5];
+	//	float joyX;
+	//	float joyY;
+	//	bool joyButton;
+	//	bool trgButton;
+	//	bool aButton;
+	//	bool bButton;
+	//	bool grab;
+	//	bool pinch;
+	//	bool menu;
+	//	bool calibrate;
 
-		float trgValue;
-	};
+	//	float trgValue;
+	//};
 
-	void* hPipeLeft;
-	void* hPipeRight;
+	//void* hPipeLeft;
+	//void* hPipeRight;
 	//DWORD dwWritten;
 
 	std::array<vr::VRInputComponentHandle_t, kInputHandle_COUNT> input_handles_;

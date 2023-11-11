@@ -4,6 +4,7 @@
 #include <functional>
 #include <map>
 #include <memory>
+#include <windows.h>
 
 #include "Hooks/HookReceiver.h"
 #include "openvr_driver.h"
