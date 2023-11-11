@@ -40,6 +40,115 @@ int TrackerDiscovery::FindTrackerDeviceIdByContainer(vr::PropertyContainerHandle
 void TrackerDiscovery::StartDiscovery(std::function<void(vr::ETrackedControllerRole role, int deviceId)> callback) {
   m_callback = callback;
 
+  hPipeLeft = CreateFile(TEXT("\\\\.\\pipe\\vrapplication\\input\\glove\\v2\\left"),
+      GENERIC_READ | GENERIC_WRITE,
+      0,
+      NULL,
+      OPEN_EXISTING,
+      0,
+      NULL);
+  
+  DWORD last_error;
+  const unsigned int timeout_seconds = 5;
+  unsigned int elapsed_seconds = 0;
+  while (hPipeLeft == INVALID_HANDLE_VALUE && elapsed_seconds < timeout_seconds)
+  {
+      last_error = GetLastError();
+
+      if (last_error != ERROR_PIPE_BUSY)
+      {
+          break;
+      }
+
+      Sleep(1 * 1000);
+      elapsed_seconds++;
+
+      hPipeLeft = CreateFile(TEXT("\\\\.\\pipe\\vrapplication\\input\\glove\\v2\\left"),
+          GENERIC_READ | GENERIC_WRITE,
+          0,
+          NULL,
+          OPEN_EXISTING,
+          0,
+          NULL);
+  }
+
+  hPipeRight = CreateFile(TEXT("\\\\.\\pipe\\vrapplication\\input\\glove\\v2\\right"),
+      GENERIC_READ | GENERIC_WRITE,
+      0,
+      NULL,
+      OPEN_EXISTING,
+      0,
+      NULL);
+
+  elapsed_seconds = 0;
+  while (hPipeLeft == INVALID_HANDLE_VALUE && elapsed_seconds < timeout_seconds)
+  {
+      last_error = GetLastError();
+
+      if (last_error != ERROR_PIPE_BUSY)
+      {
+          break;
+      }
+
+      Sleep(1 * 1000);
+      elapsed_seconds++;
+
+      hPipeRight = CreateFile(TEXT("\\\\.\\pipe\\vrapplication\\input\\glove\\v2\\right"),
+          GENERIC_READ | GENERIC_WRITE,
+          0,
+          NULL,
+          OPEN_EXISTING,
+          0,
+          NULL);
+  }
+
+
+  leftData.flexion[0][0] = 0; leftData.flexion[0][1] = 0; leftData.flexion[0][2] = 0; leftData.flexion[0][3] = 0;
+  leftData.flexion[1][0] = 0; leftData.flexion[1][1] = 0; leftData.flexion[1][2] = 0; leftData.flexion[1][3] = 0;
+  leftData.flexion[2][0] = 0; leftData.flexion[2][1] = 0; leftData.flexion[2][2] = 0; leftData.flexion[2][3] = 0;
+  leftData.flexion[3][0] = 0; leftData.flexion[3][1] = 0; leftData.flexion[3][2] = 0; leftData.flexion[3][3] = 0;
+  leftData.flexion[4][0] = 0; leftData.flexion[4][1] = 0; leftData.flexion[4][2] = 0; leftData.flexion[4][3] = 0;
+  leftData.splay[0] = 0;
+  leftData.splay[1] = 0;
+  leftData.splay[2] = 0;
+  leftData.splay[3] = 0;
+  leftData.splay[4] = 0;
+  leftData.joyX = 0;
+  leftData.joyY = 0;
+  leftData.joyButton;
+  leftData.trgButton;
+  leftData.aButton = false;
+  leftData.bButton = false;
+  leftData.bButton = false;
+  leftData.grab = false;
+  leftData.pinch = false;
+  leftData.menu = false;
+  leftData.calibrate = false;
+  leftData.trgValue = false;
+
+  rightData.flexion[0][0] = 0; rightData.flexion[0][1] = 0; rightData.flexion[0][2] = 0; rightData.flexion[0][3] = 0;
+  rightData.flexion[1][0] = 0; rightData.flexion[1][1] = 0; rightData.flexion[1][2] = 0; rightData.flexion[1][3] = 0;
+  rightData.flexion[2][0] = 0; rightData.flexion[2][1] = 0; rightData.flexion[2][2] = 0; rightData.flexion[2][3] = 0;
+  rightData.flexion[3][0] = 0; rightData.flexion[3][1] = 0; rightData.flexion[3][2] = 0; rightData.flexion[3][3] = 0;
+  rightData.flexion[4][0] = 0; rightData.flexion[4][1] = 0; rightData.flexion[4][2] = 0; rightData.flexion[4][3] = 0;
+  rightData.splay[0] = 0;
+  rightData.splay[1] = 0;
+  rightData.splay[2] = 0;
+  rightData.splay[3] = 0;
+  rightData.splay[4] = 0;
+  rightData.joyX = 0;
+  rightData.joyY = 0;
+  rightData.joyButton;
+  rightData.trgButton;
+  rightData.aButton = false;
+  rightData.bButton = false;
+  rightData.bButton = false;
+  rightData.grab = false;
+  rightData.pinch = false;
+  rightData.menu = false;
+  rightData.calibrate = false;
+  rightData.trgValue = false;
+
   InjectHooks(this, m_context);
 
   m_active = true;
@@ -123,77 +232,61 @@ void TrackerDiscovery::UpdateBooleanComponent(vr::VRInputComponentHandle_t ulCom
 // and the controller data is sent through SPI to the tracker and subsequently to SteamVR
 void TrackerDiscovery::UpdateScalarComponent(vr::VRInputComponentHandle_t ulComponent, float fNewValue, double fTimeOffset) {
     if (m_inputComponentDeviceIdMap.count(ulComponent) > 0) {
-
-        char logstring[50] = {};
-        if ((int)(ulComponent) == 1) sprintf_s(logstring, "index %f ", fNewValue);
-        else if ((int)(ulComponent) == 2) sprintf_s(logstring, "middle %f ", fNewValue);
-        else if ((int)(ulComponent) == 3) sprintf_s(logstring, "ring %f ", fNewValue);
-        else if ((int)(ulComponent) == 4) sprintf_s(logstring, "pinky %f ", fNewValue);
-        vr::VRDriverLog()->Log(logstring);
-
         InputComponentInfo& inputInfo = m_inputComponentDeviceIdMap.at(ulComponent);
-        vr::VRDriverLog()->Log(inputInfo.name.c_str()); //this prints /input/index/value, /input/middle/value, etc
+        //vr::VRDriverLog()->Log(inputInfo.name.c_str()); //this prints /input/index/value, /input/middle/value, etc
 
         // Check the device serial number
         vr::PropertyContainerHandle_t container = vr::VRProperties()->TrackedDeviceToPropertyContainer(inputInfo.deviceId);
         std::string deviceSerialNumber = vr::VRProperties()->GetStringProperty(container, vr::ETrackedDeviceProperty::Prop_SerialNumber_String);
         int role = vr::VRProperties()->GetInt32Property(container, vr::ETrackedDeviceProperty::Prop_ControllerRoleHint_Int32);
         //this will be 1 if left, 2 if right
-        
-        struct InputData {
-            float flexion[5][4];
-            float splay[5];
-            float joyX;
-            float joyY;
-            bool joyButton;
-            bool trgButton;
-            bool aButton;
-            bool bButton;
-            bool grab;
-            bool pinch;
-            bool menu;
-            bool calibrate;
+        if (role == 1) {
+            char logstring[50] = {};
 
-            float trgValue;
-        };
-        float flex = 0.5;
-        InputData leftData;
-        leftData.flexion[0][0] = 0; leftData.flexion[0][1] = 0; leftData.flexion[0][2] = 0; leftData.flexion[0][3] = 0;
-        leftData.flexion[1][0] = flex; leftData.flexion[1][1] = flex; leftData.flexion[1][2] = flex; leftData.flexion[1][3] = flex;
-        leftData.flexion[2][0] = flex; leftData.flexion[2][1] = flex; leftData.flexion[2][2] = flex; leftData.flexion[2][3] = flex;
-        leftData.flexion[3][0] = 0; leftData.flexion[3][1] = 0; leftData.flexion[3][2] = 0; leftData.flexion[3][3] = 0;
-        leftData.flexion[4][0] = 0; leftData.flexion[4][1] = 0; leftData.flexion[4][2] = 0; leftData.flexion[4][3] = 0;
-        leftData.splay[0] = 0;
-        leftData.splay[1] = 0;
-        leftData.splay[2] = 0;
-        leftData.splay[3] = 0;
-        leftData.splay[4] = 0;
-        leftData.joyX = 0;
-        leftData.joyY = 0;
-        leftData.joyButton;
-        leftData.trgButton;
-        leftData.aButton = false;
-        leftData.bButton = false;
-        leftData.bButton = false;
-        leftData.grab = false;
-        leftData.pinch = false;
-        leftData.menu = false;
-        leftData.calibrate = false;
-        leftData.trgValue = false;
+            float flex = fNewValue;
+            if ((int)(ulComponent) == 1) {
+                leftData.flexion[1][0] = flex; leftData.flexion[1][1] = flex; leftData.flexion[1][2] = flex; leftData.flexion[1][3] = flex;
+                sprintf_s(logstring, "index %f ", fNewValue);
+                vr::VRDriverLog()->Log(logstring);
+            }
+            else if ((int)(ulComponent) == 2) {
+                leftData.flexion[2][0] = flex; leftData.flexion[2][1] = flex; leftData.flexion[2][2] = flex; leftData.flexion[2][3] = flex;
+                sprintf_s(logstring, "middle %f ", fNewValue);
+                vr::VRDriverLog()->Log(logstring);
+            }
+            else if ((int)(ulComponent) == 3) {
+                leftData.flexion[3][0] = flex; leftData.flexion[3][1] = flex; leftData.flexion[3][2] = flex; leftData.flexion[3][3] = flex;
+                sprintf_s(logstring, "ring %f ", fNewValue);
+                vr::VRDriverLog()->Log(logstring);
+            }
+            else if ((int)(ulComponent) == 4) {
+                leftData.flexion[4][0] = flex; leftData.flexion[4][1] = flex; leftData.flexion[4][2] = flex; leftData.flexion[4][3] = flex;
+                sprintf_s(logstring, "pinky %f ", fNewValue);
+                vr::VRDriverLog()->Log(logstring);
+            }
 
-        HANDLE hPipeLeft = CreateFile(TEXT("\\\\.\\pipe\\vrapplication\\input\\glove\\v2\\left"),
-            GENERIC_READ | GENERIC_WRITE,
-            0,
-            NULL,
-            OPEN_EXISTING,
-            0,
-            NULL);
-        DWORD dwWritten;
-        WriteFile(hPipeLeft,
-            &leftData,
-            sizeof(InputData),
-            &dwWritten,
-            NULL);
+            if (hPipeLeft != INVALID_HANDLE_VALUE)
+            {
+                WriteFile(hPipeLeft,
+                    &leftData,
+                    sizeof(InputData),
+                    &dwWritten,
+                    NULL);
+            }
+            else {
+                vr::VRDriverLog()->Log("Invalid Handle Value");
+            }
+        }
+        else if (role == 2) {
+            if (hPipeRight != INVALID_HANDLE_VALUE)
+            {
+                WriteFile(hPipeRight,
+                    &rightData,
+                    sizeof(InputData),
+                    &dwWritten,
+                    NULL);
+            }
+        }
 
         if (!m_trackerIdStatus.count(inputInfo.deviceId)) m_trackerIdStatus[inputInfo.deviceId] = {}; // I don't know what this does...
 
@@ -209,4 +302,9 @@ void TrackerDiscovery::UpdateScalarComponent(vr::VRInputComponentHandle_t ulComp
 
         m_callback(status.role, inputInfo.deviceId);
     }
+}
+
+void TrackerDiscovery::ClosePipes() {
+    CloseHandle(hPipeLeft);  // close pipes
+    CloseHandle(hPipeRight); // close pipes
 }

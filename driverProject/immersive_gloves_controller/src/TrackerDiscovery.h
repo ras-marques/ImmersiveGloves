@@ -24,6 +24,23 @@ struct InputComponentInfo {
   bool valid;
 };
 
+struct InputData {
+    float flexion[5][4];
+    float splay[5];
+    float joyX;
+    float joyY;
+    bool joyButton;
+    bool trgButton;
+    bool aButton;
+    bool bButton;
+    bool grab;
+    bool pinch;
+    bool menu;
+    bool calibrate;
+
+    float trgValue;
+};
+
 class TrackerDiscovery : IHookReceiver {
  public:
   TrackerDiscovery(vr::IVRDriverContext *context) : m_context(context){};
@@ -35,6 +52,8 @@ class TrackerDiscovery : IHookReceiver {
   void CreateScalarComponent(vr::PropertyContainerHandle_t ulContainer, const char* pchName, vr::VRInputComponentHandle_t* pHandle) override;
   void UpdateScalarComponent(vr::VRInputComponentHandle_t ulComponent, float fNewValue, double fTimeOffset) override;
   void TrackedDeviceAdded(const char *pchDeviceSerialNumber, vr::ETrackedDeviceClass eDeviceClass, vr::ITrackedDeviceServerDriver *pDriver) override;
+
+  void ClosePipes();
 
  private:
   int FindTrackerDeviceIdByContainer(vr::PropertyContainerHandle_t ulContainer);
@@ -48,4 +67,8 @@ class TrackerDiscovery : IHookReceiver {
   std::map<int, TrackerStatus> m_trackerIdStatus;
 
   std::atomic<bool> m_active;
+
+  HANDLE hPipeLeft, hPipeRight;
+  DWORD dwWritten;
+  InputData leftData, rightData;
 };

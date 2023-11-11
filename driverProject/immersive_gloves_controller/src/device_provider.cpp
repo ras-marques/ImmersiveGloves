@@ -16,7 +16,7 @@ vr::EVRInitError DeviceProvider::Init(vr::IVRDriverContext* pDriverContext) {
 
     m_trackerDiscovery = std::make_unique<TrackerDiscovery>(pDriverContext);
     m_trackerDiscovery->StartDiscovery([&](vr::ETrackedControllerRole role, int deviceId) {
-        vr::VRDriverLog()->Log("Callback!");
+        //vr::VRDriverLog()->Log("Callback!");
 
         if (my_left_device_ != nullptr && my_left_device_->GetDeviceRole() == role) {
             my_left_device_->SetTrackerId(deviceId, false);
@@ -31,6 +31,7 @@ vr::EVRInitError DeviceProvider::Init(vr::IVRDriverContext* pDriverContext) {
 }
 
 void DeviceProvider::Cleanup() {
+    m_trackerDiscovery->ClosePipes();
     VR_CLEANUP_SERVER_DRIVER_CONTEXT();
 }
 
