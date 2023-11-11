@@ -21,8 +21,8 @@
 	  "mapped_input" : true
    },
    "head" : {
-      "plus_x" : [ 0, 0, -1 ],
-      "plus_z" : [ 0, 1, 0 ],
+      "plus_x" : [ 1, 0, 0 ],
+      "plus_z" : [ 0, 0, 1 ],
       "position" : [ 0, 0, 0 ]
    },
    "imu" : {
