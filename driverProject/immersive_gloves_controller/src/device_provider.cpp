@@ -13,10 +13,66 @@ vr::EVRInitError DeviceProvider::Init(vr::IVRDriverContext* pDriverContext) {
     vr::VRServerDriverHost()->TrackedDeviceAdded("IMMRSV-GLV-RIGHT",
         vr::TrackedDeviceClass_Controller,
         my_right_device_.get());
-
+    
     m_trackerDiscovery = std::make_unique<TrackerDiscovery>(pDriverContext);
-    m_trackerDiscovery->StartDiscovery([&](vr::ETrackedControllerRole role, int deviceId) {
-        //vr::VRDriverLog()->Log("Callback!");
+    m_trackerDiscovery->StartDiscovery([&](vr::ETrackedControllerRole role, int deviceId, int componentIndex, float data) {
+        vr::VRDriverLog()->Log("Callback!");
+        if (role == 1) {
+            float flex = data;
+            if (componentIndex == 1) {
+                my_left_device_->leftData.flexion[1][0] = flex;
+                my_left_device_->leftData.flexion[1][1] = flex;
+                my_left_device_->leftData.flexion[1][2] = flex;
+                my_left_device_->leftData.flexion[1][3] = flex;
+            }
+            else if (componentIndex == 2) {
+                my_left_device_->leftData.flexion[2][0] = flex;
+                my_left_device_->leftData.flexion[2][1] = flex;
+                my_left_device_->leftData.flexion[2][2] = flex;
+                my_left_device_->leftData.flexion[2][3] = flex;
+            }
+            else if (componentIndex == 3) {
+                my_left_device_->leftData.flexion[3][0] = flex;
+                my_left_device_->leftData.flexion[3][1] = flex;
+                my_left_device_->leftData.flexion[3][2] = flex;
+                my_left_device_->leftData.flexion[3][3] = flex;
+            }
+            else if (componentIndex == 4) {
+                my_left_device_->leftData.flexion[4][0] = flex;
+                my_left_device_->leftData.flexion[4][1] = flex;
+                my_left_device_->leftData.flexion[4][2] = flex;
+                my_left_device_->leftData.flexion[4][3] = flex;
+            }
+            my_left_device_->WritePipe();
+        }
+        else if (role == 2) {
+            float flex = data;
+            if (componentIndex == 1) {
+                my_right_device_->rightData.flexion[1][0] = flex;
+                my_right_device_->rightData.flexion[1][1] = flex;
+                my_right_device_->rightData.flexion[1][2] = flex;
+                my_right_device_->rightData.flexion[1][3] = flex;
+            }
+            else if (componentIndex == 2) {
+                my_right_device_->rightData.flexion[2][0] = flex;
+                my_right_device_->rightData.flexion[2][1] = flex;
+                my_right_device_->rightData.flexion[2][2] = flex;
+                my_right_device_->rightData.flexion[2][3] = flex;
+            }
+            else if (componentIndex == 3) {
+                my_right_device_->rightData.flexion[3][0] = flex;
+                my_right_device_->rightData.flexion[3][1] = flex;
+                my_right_device_->rightData.flexion[3][2] = flex;
+                my_right_device_->rightData.flexion[3][3] = flex;
+            }
+            else if (componentIndex == 4) {
+                my_right_device_->rightData.flexion[4][0] = flex;
+                my_right_device_->rightData.flexion[4][1] = flex;
+                my_right_device_->rightData.flexion[4][2] = flex;
+                my_right_device_->rightData.flexion[4][3] = flex;
+            }
+            my_right_device_->WritePipe();
+        }
 
         if (my_left_device_ != nullptr && my_left_device_->GetDeviceRole() == role) {
             my_left_device_->SetTrackerId(deviceId, false);
@@ -31,7 +87,6 @@ vr::EVRInitError DeviceProvider::Init(vr::IVRDriverContext* pDriverContext) {
 }
 
 void DeviceProvider::Cleanup() {
-    m_trackerDiscovery->ClosePipes();
     VR_CLEANUP_SERVER_DRIVER_CONTEXT();
 }
 

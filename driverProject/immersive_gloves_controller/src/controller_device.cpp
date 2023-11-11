@@ -5,6 +5,21 @@ ControllerDevice::ControllerDevice(vr::ETrackedControllerRole role) : role_(role
 vr::EVRInitError ControllerDevice::Activate(uint32_t unObjectId) {
 	vr::VRDriverLog()->Log("ControllerDevice::Activate");
 
+	hPipeLeft = CreateFile(TEXT("\\\\.\\pipe\\vrapplication\\input\\glove\\v2\\left"),
+		GENERIC_READ | GENERIC_WRITE,
+		0,
+		NULL,
+		OPEN_EXISTING,
+		0,
+		NULL);
+	hPipeRight = CreateFile(TEXT("\\\\.\\pipe\\vrapplication\\input\\glove\\v2\\right"),
+		GENERIC_READ | GENERIC_WRITE,
+		0,
+		NULL,
+		OPEN_EXISTING,
+		0,
+		NULL);
+
 	//hPipeLeft = CreateFile(TEXT("\\\\.\\pipe\\vrapplication\\input\\glove\\v2\\left"),
 	//	GENERIC_READ | GENERIC_WRITE,
 	//	0,
@@ -56,6 +71,32 @@ void ControllerDevice::RunFrame() {
 	//vr::VRDriverInput()->UpdateScalarComponent(input_handles_[kInputHandle_pinky_value], 0.25, 0.0);
 }
 
+void ControllerDevice::WritePipe() {
+	vr::VRDriverLog()->Log("WRITING");
+	if (role_ == vr::TrackedControllerRole_LeftHand) {
+		char logstring[50] = {};
+		sprintf_s(logstring, "left %f %f %f %f", leftData.flexion[1][0], leftData.flexion[2][0], leftData.flexion[3][0], leftData.flexion[4][0]);
+		vr::VRDriverLog()->Log(logstring);
+
+		WriteFile(hPipeLeft,
+			&leftData,
+			sizeof(InputData),
+			&dwWritten,
+			NULL);
+	}
+	else if (role_ == vr::TrackedControllerRole_RightHand) {
+		char logstring[50] = {};
+		sprintf_s(logstring, "right %f %f %f %f", rightData.flexion[1][0], rightData.flexion[2][0], rightData.flexion[3][0], rightData.flexion[4][0]);
+		vr::VRDriverLog()->Log(logstring);
+
+		WriteFile(hPipeRight,
+			&rightData,
+			sizeof(InputData),
+			&dwWritten,
+			NULL);
+	}
+}
+
 void ControllerDevice::HandleEvent(const vr::VREvent_t& vrevent) {
 	//char logstring[100] = {};
 	//sprintf_s(logstring, "device_id_ %d - trackedDeviceIndex %d - vrevent.eventType %d", device_id_, vrevent.trackedDeviceIndex, vrevent.eventType);
@@ -83,6 +124,8 @@ vr::ETrackedControllerRole ControllerDevice::GetDeviceRole() const {
 }
 
 void ControllerDevice::Deactivate() {
+	//CloseHandle(hPipeLeft);  // close pipes
+	//CloseHandle(hPipeRight); // close pipes
 }
 
 void ControllerDevice::EnterStandby() {

@@ -2,7 +2,7 @@
 
 #include <array>
 #include "openvr_driver.h"
-//#include <fileapi.h>
+#include <windows.h>
 
 enum InputHandles {
 	kInputHandle_index_value,
@@ -10,6 +10,23 @@ enum InputHandles {
 	kInputHandle_ring_value,
 	kInputHandle_pinky_value,
 	kInputHandle_COUNT
+};
+
+struct InputData {
+	float flexion[5][4];
+	float splay[5];
+	float joyX;
+	float joyY;
+	bool joyButton;
+	bool trgButton;
+	bool aButton;
+	bool bButton;
+	bool grab;
+	bool pinch;
+	bool menu;
+	bool calibrate;
+
+	float trgValue;
 };
 
 class ControllerDevice : public vr::ITrackedDeviceServerDriver {
@@ -28,31 +45,16 @@ public:
 	void HandleEvent(const vr::VREvent_t& vrevent);
 	void SetTrackerId(short deviceId, bool isRightHand);
 	vr::ETrackedControllerRole GetDeviceRole() const;
+	void WritePipe();
+
+	InputData leftData, rightData;
 
 private:
-	//struct InputData {
-	//	float flexion[5][4];
-	//	float splay[5];
-	//	float joyX;
-	//	float joyY;
-	//	bool joyButton;
-	//	bool trgButton;
-	//	bool aButton;
-	//	bool bButton;
-	//	bool grab;
-	//	bool pinch;
-	//	bool menu;
-	//	bool calibrate;
-
-	//	float trgValue;
-	//};
-
-	//void* hPipeLeft;
-	//void* hPipeRight;
-	//DWORD dwWritten;
-
 	std::array<vr::VRInputComponentHandle_t, kInputHandle_COUNT> input_handles_;
 
 	vr::ETrackedControllerRole role_;
 	vr::TrackedDeviceIndex_t device_id_;
+
+	HANDLE hPipeLeft, hPipeRight;
+	DWORD dwWritten;
 };
