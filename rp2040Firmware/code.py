@@ -412,7 +412,7 @@ while True:
 #         print("pinkyAngle: " + str(pinkyAngle))
 #         print("pinky_axis: " + str(pinky_axis))
     
-    print("index: " + str(index_axis) + "\tmiddle: " + str(middle_axis) + "\tring: " + str(ring_axis) + "\tpinky: " + str(pinky_axis))
+#    print("index: " + str(index_axis) + "\tmiddle: " + str(middle_axis) + "\tring: " + str(ring_axis) + "\tpinky: " + str(pinky_axis))
     
 #     thumbstick_x_axis_inverted = 0
 #     thumbstick_y_axis_inverted = 0
@@ -507,7 +507,7 @@ while True:
 #     print(fullframe)
     
     sm.write(fullframe)
-    time.sleep(0.01)
+    time.sleep(0.001)
     frame_id = frame_id + 1
     if frame_id > 255:
         frame_id = 0
