@@ -2,11 +2,11 @@
 
 I want to share how I am making vr gloves using 2 Tundra Trackers, 2 interface boards and 12 inertial sensors. These gloves do not have force feedback and probably will never have, but haptics are a possibility in the future.
 
-https://github.com/ras-marques/ImmersiveGloves/assets/6479742/ab621e96-3ca8-48bc-adb8-41644092043d
+https://github.com/ras-marques/ImmersiveGloves/assets/6479742/5a5f25be-386e-40be-8135-42ff1db2880f
 
-Everything is in a prototyping phase, but I managed to get a trigger working in Pavlov and 4 fingers in Steam VR controller testing, so that's the state of the project.
+Everything is in a prototyping phase, currently I have finger curl working on 4 fingers, development of the splay and thumb movement is next in line.
 
-Why base these gloves around the Tundra Tracker? Using a Tundra Tracker and a development board avoids having to deal with batteries, since the Tundra Tracker can power everything. Also, the tracker also takes care of transmiting the data from the gloves to the computer wirelessly. An RP2040 takes care of acquiring the data from the 6 inertial sensors, processing it and delivering it to the tracker.
+Why base these gloves around the Tundra Tracker? Using a Tundra Tracker and a development board avoids having to deal with batteries, since the Tundra Tracker can power everything. Also, the tracker takes care of transmiting the data from the gloves to the computer wirelessly. An RP2040 takes care of acquiring the data from the 6 inertial sensors, processing it and delivering it to the tracker.
 
 This project is for people that already have a laser tracked VR setup with base stations and ideally for people using Tundra Trackers for full body tracking. In any case, if you're based in Europe, I can recommend a list of supplies:
 
@@ -18,9 +18,12 @@ If you don't have the Tundra Trackers yet, you could buy 2 bundles of individual
 
 I have already designed smaller BNO085 boards compatible with SparkFun's Qwiic Connect System, but I haven't ordered them yet, if you do, do it at your own risk and tell me if it works :) There are boards for the finger tip and finger base (digital phalanx and proximal phalanx bones).
 
-I am also designing a custom interface board for the Tundra Tracker, but I am still unsure if I can get the data from the Tundra Tracker into OpenVR or if I need to use an ESP and OpenGloves (https://github.com/LucidVR/opengloves-driver) for processing inputs. Anyway, I don't expect cost savings from designing my own boards, but I do this for smaller IMU boards on the finger tips, no solder assembly and good looks.
+I am also designing a custom interface board for the Tundra Tracker so it is easier to assemble the glove without soldering and for good looks.
 
 ## Steps to make the gloves:
+
+### 3D Print the mount points for the tracker
+- There are 3D printing files available in the 3DPrintingFiles folder of this repo. This is not a one size fits all kind of mount point. I measured the curvature of the back of my hand with a 3D printed matrix of screw inserts, so it fits me perfectly. I will show my process in the future so you can do the same if you want.
 
 ### Prepare the Tundra Tracker
 - Download the files from this repository.
@@ -42,9 +45,11 @@ I am also designing a custom interface board for the Tundra Tracker, but I am st
 - A window should appear on your PC showing the new drive that is emulated by the RP2040. Copy the circuitpython file you downloaded earlier into this folder. The RP2040 will reboot automatically.
 - Like before, a new window should appear on your PC showing another drive but now with a different structure. This is where you will put your program that processes the sensor data and sends it to the computer. Just copy the contents of the rp2040Firmware folder into the root of this new folder that appeared.
 
-### SteamVR tweaks
-- This is a problem currently, but I don't yet know how to make things the right way. The driver expects the Tundra Tracker from the left glove to be the 8th device to be added to the list, and the right glove tracker to be the 9th. I am speaking about that small SteamVR window that lists the Headset, Base Stations and controllers. This will be fixed in the near future, hopefully.
-- Go to Controller Settings and mark the Tundra Trackers as Disabled. This will not prevent the driver from getting the Tracker position and rotation (pose) and will ensure the driver takes care of representing the hands in the right place and rotation.
+### Drivers
+- We are using the OpenGloves driver so we can easily get inputs working with all apps that support the Index Controllers, which are most of them. So download it from steam: https://store.steampowered.com/app/1574050/OpenGloves/
+- Copy the contents of driverProject/immersive_gloves_controller/build/immersive_gloves_controller in this repo to C:\Program Files (x86)\Steam\steamapps\common\SteamVR\drivers or wherever you have your SteamVR app installed.
+- Be sure to enable both opengloves and immersive_gloves_controller addon by going to SteamVR settings, Startup/Shutdown tab and clicking Manage SteamVR Add-Ons. These two should be toggled on. Everytime SteamVR shuts down due to an error, it is likely one or both will be toggled off, so check this if something is not working.
+- You should calibrate the rotation and position offsets on the OpenGloves configuration panel. I did that manually since I don't have buttons on the glove yet to trigger the callibration interface. Pre-calibrated files may be available in the future with instructions on how to use them.
 
 ## Important resources that made this project possible
  
@@ -55,3 +60,5 @@ CircuitPython allowed me to easily get the inertial sensors working without me h
 Finally Functional's Open VR Driver Tutorial that was a great introduction on how OpenVR inputs work https://www.youtube.com/watch?v=LzEIOBnbC8k
 
 OpenVR repository has lots of documentation, it takes a while to figure out the parts that are important for this project, but it's worth the effort https://github.com/ValveSoftware/openvr
+
+[dan_willm](https://github.com/danwillm) helped me get this thing started by pointing me in the right direction, telling me what technologies to use to speak with the tracker and openvr.
