@@ -64,9 +64,9 @@ void ControllerDevice::PrintDeviceId() {
 
 void ControllerDevice::WritePipe() {
 	//vr::VRDriverLog()->Log("WRITING");
-	char logstring[50] = {};
-	sprintf_s(logstring, "id: %d %f %f %f %f", device_id_, data.flexion[1][0], data.flexion[2][0], data.flexion[3][0], data.flexion[4][0]);
-	vr::VRDriverLog()->Log(logstring);
+	//char logstring[50] = {};
+	//sprintf_s(logstring, "id: %d %f %f %f %f", device_id_, data.flexion[1][0], data.flexion[2][0], data.flexion[3][0], data.flexion[4][0]);
+	//vr::VRDriverLog()->Log(logstring);
 
 	if (hPipe != INVALID_HANDLE_VALUE) {
 		WriteFile(hPipe,

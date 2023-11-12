@@ -37,58 +37,98 @@ vr::EVRInitError DeviceProvider::Init(vr::IVRDriverContext* pDriverContext) {
     m_trackerDiscovery->StartDiscovery([&](vr::ETrackedControllerRole role, int deviceId, std::string inputName, float data) {
         //vr::VRDriverLog()->Log("Callback!");
         if (role == 1) {
-            float flex = data;
-            if (inputName == "/input/index/value") {
-                my_left_device_->data.flexion[1][0] = flex;
-                my_left_device_->data.flexion[1][1] = flex;
-                my_left_device_->data.flexion[1][2] = flex;
-                my_left_device_->data.flexion[1][3] = flex;
+            if (inputName == "/input/thumb/value") {
+                my_left_device_->data.flexion[0][0] = data;
+                my_left_device_->data.flexion[0][1] = data;
+                my_left_device_->data.flexion[0][2] = data;
+                my_left_device_->data.flexion[0][3] = data;
+            }
+            else if (inputName == "/input/index/value") {
+                my_left_device_->data.flexion[1][0] = data;
+                my_left_device_->data.flexion[1][1] = data;
+                my_left_device_->data.flexion[1][2] = data;
+                my_left_device_->data.flexion[1][3] = data;
             }
             else if (inputName == "/input/middle/value") {
-                my_left_device_->data.flexion[2][0] = flex;
-                my_left_device_->data.flexion[2][1] = flex;
-                my_left_device_->data.flexion[2][2] = flex;
-                my_left_device_->data.flexion[2][3] = flex;
+                my_left_device_->data.flexion[2][0] = data;
+                my_left_device_->data.flexion[2][1] = data;
+                my_left_device_->data.flexion[2][2] = data;
+                my_left_device_->data.flexion[2][3] = data;
             }
             else if (inputName == "/input/ring/value") {
-                my_left_device_->data.flexion[3][0] = flex;
-                my_left_device_->data.flexion[3][1] = flex;
-                my_left_device_->data.flexion[3][2] = flex;
-                my_left_device_->data.flexion[3][3] = flex;
+                my_left_device_->data.flexion[3][0] = data;
+                my_left_device_->data.flexion[3][1] = data;
+                my_left_device_->data.flexion[3][2] = data;
+                my_left_device_->data.flexion[3][3] = data;
             }
             else if (inputName == "/input/pinky/value") {
-                my_left_device_->data.flexion[4][0] = flex;
-                my_left_device_->data.flexion[4][1] = flex;
-                my_left_device_->data.flexion[4][2] = flex;
-                my_left_device_->data.flexion[4][3] = flex;
+                my_left_device_->data.flexion[4][0] = data;
+                my_left_device_->data.flexion[4][1] = data;
+                my_left_device_->data.flexion[4][2] = data;
+                my_left_device_->data.flexion[4][3] = data;
+            }
+            else if (inputName == "/input/thumbsplay/value") {
+                my_left_device_->data.splay[0] = data;
+            }
+            else if (inputName == "/input/indexsplay/value") {
+                my_left_device_->data.splay[1] = data;
+            }
+            else if (inputName == "/input/middlesplay/value") {
+                my_left_device_->data.splay[2] = data;
+            }
+            else if (inputName == "/input/indexsplay/value") {
+                my_left_device_->data.splay[3] = data;
+            }
+            else if (inputName == "/input/indexsplay/value") {
+                my_left_device_->data.splay[4] = data;
             }
             my_left_device_->WritePipe();
         }
         else if (role == 2) {
-            float flex = data;
-            if (inputName == "/input/index/value") {
-                my_right_device_->data.flexion[1][0] = flex;
-                my_right_device_->data.flexion[1][1] = flex;
-                my_right_device_->data.flexion[1][2] = flex;
-                my_right_device_->data.flexion[1][3] = flex;
+            if (inputName == "/input/thumb/value") {
+                my_right_device_->data.flexion[0][0] = data;
+                my_right_device_->data.flexion[0][1] = data;
+                my_right_device_->data.flexion[0][2] = data;
+                my_right_device_->data.flexion[0][3] = data;
+            }
+            else if (inputName == "/input/index/value") {
+                my_right_device_->data.flexion[1][0] = data;
+                my_right_device_->data.flexion[1][1] = data;
+                my_right_device_->data.flexion[1][2] = data;
+                my_right_device_->data.flexion[1][3] = data;
             }
             else if (inputName == "/input/middle/value") {
-                my_right_device_->data.flexion[2][0] = flex;
-                my_right_device_->data.flexion[2][1] = flex;
-                my_right_device_->data.flexion[2][2] = flex;
-                my_right_device_->data.flexion[2][3] = flex;
+                my_right_device_->data.flexion[2][0] = data;
+                my_right_device_->data.flexion[2][1] = data;
+                my_right_device_->data.flexion[2][2] = data;
+                my_right_device_->data.flexion[2][3] = data;
             }
             else if (inputName == "/input/ring/value") {
-                my_right_device_->data.flexion[3][0] = flex;
-                my_right_device_->data.flexion[3][1] = flex;
-                my_right_device_->data.flexion[3][2] = flex;
-                my_right_device_->data.flexion[3][3] = flex;
+                my_right_device_->data.flexion[3][0] = data;
+                my_right_device_->data.flexion[3][1] = data;
+                my_right_device_->data.flexion[3][2] = data;
+                my_right_device_->data.flexion[3][3] = data;
             }
             else if (inputName == "/input/pinky/value") {
-                my_right_device_->data.flexion[4][0] = flex;
-                my_right_device_->data.flexion[4][1] = flex;
-                my_right_device_->data.flexion[4][2] = flex;
-                my_right_device_->data.flexion[4][3] = flex;
+                my_right_device_->data.flexion[4][0] = data;
+                my_right_device_->data.flexion[4][1] = data;
+                my_right_device_->data.flexion[4][2] = data;
+                my_right_device_->data.flexion[4][3] = data;
+            }
+            else if (inputName == "/input/thumbsplay/value") {
+                my_right_device_->data.splay[0] = data;
+            }
+            else if (inputName == "/input/indexsplay/value") {
+                my_right_device_->data.splay[1] = data;
+            }
+            else if (inputName == "/input/middlesplay/value") {
+                my_right_device_->data.splay[2] = data;
+            }
+            else if (inputName == "/input/indexsplay/value") {
+                my_right_device_->data.splay[3] = data;
+            }
+            else if (inputName == "/input/indexsplay/value") {
+                my_right_device_->data.splay[4] = data;
             }
             my_right_device_->WritePipe();
         }

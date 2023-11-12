@@ -5,14 +5,23 @@
 #include "Hooks/InterfaceHookInjector.h"
 //#include "Util/DriverLog.h"
 
+static const std::string thumbValueInputName = "/input/thumb/value";
 static const std::string indexValueInputName = "/input/index/value";
 static const std::string middleValueInputName = "/input/middle/value";
 static const std::string ringValueInputName = "/input/ring/value";
 static const std::string pinkyValueInputName = "/input/pinky/value";
+static const std::string thumbSplayValueInputName = "/input/thumbsplay/value";
+static const std::string indexSplayValueInputName = "/input/indexsplay/value";
+static const std::string middleSplayValueInputName = "/input/middlesplay/value";
+static const std::string ringSplayValueInputName = "/input/ringsplay/value";
+static const std::string pinkySplayValueInputName = "/input/pinkysplay/value";
 
 std::string tundraTrackerLeftSerNum, tundraTrackerRightSerNum;
 
-static std::array<std::string, 4> expectedInputNames = { indexValueInputName, middleValueInputName, ringValueInputName, pinkyValueInputName };
+static std::array<std::string, 10> expectedInputNames = {
+    thumbValueInputName, indexValueInputName, middleValueInputName, ringValueInputName, pinkyValueInputName,
+    thumbSplayValueInputName, indexSplayValueInputName, middleSplayValueInputName, ringSplayValueInputName, pinkySplayValueInputName
+};
 
 int TrackerDiscovery::FindTrackerDeviceIdByContainer(vr::PropertyContainerHandle_t ulContainer) {
   if (m_propertyContainerDeviceIdMap.count(ulContainer) > 0) return m_propertyContainerDeviceIdMap.at(ulContainer);
