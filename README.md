@@ -61,4 +61,4 @@ Finally Functional's Open VR Driver Tutorial that was a great introduction on ho
 
 OpenVR repository has lots of documentation, it takes a while to figure out the parts that are important for this project, but it's worth the effort https://github.com/ValveSoftware/openvr
 
-[dan_willm](https://github.com/danwillm) helped me get this thing started by pointing me in the right direction, telling me what technologies to use to speak with the tracker and openvr.
+[danwillm](https://github.com/danwillm) helped me get this thing started by pointing me in the right direction, telling me what technologies to use to speak with the tracker and openvr.
