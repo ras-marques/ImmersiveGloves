@@ -149,6 +149,9 @@ def quaternion_multiply(q1, q2):
 
 def getCurl(q):
     return np.arctan2(2 * (q.x * q.w - q.y * q.z), 1 - 2 * (q.x * q.x + q.y * q.y))
+def getSplay(q):
+    return np.arctan2(2 * (q.x * q.y + q.z * q.w), 1 - 2 * (q.y * q.y + q.z * q.z))
+
 
 def quaternion_rotation_matrix(Q):
     """
@@ -205,6 +208,15 @@ def rotationMatrixToEulerAngles(R) :
         z = 0
  
     return np.array([x*180/3.14, y*180/3.14, z*180/3.14])
+
+def quaternionFromAngle(angle, axis):
+    # angle is in radians, x axis is 0, y axis is 1, z axis is 2
+    if axis == 0:
+        return Quaternion(np.cos(angle/2),np.sin(angle/2),0,0)
+    if axis == 1:
+        return Quaternion(np.cos(angle/2),0,np.sin(angle/2),0)
+    if axis == 2:
+        return Quaternion(np.cos(angle/2),0,0,np.sin(angle/2))
 
 thumbActive = False
 indexActive = True
@@ -278,6 +290,12 @@ second_header_32bits = (input_data_length << 24) + (backchannel_length << 16) + 
 # then, finally, I do all my calculations.
 handQuaternionThatWorks = Quaternion(np.sqrt(2)/2,0,0,-np.sqrt(2)/2)
 
+# for splay, I took measurements of the results of my calculations and the splay angle results are as follows:
+# finger   min  rest  max
+# index    -22   18    35
+# middle   -11    4    28
+# ring     -14   -5    14
+# pinky    -40  -25    -2
 while True:
     handQuaternion = Quaternion(bnoRef.quaternion[3],bnoRef.quaternion[0],bnoRef.quaternion[1],bnoRef.quaternion[2])                    # get the reference IMU quaternion
     relativeQuaternion = quaternion_multiply(handQuaternionThatWorks, quaternion_conjugate(handQuaternion))                             # get the relative quaternion between the reference IMU quaternion and the coordinate frame where my calculations work
@@ -289,12 +307,28 @@ while True:
         indexToHandQuaternion = quaternion_multiply(handQuaternion, quaternion_conjugate(indexQuaternion))                              # get the relative quaternion between the reference IMU quaternion and the index IMU quaternion
         indexCurlAmount = getCurl(indexToHandQuaternion)                                                                                # get the curl angle in radians from the quaternion calculated above
         indexAngle = int(indexCurlAmount*180/3.14)                                                                                      # convert the curl angle to degrees
-        
         # remap the angle output in degrees to a value between 0 and 1023: the following calculations were a bit hacky when I implemented them and I didn't document them properly, still, they were based on observations of the outputs and you may be able to reverse engineer an explanation
         if indexAngle <= 0 and indexAngle >= -180:
             index_axis = int(682 * -indexAngle / 180)
         elif indexAngle <= 180 and indexAngle >= 90:
             index_axis = int(682 - (341 / 90) * (indexAngle - 180))
+        
+        indexCurlQuaternion = quaternionFromAngle(indexCurlAmount, 0)                                                                   # create a quaternion that represents just the amount of curl in the x axis
+        indexDecurledQuaternion = quaternion_multiply(indexCurlQuaternion, indexQuaternion)                                             # rotate the indexQuaternion by the curl angle in the x axis
+        indexDecurledToHandQuaternion = quaternion_multiply(handQuaternion, quaternion_conjugate(indexDecurledQuaternion))              # get the relative quaternion between the reference IMU quaternion and the quaternion representing the index IMU rotated back by the curl angle
+        indexSplayAmount = getSplay(indexDecurledToHandQuaternion)                                                                      # get the splay angle in radians from the quaternion calculated above
+        indexSplayAngle = int(indexSplayAmount*180/3.14)                                                                                # convert the splay angle to degrees
+        #print(str(indexSplayAngle))
+        # finger   min  rest  max
+        # index    -22   18    35
+        if indexSplayAngle <= 18:
+            index_splay_axis = int(512+512*(indexSplayAngle-18)/40.)
+        else:
+            index_splay_axis = int(512+512*(indexSplayAngle-18)/17.)
+        if index_splay_axis < 0:
+            index_splay_axis = 0
+        elif index_splay_axis > 1023:
+            index_splay_axis = 1023
     
     if middleActive:
         middleQuaternion = Quaternion(bnoMiddle.quaternion[3],bnoMiddle.quaternion[0],bnoMiddle.quaternion[1],bnoMiddle.quaternion[2])  # get the middle IMU quaternion
@@ -302,12 +336,27 @@ while True:
         middleToHandQuaternion = quaternion_multiply(handQuaternion, quaternion_conjugate(middleQuaternion))                            # get the relative quaternion between the reference IMU quaternion and the middle IMU quaternion
         middleCurlAmount = getCurl(middleToHandQuaternion)                                                                              # get the curl angle in radians from the quaternion calculated above
         middleAngle = int(middleCurlAmount*180/3.14)                                                                                    # convert the curl angle to degrees
-        
         # remap the angle output in degrees to a value between 0 and 1023: the following calculations were a bit hacky when I implemented them and I didn't document them properly, still, they were based on observations of the outputs and you may be able to reverse engineer an explanation
         if middleAngle <= 0 and middleAngle >= -180:
             middle_axis = int(682 * -middleAngle / 180)
         elif middleAngle <= 180 and middleAngle >= 90:
             middle_axis = int(682 - (341 / 90) * (middleAngle - 180))
+            
+        middleCurlQuaternion = quaternionFromAngle(middleCurlAmount, 0)                                                                 # create a quaternion that represents just the amount of curl in the x axis
+        middleDecurledQuaternion = quaternion_multiply(middleCurlQuaternion, middleQuaternion)                                          # rotate the middleQuaternion by the curl angle in the x axis
+        middleDecurledToHandQuaternion = quaternion_multiply(handQuaternion, quaternion_conjugate(middleDecurledQuaternion))            # get the relative quaternion between the reference IMU quaternion and the quaternion representing the middle IMU rotated back by the curl angle
+        middleSplayAmount = getSplay(middleDecurledToHandQuaternion)                                                                    # get the splay angle in radians from the quaternion calculated above
+        middleSplayAngle = int(middleSplayAmount*180/3.14)                                                                              # convert the splay angle to degrees
+        # finger   min  rest  max
+        # middle   -11    4    28
+        if middleSplayAngle <= 4:
+            middle_splay_axis = int(512+512*(middleSplayAngle-4)/15.)
+        else:
+            middle_splay_axis = int(512+512*(middleSplayAngle-4)/24.)
+        if middle_splay_axis < 0:
+            middle_splay_axis = 0
+        elif middle_splay_axis > 1023:
+            middle_splay_axis = 1023
     
     if ringActive:
         ringQuaternion = Quaternion(bnoRing.quaternion[3],bnoRing.quaternion[0],bnoRing.quaternion[1],bnoRing.quaternion[2])            # get the ring IMU quaternion
@@ -315,12 +364,27 @@ while True:
         ringToHandQuaternion = quaternion_multiply(handQuaternion, quaternion_conjugate(ringQuaternion))                                # get the relative quaternion between the reference IMU quaternion and the ring IMU quaternion
         ringCurlAmount = getCurl(ringToHandQuaternion)                                                                                  # get the curl angle in radians from the quaternion calculated above
         ringAngle = int(ringCurlAmount*180/3.14)                                                                                        # convert the curl angle to degrees
-        
         # remap the angle output in degrees to a value between 0 and 1023: the following calculations were a bit hacky when I implemented them and I didn't document them properly, still, they were based on observations of the outputs and you may be able to reverse engineer an explanation
         if ringAngle <= 0 and ringAngle >= -180:
             ring_axis = int(682 * -ringAngle / 180)
         elif ringAngle <= 180 and ringAngle >= 90:
             ring_axis = int(682 - (341 / 90) * (ringAngle - 180))
+        
+        ringCurlQuaternion = quaternionFromAngle(ringCurlAmount, 0)                                                                     # create a quaternion that represents just the amount of curl in the x axis
+        ringDecurledQuaternion = quaternion_multiply(ringCurlQuaternion, ringQuaternion)                                                # rotate the ringQuaternion by the curl angle in the x axis
+        ringDecurledToHandQuaternion = quaternion_multiply(handQuaternion, quaternion_conjugate(ringDecurledQuaternion))                # get the relative quaternion between the reference IMU quaternion and the quaternion representing the ring IMU rotated back by the curl angle
+        ringSplayAmount = getSplay(ringDecurledToHandQuaternion)                                                                        # get the splay angle in radians from the quaternion calculated above
+        ringSplayAngle = int(ringSplayAmount*180/3.14)                                                                                  # convert the splay angle to degrees
+        # finger   min  rest  max
+        # ring     -14   -5    14
+        if ringSplayAngle <= -5:
+            ring_splay_axis = int(512+512*(ringSplayAngle+5)/9.)
+        else:
+            ring_splay_axis = int(512+512*(ringSplayAngle+5)/21.)
+        if ring_splay_axis < 0:
+            ring_splay_axis = 0
+        elif ring_splay_axis > 1023:
+            ring_splay_axis = 1023
 
     if pinkyActive:
         pinkyQuaternion = Quaternion(bnoPinky.quaternion[3],bnoPinky.quaternion[0],bnoPinky.quaternion[1],bnoPinky.quaternion[2])       # get the pinky IMU quaternion
@@ -328,12 +392,30 @@ while True:
         pinkyToHandQuaternion = quaternion_multiply(handQuaternion, quaternion_conjugate(pinkyQuaternion))                              # get the relative quaternion between the reference IMU quaternion and the pinky IMU quaternion
         pinkyCurlAmount = getCurl(pinkyToHandQuaternion)                                                                                # get the curl angle in radians from the quaternion calculated above
         pinkyAngle = int(pinkyCurlAmount*180/3.14)                                                                                      # convert the curl angle to degrees
-        
         # remap the angle output in degrees to a value between 0 and 1023: the following calculations were a bit hacky when I implemented them and I didn't document them properly, still, they were based on observations of the outputs and you may be able to reverse engineer an explanation
         if pinkyAngle <= 0 and pinkyAngle >= -180:
             pinky_axis = int(682 * -pinkyAngle / 180)
         elif pinkyAngle <= 180 and pinkyAngle >= 90:
             pinky_axis = int(682 - (341 / 90) * (pinkyAngle - 180))
+        
+        pinkyCurlQuaternion = quaternionFromAngle(pinkyCurlAmount, 0)                                                                   # create a quaternion that represents just the amount of curl in the x axis
+        pinkyDecurledQuaternion = quaternion_multiply(pinkyCurlQuaternion, pinkyQuaternion)                                             # rotate the pinkyQuaternion by the curl angle in the x axis
+        pinkyDecurledToHandQuaternion = quaternion_multiply(handQuaternion, quaternion_conjugate(pinkyDecurledQuaternion))              # get the relative quaternion between the reference IMU quaternion and the quaternion representing the pinky IMU rotated back by the curl angle
+        pinkySplayAmount = getSplay(pinkyDecurledToHandQuaternion)                                                                      # get the splay angle in radians from the quaternion calculated above
+        pinkySplayAngle = int(pinkySplayAmount*180/3.14)                                                                                # convert the splay angle to degrees
+        # finger   min  rest  max
+        # pinky    -40  -25    -2
+        if pinkySplayAngle <= -10:
+            pinky_splay_axis = int(512+512*(pinkySplayAngle+25)/15.)
+        else:
+            pinky_splay_axis = int(512+512*(pinkySplayAngle+25)/23.)
+        if pinky_splay_axis < 0:
+            pinky_splay_axis = 0
+        elif pinky_splay_axis > 1023:
+            pinky_splay_axis = 1023
+    
+    #print(str(indexSplayAngle) + " " + str(middleSplayAngle) + " " + str(ringSplayAngle) + " " + str(pinkySplayAngle))
+    print(str(index_splay_axis) + " " + str(middle_splay_axis) + " " + str(ring_splay_axis) + " " + str(pinky_splay_axis))
     
     # I did a lot of tweaking without knowing exactly what was going on, but I compared the original signals from the development board with the ones I generated using the rp2040 PIO, and figured I needed to invert the bit order for the tundra tracker to receive the SPI communication correctly
     # the next few lines take of this inversion and the header construction

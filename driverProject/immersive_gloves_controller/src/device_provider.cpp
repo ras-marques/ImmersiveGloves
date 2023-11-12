@@ -68,19 +68,22 @@ vr::EVRInitError DeviceProvider::Init(vr::IVRDriverContext* pDriverContext) {
                 my_left_device_->data.flexion[4][3] = data;
             }
             else if (inputName == "/input/thumbsplay/value") {
-                my_left_device_->data.splay[0] = data;
+                my_left_device_->data.splay[0] = (float)(2 * (data - 0.5));
             }
             else if (inputName == "/input/indexsplay/value") {
-                my_left_device_->data.splay[1] = data;
+                my_left_device_->data.splay[1] = (float)(2 * (data - 0.5));
             }
             else if (inputName == "/input/middlesplay/value") {
-                my_left_device_->data.splay[2] = data;
+                char logstring[50] = {};
+                sprintf_s(logstring, "middlesplay: %f", (float)(2 * (data - 0.5)));
+                vr::VRDriverLog()->Log(logstring);
+                my_left_device_->data.splay[2] = (float)(2 * (data - 0.5));
             }
-            else if (inputName == "/input/indexsplay/value") {
-                my_left_device_->data.splay[3] = data;
+            else if (inputName == "/input/ringsplay/value") {
+                my_left_device_->data.splay[3] = (float)(2 * (data - 0.5));
             }
-            else if (inputName == "/input/indexsplay/value") {
-                my_left_device_->data.splay[4] = data;
+            else if (inputName == "/input/pinkysplay/value") {
+                my_left_device_->data.splay[4] = (float)(2 * (data - 0.5));
             }
             my_left_device_->WritePipe();
         }
@@ -116,19 +119,19 @@ vr::EVRInitError DeviceProvider::Init(vr::IVRDriverContext* pDriverContext) {
                 my_right_device_->data.flexion[4][3] = data;
             }
             else if (inputName == "/input/thumbsplay/value") {
-                my_right_device_->data.splay[0] = data;
+                my_right_device_->data.splay[0] = (float)(2 * (data - 0.5));
             }
             else if (inputName == "/input/indexsplay/value") {
-                my_right_device_->data.splay[1] = data;
+                my_right_device_->data.splay[1] = (float)(2 * (data - 0.5));
             }
             else if (inputName == "/input/middlesplay/value") {
-                my_right_device_->data.splay[2] = data;
+                my_right_device_->data.splay[2] = (float)(2 * (data - 0.5));
             }
-            else if (inputName == "/input/indexsplay/value") {
-                my_right_device_->data.splay[3] = data;
+            else if (inputName == "/input/ringsplay/value") {
+                my_right_device_->data.splay[3] = (float)(2 * (data - 0.5));
             }
-            else if (inputName == "/input/indexsplay/value") {
-                my_right_device_->data.splay[4] = data;
+            else if (inputName == "/input/pinkysplay/value") {
+                my_right_device_->data.splay[4] = (float)(2 * (data - 0.5));
             }
             my_right_device_->WritePipe();
         }
