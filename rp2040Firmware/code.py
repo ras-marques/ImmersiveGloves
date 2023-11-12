@@ -206,6 +206,7 @@ def rotationMatrixToEulerAngles(R) :
  
     return np.array([x*180/3.14, y*180/3.14, z*180/3.14])
 
+thumbActive = False
 indexActive = True
 middleActive = True
 ringActive = True
@@ -218,7 +219,7 @@ i2c_3 = 0
 i2c_4 = 0
 i2c_5 = 0
 bnoRef = 0
-# bnoThumb = BNO08X_I2C(i2c_1, None, 0x4B)
+bnoThumb = 0
 bnoIndex = 0
 bnoMiddle = 0
 bnoRing = 0
@@ -228,10 +229,10 @@ i2c_0 = bitbangio.I2C(board.GP16, board.GP17, frequency = 400000, timeout = 8000
 bnoRef = BNO08X_I2C(i2c_0, None, 0x4B)
 bnoRef.enable_feature(BNO_REPORT_ROTATION_VECTOR)
 
-# i2c_1 = bitbangio.I2C(board.GP10, board.GP11, frequency = 100000, timeout = 2000)
-# bnoThumb = BNO08X_I2C(i2c_1, None, 0x4B)
-# bnoThumb.enable_feature(BNO_REPORT_ROTATION_VECTOR)
-
+if thumbActive:
+    i2c_1 = bitbangio.I2C(board.GP10, board.GP11, frequency = 400000, timeout = 8000)
+    bnoIndex = BNO08X_I2C(i2c_1, None, 0x4B)
+    bnoIndex.enable_feature(BNO_REPORT_ROTATION_VECTOR)
 if indexActive:
     i2c_2 = bitbangio.I2C(board.GP8, board.GP9, frequency = 400000, timeout = 8000)
     bnoIndex = BNO08X_I2C(i2c_2, None, 0x4B)
@@ -249,29 +250,11 @@ if pinkyActive:
     bnoPinky = BNO08X_I2C(i2c_5, None, 0x4B)
     bnoPinky.enable_feature(BNO_REPORT_ROTATION_VECTOR)
 
-# system_button = 0        # 1   0
-# a_button = 0             # 1   1
-# b_button = 0             # 1   2
-# trigger_button = 0       # 1   3
-# grip_button = 0          # 1   4
-# thumbstick_button = 0    # 1   5
-# menu_button = 0          # 1   6
-# thumbstick_enable = 0    # 1   7
-# thumbstick_x_axis = 0    # 10  8
-# thumbstick_y_axis = 0    # 10  18
-# trigger_axis = 0         # 10  28
-# index_axis = 200           # 10  38
-# middle_axis = 400          # 10  48
-# ring_axis = 600            # 10  58
-# pinky_axis = 800           # 10  68
-
-# thumb_axis = 0
-
 spi_protocol_rev = 1
 frame_id = 0
 report_mode = 3         # MI_PROTOCOL_REVISION_GENERIC
 status = 0              # 0 normal, 1 bootloader
-input_data_length = 5   # 5 bytes, 40 bits, see a bit below
+input_data_length = 10  # 10 bytes, 80 bits, see a bit below
 backchannel_length = 0  # only for RX, probably for haptics that I am not using yet (YET!)
 event_data_length = 0   # only for RX, probably for haptics that I am not using yet (YET!)
 reserved = 0
@@ -280,154 +263,89 @@ index_axis = 0           # 10  0
 middle_axis = 0          # 10  10
 ring_axis = 0            # 10  20
 pinky_axis = 0           # 10  30
-# 40 bits are 5 bytes
+index_splay_axis = 0     # 10  40
+middle_splay_axis = 0    # 10  50
+ring_splay_axis = 0      # 10  60
+pinky_splay_axis = 0     # 10  70
+# 80 bits are 10 bytes
 
 first_header_32bits  = (spi_protocol_rev << 24) + (frame_id << 16) + (report_mode << 8) + (status << 0)
 second_header_32bits = (input_data_length << 24) + (backchannel_length << 16) + (event_data_length << 8) + (reserved << 0)
 
+# during my tests, for some reason the finger curl was only working if the reference IMU quaternion is the one in the definition below.
+# so for everything to work, I define the quaternion below and rotate everything to this coordinate frame.
+# for that, I take the relative quaternion from the reference IMU to this quaternion and then use this relative quaternion to rotate every IMU into this reference frame
+# then, finally, I do all my calculations.
 handQuaternionThatWorks = Quaternion(np.sqrt(2)/2,0,0,-np.sqrt(2)/2)
 
 while True:
-    handQuaternion = Quaternion(bnoRef.quaternion[3],bnoRef.quaternion[0],bnoRef.quaternion[1],bnoRef.quaternion[2])
-    relativeQuaternion = quaternion_multiply(handQuaternionThatWorks, quaternion_conjugate(handQuaternion))
-    handQuaternion = quaternion_multiply(relativeQuaternion, handQuaternion)
-#     newHandQuaternionString = "{:10.4f}".format(newHandQuaternion.w) + "{:10.4f}".format(newHandQuaternion.x) + "{:10.4f}".format(newHandQuaternion.y) + "{:10.4f}".format(newHandQuaternion.z)
-#     print(newHandQuaternionString)
-#     handQuaternionString = "{:10.4f}".format(handQuaternion.w) + "{:10.4f}".format(handQuaternion.x) + "{:10.4f}".format(handQuaternion.y) + "{:10.4f}".format(handQuaternion.z)
-#     print(handQuaternionString)
-
-#     print(string)
-#     serial.write(string.encode())
-#     serial.write(b'\n\r')
-    
-#     handRotationMatrix = quaternion_rotation_matrix(handQuaternion)
-#     euler_angles = rotationMatrixToEulerAngles(rotation_matrix)
-#     print(euler_angles)
-    
-#     thumbQuaternion = Quaternion(bnoThumb.quaternion[3],bnoThumb.quaternion[0],bnoThumb.quaternion[1],bnoThumb.quaternion[2])
-#     thumbToHandQuaternion = quaternion_multiply(handQuaternion, quaternion_conjugate(thumbQuaternion))
-#     thumbCurlAmount = getCurl(thumbToHandQuaternion)
-#     thumbAngle = int(thumbCurlAmount*180/3.14)
-#     if thumbAngle <= 0 and thumbAngle >= -180:
-#         thumb_axis = int(682 * -thumbAngle / 180)
-#     elif thumbAngle <= 180 and thumbAngle >= 90:
-#         thumb_axis = int(682 - (341 / 90) * (thumbAngle - 180))
+    handQuaternion = Quaternion(bnoRef.quaternion[3],bnoRef.quaternion[0],bnoRef.quaternion[1],bnoRef.quaternion[2])                    # get the reference IMU quaternion
+    relativeQuaternion = quaternion_multiply(handQuaternionThatWorks, quaternion_conjugate(handQuaternion))                             # get the relative quaternion between the reference IMU quaternion and the coordinate frame where my calculations work
+    handQuaternion = quaternion_multiply(relativeQuaternion, handQuaternion)                                                            # rotate the handQuaternion to be in the coordinate frame where my calculations work
 
     if indexActive:
-        indexQuaternion = Quaternion(bnoIndex.quaternion[3],bnoIndex.quaternion[0],bnoIndex.quaternion[1],bnoIndex.quaternion[2])
-        indexQuaternionString = "{:10.4f}".format(indexQuaternion.w) + "{:10.4f}".format(indexQuaternion.x) + "{:10.4f}".format(indexQuaternion.y) + "{:10.4f}".format(indexQuaternion.z)
-        indexQuaternion = quaternion_multiply(relativeQuaternion, indexQuaternion)
+        indexQuaternion = Quaternion(bnoIndex.quaternion[3],bnoIndex.quaternion[0],bnoIndex.quaternion[1],bnoIndex.quaternion[2])       # get the index IMU quaternion
+        indexQuaternion = quaternion_multiply(relativeQuaternion, indexQuaternion)                                                      # rotate the indexQuaternion to be in the coordinate frame where my calculations work
+        indexToHandQuaternion = quaternion_multiply(handQuaternion, quaternion_conjugate(indexQuaternion))                              # get the relative quaternion between the reference IMU quaternion and the index IMU quaternion
+        indexCurlAmount = getCurl(indexToHandQuaternion)                                                                                # get the curl angle in radians from the quaternion calculated above
+        indexAngle = int(indexCurlAmount*180/3.14)                                                                                      # convert the curl angle to degrees
         
-#         indexRotationMatrix = quaternion_rotation_matrix(indexQuaternion)
-#         relative_rot_matrix = np.dot(indexRotationMatrix, np.linalg.inv(handRotationMatrix))
-#         euler_angles = rotationMatrixToEulerAngles(relative_rot_matrix)
-#         print(euler_angles)
-
-#         w_bh, x_bh, y_bh, z_bh = bnoRef.quaternion[3],bnoRef.quaternion[0],bnoRef.quaternion[1],bnoRef.quaternion[2]
-#         w_if, x_if, y_if, z_if = bnoIndex.quaternion[3],bnoIndex.quaternion[0],bnoIndex.quaternion[1],bnoIndex.quaternion[2]
-#         
-#         # Convert quaternions to rotation matrices
-#         rot_matrix_bh = np.array([
-#             [1 - 2*(y_bh**2 + z_bh**2), 2*(x_bh*y_bh - w_bh*z_bh), 2*(x_bh*z_bh + w_bh*y_bh)],
-#             [2*(x_bh*y_bh + w_bh*z_bh), 1 - 2*(x_bh**2 + z_bh**2), 2*(y_bh*z_bh - w_bh*x_bh)],
-#             [2*(x_bh*z_bh - w_bh*y_bh), 2*(y_bh*z_bh + w_bh*x_bh), 1 - 2*(x_bh**2 + y_bh**2)]
-#         ])
-# 
-#         rot_matrix_if = np.array([
-#             [1 - 2*(y_if**2 + z_if**2), 2*(x_if*y_if - w_if*z_if), 2*(x_if*z_if + w_if*y_if)],
-#             [2*(x_if*y_if + w_if*z_if), 1 - 2*(x_if**2 + z_if**2), 2*(y_if*z_if - w_if*x_if)],
-#             [2*(x_if*z_if - w_if*y_if), 2*(y_if*z_if + w_if*x_if), 1 - 2*(x_if**2 + y_if**2)]
-#         ])
-# 
-#         # Calculate the relative rotation matrix
-#         relative_rot_matrix = np.dot(rot_matrix_if, np.linalg.inv(rot_matrix_bh))
-# 
-#         # Extract Euler angles (in radians)
-#         roll, pitch, yaw = np.arctan2(relative_rot_matrix[2, 1], relative_rot_matrix[2, 2]), -np.asin(relative_rot_matrix[2, 0]), np.arctan2(relative_rot_matrix[1, 0], relative_rot_matrix[0, 0])
-#         
-#         print(str(roll) + " " + str(pitch) + " " + str(yaw))
-        
-        indexToHandQuaternion = quaternion_multiply(handQuaternion, quaternion_conjugate(indexQuaternion))
-        
-#         initial_quaternion = np.array([bnoRef.quaternion[3],bnoRef.quaternion[0],bnoRef.quaternion[1],bnoRef.quaternion[2]])
-#         final_quaternion = np.array([bnoIndex.quaternion[3],bnoIndex.quaternion[0],bnoIndex.quaternion[1],bnoIndex.quaternion[2]])
-#         relative_quaternion = np.dot(initial_quaternion, final_quaternion)
-#         print(relative_quaternion)
-        
-        indexToHandQuaternionString = "{:10.4f}".format(indexToHandQuaternion.w) + "{:10.4f}".format(indexToHandQuaternion.x) + "{:10.4f}".format(indexToHandQuaternion.y) + "{:10.4f}".format(indexToHandQuaternion.z)
-#         print(handQuaternionString + " " + indexQuaternionString + " " + indexToHandQuaternionString)
-        
-#         indexToHandQuaternion = quaternion_multiply(quaternion_conjugate(handQuaternion), indexQuaternion)
-#         rotation_matrix = quaternion_rotation_matrix(indexToHandQuaternion)
-#         euler_angles = rotationMatrixToEulerAngles(rotation_matrix)
-#         print(euler_angles)
-
-#         indexToHandQuaternionModified = quaternion_multiply(handQuaternion, indexToHandQuaternion)
-        
-        indexCurlAmount = getCurl(indexToHandQuaternion)
-#         indexCurlAmount = getCurl(indexToHandQuaternionModified)
-        indexAngle = int(indexCurlAmount*180/3.14)
-#         print(indexAngle)
-        
+        # remap the angle output in degrees to a value between 0 and 1023: the following calculations were a bit hacky when I implemented them and I didn't document them properly, still, they were based on observations of the outputs and you may be able to reverse engineer an explanation
         if indexAngle <= 0 and indexAngle >= -180:
             index_axis = int(682 * -indexAngle / 180)
         elif indexAngle <= 180 and indexAngle >= 90:
             index_axis = int(682 - (341 / 90) * (indexAngle - 180))
-#         print("indexAngle: " + str(indexAngle))
     
     if middleActive:
-        middleQuaternion = Quaternion(bnoMiddle.quaternion[3],bnoMiddle.quaternion[0],bnoMiddle.quaternion[1],bnoMiddle.quaternion[2])
-        middleQuaternion = quaternion_multiply(relativeQuaternion, middleQuaternion)
-        middleToHandQuaternion = quaternion_multiply(handQuaternion, quaternion_conjugate(middleQuaternion))
-        middleCurlAmount = getCurl(middleToHandQuaternion)
-        middleAngle = int(middleCurlAmount*180/3.14)
+        middleQuaternion = Quaternion(bnoMiddle.quaternion[3],bnoMiddle.quaternion[0],bnoMiddle.quaternion[1],bnoMiddle.quaternion[2])  # get the middle IMU quaternion
+        middleQuaternion = quaternion_multiply(relativeQuaternion, middleQuaternion)                                                    # rotate the middleQuaternion to be in the coordinate frame where my calculations work
+        middleToHandQuaternion = quaternion_multiply(handQuaternion, quaternion_conjugate(middleQuaternion))                            # get the relative quaternion between the reference IMU quaternion and the middle IMU quaternion
+        middleCurlAmount = getCurl(middleToHandQuaternion)                                                                              # get the curl angle in radians from the quaternion calculated above
+        middleAngle = int(middleCurlAmount*180/3.14)                                                                                    # convert the curl angle to degrees
+        
+        # remap the angle output in degrees to a value between 0 and 1023: the following calculations were a bit hacky when I implemented them and I didn't document them properly, still, they were based on observations of the outputs and you may be able to reverse engineer an explanation
         if middleAngle <= 0 and middleAngle >= -180:
             middle_axis = int(682 * -middleAngle / 180)
         elif middleAngle <= 180 and middleAngle >= 90:
             middle_axis = int(682 - (341 / 90) * (middleAngle - 180))
-#         print("middleAngle: " + str(middleAngle))
     
     if ringActive:
-        ringQuaternion = Quaternion(bnoRing.quaternion[3],bnoRing.quaternion[0],bnoRing.quaternion[1],bnoRing.quaternion[2])
-        ringQuaternion = quaternion_multiply(relativeQuaternion, ringQuaternion)
-        ringToHandQuaternion = quaternion_multiply(handQuaternion, quaternion_conjugate(ringQuaternion))
-        ringCurlAmount = getCurl(ringToHandQuaternion)
-        ringAngle = int(ringCurlAmount*180/3.14)
+        ringQuaternion = Quaternion(bnoRing.quaternion[3],bnoRing.quaternion[0],bnoRing.quaternion[1],bnoRing.quaternion[2])            # get the ring IMU quaternion
+        ringQuaternion = quaternion_multiply(relativeQuaternion, ringQuaternion)                                                        # rotate the ringQuaternion to be in the coordinate frame where my calculations work
+        ringToHandQuaternion = quaternion_multiply(handQuaternion, quaternion_conjugate(ringQuaternion))                                # get the relative quaternion between the reference IMU quaternion and the ring IMU quaternion
+        ringCurlAmount = getCurl(ringToHandQuaternion)                                                                                  # get the curl angle in radians from the quaternion calculated above
+        ringAngle = int(ringCurlAmount*180/3.14)                                                                                        # convert the curl angle to degrees
+        
+        # remap the angle output in degrees to a value between 0 and 1023: the following calculations were a bit hacky when I implemented them and I didn't document them properly, still, they were based on observations of the outputs and you may be able to reverse engineer an explanation
         if ringAngle <= 0 and ringAngle >= -180:
             ring_axis = int(682 * -ringAngle / 180)
         elif ringAngle <= 180 and ringAngle >= 90:
             ring_axis = int(682 - (341 / 90) * (ringAngle - 180))
-#         print("ringAngle: " + str(ringAngle))
 
     if pinkyActive:
-        pinkyQuaternion = Quaternion(bnoPinky.quaternion[3],bnoPinky.quaternion[0],bnoPinky.quaternion[1],bnoPinky.quaternion[2])
-        pinkyQuaternion = quaternion_multiply(relativeQuaternion, pinkyQuaternion)
-        pinkyToHandQuaternion = quaternion_multiply(handQuaternion, quaternion_conjugate(pinkyQuaternion))
-        pinkyCurlAmount = getCurl(pinkyToHandQuaternion)
-        pinkyAngle = int(pinkyCurlAmount*180/3.14)
+        pinkyQuaternion = Quaternion(bnoPinky.quaternion[3],bnoPinky.quaternion[0],bnoPinky.quaternion[1],bnoPinky.quaternion[2])       # get the pinky IMU quaternion
+        pinkyQuaternion = quaternion_multiply(relativeQuaternion, pinkyQuaternion)                                                      # rotate the pinkyQuaternion to be in the coordinate frame where my calculations work
+        pinkyToHandQuaternion = quaternion_multiply(handQuaternion, quaternion_conjugate(pinkyQuaternion))                              # get the relative quaternion between the reference IMU quaternion and the pinky IMU quaternion
+        pinkyCurlAmount = getCurl(pinkyToHandQuaternion)                                                                                # get the curl angle in radians from the quaternion calculated above
+        pinkyAngle = int(pinkyCurlAmount*180/3.14)                                                                                      # convert the curl angle to degrees
+        
+        # remap the angle output in degrees to a value between 0 and 1023: the following calculations were a bit hacky when I implemented them and I didn't document them properly, still, they were based on observations of the outputs and you may be able to reverse engineer an explanation
         if pinkyAngle <= 0 and pinkyAngle >= -180:
             pinky_axis = int(682 * -pinkyAngle / 180)
         elif pinkyAngle <= 180 and pinkyAngle >= 90:
             pinky_axis = int(682 - (341 / 90) * (pinkyAngle - 180))
-#         print("pinkyAngle: " + str(pinkyAngle))
-#         print("pinky_axis: " + str(pinky_axis))
     
-#    print("index: " + str(index_axis) + "\tmiddle: " + str(middle_axis) + "\tring: " + str(ring_axis) + "\tpinky: " + str(pinky_axis))
-    
-#     thumbstick_x_axis_inverted = 0
-#     thumbstick_y_axis_inverted = 0
-#     trigger_axis_inverted = 0
+    # I did a lot of tweaking without knowing exactly what was going on, but I compared the original signals from the development board with the ones I generated using the rp2040 PIO, and figured I needed to invert the bit order for the tundra tracker to receive the SPI communication correctly
+    # the next few lines take of this inversion and the header construction
     index_axis_inverted = 0
     middle_axis_inverted = 0
     ring_axis_inverted = 0
     pinky_axis_inverted = 0
+    index_splay_axis_inverted = 0
+    middle_splay_axis_inverted = 0
+    ring_splay_axis_inverted = 0
+    pinky_splay_axis_inverted = 0
     for i in range(10):
-#         bit = (thumbstick_x_axis >> i) & 1  # Get the ith bit from the original_value
-#         thumbstick_x_axis_inverted |= (bit << (9 - i))  # Set the bit in the reversed_value
-#         bit = (thumbstick_y_axis >> i) & 1  # Get the ith bit from the original_value
-#         thumbstick_y_axis_inverted |= (bit << (9 - i))  # Set the bit in the reversed_value
-#         bit = (trigger_axis >> i) & 1  # Get the ith bit from the original_value
-#         trigger_axis_inverted |= (bit << (9 - i))  # Set the bit in the reversed_value
         bit = (index_axis >> i) & 1  # Get the ith bit from the original_value
         index_axis_inverted |= (bit << (9 - i))  # Set the bit in the reversed_value
         bit = (middle_axis >> i) & 1  # Get the ith bit from the original_value
@@ -436,13 +354,19 @@ while True:
         ring_axis_inverted |= (bit << (9 - i))  # Set the bit in the reversed_value
         bit = (pinky_axis >> i) & 1  # Get the ith bit from the original_value
         pinky_axis_inverted |= (bit << (9 - i))  # Set the bit in the reversed_value
+        bit = (index_splay_axis >> i) & 1  # Get the ith bit from the original_value
+        index_splay_axis_inverted |= (bit << (9 - i))  # Set the bit in the reversed_value
+        bit = (middle_splay_axis >> i) & 1  # Get the ith bit from the original_value
+        middle_splay_axis_inverted |= (bit << (9 - i))  # Set the bit in the reversed_value
+        bit = (ring_splay_axis >> i) & 1  # Get the ith bit from the original_value
+        ring_splay_axis_inverted |= (bit << (9 - i))  # Set the bit in the reversed_value
+        bit = (pinky_splay_axis >> i) & 1  # Get the ith bit from the original_value
+        pinky_splay_axis_inverted |= (bit << (9 - i))  # Set the bit in the reversed_value
     
     first_header_32bits  = (spi_protocol_rev << 24) + (frame_id << 16) + (report_mode << 8) + (status << 0)
-#     first_data_32_bits  = (system_button << 31) + (a_button << 30) + (b_button << 29) + (trigger_button << 28) + (grip_button << 27) + (thumbstick_button << 26) + (menu_button << 25) + (thumbstick_enable << 24) + (thumbstick_x_axis_inverted << 14) + (thumbstick_y_axis_inverted << 4) + (trigger_axis_inverted >> 6)
-#     second_data_32_bits = (trigger_axis_inverted << 26) + (index_axis_inverted << 16) + (middle_axis_inverted << 6) + (ring_axis_inverted >> 4)
-#     third_data_32_bits  = (ring_axis_inverted << 28) + (pinky_axis_inverted << 18)
     first_data_32_bits  = (index_axis_inverted << 22) + (middle_axis_inverted << 12) + (ring_axis_inverted << 2) + (ring_axis_inverted >> 8)
-    second_data_32_bits  = (pinky_axis_inverted << 24)
+    second_data_32_bits  = (pinky_axis_inverted << 24) + (index_splay_axis_inverted << 14) + (middle_splay_axis_inverted << 4) + (ring_splay_axis_inverted >> 6)
+    third_data_32_bits  = (ring_splay_axis_inverted << 26) + (pinky_splay_axis_inverted << 16)
     
     byte1 = ((first_data_32_bits >> 24) & 0xFF)
     byte2 = ((first_data_32_bits >> 16) & 0xFF)
@@ -483,31 +407,30 @@ while True:
         byte4Inverted |= (bit << (7 - i))  # Set the bit in the reversed_value
     second_data_32_bits = (byte1Inverted << 24) + (byte2Inverted << 16) + (byte3Inverted << 8) + (byte4Inverted << 0)
 
-#     byte1 = ((third_data_32_bits >> 24) & 0xFF)
-#     byte2 = ((third_data_32_bits >> 16) & 0xFF)
-#     byte3 = ((third_data_32_bits >> 8) & 0xFF)
-#     byte4 = ((third_data_32_bits >> 0) & 0xFF)
-#     byte1Inverted = 0
-#     byte2Inverted = 0
-#     byte3Inverted = 0
-#     byte4Inverted = 0
-#     for i in range(8):
-#         bit = (byte1 >> i) & 1  # Get the ith bit from the original_value
-#         byte1Inverted |= (bit << (7 - i))  # Set the bit in the reversed_value
-#         bit = (byte2 >> i) & 1  # Get the ith bit from the original_value
-#         byte2Inverted |= (bit << (7 - i))  # Set the bit in the reversed_value
-#         bit = (byte3 >> i) & 1  # Get the ith bit from the original_value
-#         byte3Inverted |= (bit << (7 - i))  # Set the bit in the reversed_value
-#         bit = (byte4 >> i) & 1  # Get the ith bit from the original_value
-#         byte4Inverted |= (bit << (7 - i))  # Set the bit in the reversed_value
-#     third_data_32_bits = (byte1Inverted << 24) + (byte2Inverted << 16) + (byte3Inverted << 8) + (byte4Inverted << 0)
+    byte1 = ((third_data_32_bits >> 24) & 0xFF)
+    byte2 = ((third_data_32_bits >> 16) & 0xFF)
+    byte3 = ((third_data_32_bits >> 8) & 0xFF)
+    byte4 = ((third_data_32_bits >> 0) & 0xFF)
+    byte1Inverted = 0
+    byte2Inverted = 0
+    byte3Inverted = 0
+    byte4Inverted = 0
+    for i in range(8):
+        bit = (byte1 >> i) & 1  # Get the ith bit from the original_value
+        byte1Inverted |= (bit << (7 - i))  # Set the bit in the reversed_value
+        bit = (byte2 >> i) & 1  # Get the ith bit from the original_value
+        byte2Inverted |= (bit << (7 - i))  # Set the bit in the reversed_value
+        bit = (byte3 >> i) & 1  # Get the ith bit from the original_value
+        byte3Inverted |= (bit << (7 - i))  # Set the bit in the reversed_value
+        bit = (byte4 >> i) & 1  # Get the ith bit from the original_value
+        byte4Inverted |= (bit << (7 - i))  # Set the bit in the reversed_value
+    third_data_32_bits = (byte1Inverted << 24) + (byte2Inverted << 16) + (byte3Inverted << 8) + (byte4Inverted << 0)
     
-#     fullframe = array.array('L',[first_header_32bits, second_header_32bits, first_data_32_bits, second_data_32_bits, third_data_32_bits])
-    fullframe = array.array('L',[first_header_32bits, second_header_32bits, first_data_32_bits, second_data_32_bits])
+    fullframe = array.array('L',[first_header_32bits, second_header_32bits, first_data_32_bits, second_data_32_bits, third_data_32_bits])
 #     print(fullframe)
     
-    sm.write(fullframe)
-    time.sleep(0.001)
-    frame_id = frame_id + 1
-    if frame_id > 255:
+    sm.write(fullframe)      # write the fullframe to the PIO
+    time.sleep(0.001)        # wait for 1 ms
+    frame_id = frame_id + 1  # increment the frame_id
+    if frame_id > 255:       # be sure to keep frame_id below 256 to fit one byte
         frame_id = 0
