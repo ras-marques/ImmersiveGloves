@@ -27,7 +27,7 @@ class TrackerDiscovery : IHookReceiver {
  public:
   TrackerDiscovery(vr::IVRDriverContext *context) : m_context(context){};
 
-  void StartDiscovery(std::function<void(vr::ETrackedControllerRole role, int deviceId, int componentIndex, float data)> callback);
+  void StartDiscovery(std::function<void(vr::ETrackedControllerRole role, int deviceId, std::string inputName, float data)> callback);
 
   void CreateBooleanComponent(vr::PropertyContainerHandle_t ulContainer, const char *pchName, vr::VRInputComponentHandle_t *pHandle) override;
   void UpdateBooleanComponent(vr::VRInputComponentHandle_t ulComponent, bool bNewValue, double fTimeOffset) override;
@@ -39,7 +39,7 @@ class TrackerDiscovery : IHookReceiver {
   int FindTrackerDeviceIdByContainer(vr::PropertyContainerHandle_t ulContainer);
   void UpdateHandSerialNumber(bool isRight, std::string serialNum);
 
-  std::function<void(vr::ETrackedControllerRole role, int deviceId, int componentIndex, float data)> m_callback;
+  std::function<void(vr::ETrackedControllerRole role, int deviceId, std::string inputName, float data)> m_callback;
   vr::IVRDriverContext *m_context;
 
   std::map<vr::VRInputComponentHandle_t, InputComponentInfo> m_inputComponentDeviceIdMap;

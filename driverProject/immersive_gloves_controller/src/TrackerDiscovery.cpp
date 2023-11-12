@@ -37,7 +37,7 @@ int TrackerDiscovery::FindTrackerDeviceIdByContainer(vr::PropertyContainerHandle
   return -1;
 }
 
-void TrackerDiscovery::StartDiscovery(std::function<void(vr::ETrackedControllerRole role, int deviceId, int componentIndex, float data)> callback) {
+void TrackerDiscovery::StartDiscovery(std::function<void(vr::ETrackedControllerRole role, int deviceId, std::string inputName, float data)> callback) {
   m_callback = callback;
 
   InjectHooks(this, m_context);
@@ -115,7 +115,7 @@ void TrackerDiscovery::UpdateBooleanComponent(vr::VRInputComponentHandle_t ulCom
 
     if (!status.trackerConnected || !status.role) return;  // only update state if a tracker is connected
 
-    m_callback(status.role, inputInfo.deviceId, 0, 0.0);
+    m_callback(status.role, inputInfo.deviceId, inputInfo.name, 0.0);
   }
 }
 
@@ -144,6 +144,6 @@ void TrackerDiscovery::UpdateScalarComponent(vr::VRInputComponentHandle_t ulComp
             UpdateHandSerialNumber(true, deviceSerialNumber);  // Update serial number of handed trackers
         }
 
-        m_callback(status.role, inputInfo.deviceId, (int)(ulComponent), fNewValue);
+        m_callback(status.role, inputInfo.deviceId, inputInfo.name, fNewValue);
     }
 }

@@ -34,29 +34,29 @@ vr::EVRInitError DeviceProvider::Init(vr::IVRDriverContext* pDriverContext) {
     my_right_device_->PrintDeviceId();*/
 
     m_trackerDiscovery = std::make_unique<TrackerDiscovery>(pDriverContext);
-    m_trackerDiscovery->StartDiscovery([&](vr::ETrackedControllerRole role, int deviceId, int componentIndex, float data) {
+    m_trackerDiscovery->StartDiscovery([&](vr::ETrackedControllerRole role, int deviceId, std::string inputName, float data) {
         //vr::VRDriverLog()->Log("Callback!");
         if (role == 1) {
             float flex = data;
-            if (componentIndex == 1) {
+            if (inputName == "/input/index/value") {
                 my_left_device_->data.flexion[1][0] = flex;
                 my_left_device_->data.flexion[1][1] = flex;
                 my_left_device_->data.flexion[1][2] = flex;
                 my_left_device_->data.flexion[1][3] = flex;
             }
-            else if (componentIndex == 2) {
+            else if (inputName == "/input/middle/value") {
                 my_left_device_->data.flexion[2][0] = flex;
                 my_left_device_->data.flexion[2][1] = flex;
                 my_left_device_->data.flexion[2][2] = flex;
                 my_left_device_->data.flexion[2][3] = flex;
             }
-            else if (componentIndex == 3) {
+            else if (inputName == "/input/ring/value") {
                 my_left_device_->data.flexion[3][0] = flex;
                 my_left_device_->data.flexion[3][1] = flex;
                 my_left_device_->data.flexion[3][2] = flex;
                 my_left_device_->data.flexion[3][3] = flex;
             }
-            else if (componentIndex == 4) {
+            else if (inputName == "/input/pinky/value") {
                 my_left_device_->data.flexion[4][0] = flex;
                 my_left_device_->data.flexion[4][1] = flex;
                 my_left_device_->data.flexion[4][2] = flex;
@@ -66,25 +66,25 @@ vr::EVRInitError DeviceProvider::Init(vr::IVRDriverContext* pDriverContext) {
         }
         else if (role == 2) {
             float flex = data;
-            if (componentIndex == 1) {
+            if (inputName == "/input/index/value") {
                 my_right_device_->data.flexion[1][0] = flex;
                 my_right_device_->data.flexion[1][1] = flex;
                 my_right_device_->data.flexion[1][2] = flex;
                 my_right_device_->data.flexion[1][3] = flex;
             }
-            else if (componentIndex == 2) {
+            else if (inputName == "/input/middle/value") {
                 my_right_device_->data.flexion[2][0] = flex;
                 my_right_device_->data.flexion[2][1] = flex;
                 my_right_device_->data.flexion[2][2] = flex;
                 my_right_device_->data.flexion[2][3] = flex;
             }
-            else if (componentIndex == 3) {
+            else if (inputName == "/input/ring/value") {
                 my_right_device_->data.flexion[3][0] = flex;
                 my_right_device_->data.flexion[3][1] = flex;
                 my_right_device_->data.flexion[3][2] = flex;
                 my_right_device_->data.flexion[3][3] = flex;
             }
-            else if (componentIndex == 4) {
+            else if (inputName == "/input/pinky/value") {
                 my_right_device_->data.flexion[4][0] = flex;
                 my_right_device_->data.flexion[4][1] = flex;
                 my_right_device_->data.flexion[4][2] = flex;
