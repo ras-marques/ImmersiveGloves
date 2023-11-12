@@ -38,6 +38,34 @@
           "binding_image_point" : [ 56, 86 ],
           "order" : 103
         },
+		"/input/indexsplay" : {
+          "type" : "trigger",
+          "touch" : false,
+          "value" : true,
+          "binding_image_point" : [ 56, 86 ],
+          "order" : 104
+        },
+        "/input/middlesplay" : {
+          "type" : "trigger",
+          "touch" : false,
+          "value" : true,
+          "binding_image_point" : [ 56, 86 ],
+          "order" : 105
+        },
+        "/input/ringsplay" : {
+          "type" : "trigger",
+          "touch" : false,
+          "value" : true,
+          "binding_image_point" : [ 56, 86 ],
+          "order" : 106
+        },
+        "/input/pinkysplay" : {
+          "type" : "trigger",
+          "touch" : false,
+          "value" : true,
+          "binding_image_point" : [ 56, 86 ],
+          "order" : 107
+        },
         "/pose/raw": {
             "type": "pose",
             "binding_image_point": [
@@ -73,6 +101,38 @@
         },
         "/input/pinky/value": {
             "bit_offset": 30,
+            "bit_width": 10,
+            "type": "scalar",
+            "min": 0,
+            "max": 1023,
+            "unit": "onesided"
+        },
+		"/input/indexsplay/value": {
+            "bit_offset": 40,
+            "bit_width": 10,
+            "type": "scalar",
+            "min": 0,
+            "max": 1023,
+            "unit": "onesided"
+        },
+        "/input/middlesplay/value": {
+            "bit_offset": 50,
+            "bit_width": 10,
+            "type": "scalar",
+            "min": 0,
+            "max": 1023,
+            "unit": "onesided"
+        },
+        "/input/ringsplay/value": {
+            "bit_offset": 60,
+            "bit_width": 10,
+            "type": "scalar",
+            "min": 0,
+            "max": 1023,
+            "unit": "onesided"
+        },
+        "/input/pinkysplay/value": {
+            "bit_offset": 70,
             "bit_width": 10,
             "type": "scalar",
             "min": 0,

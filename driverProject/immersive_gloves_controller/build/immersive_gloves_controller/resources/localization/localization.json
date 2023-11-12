@@ -9,12 +9,13 @@
         "/input/trigger": "Trigger",
         "/input/grip": "Grip",
         "/input/thumbstick": "Thumbstick",
-        "/input/index": "Index Finger",
-        "/input/middle": "Middle Finger",
-        "/input/ring": "Ring Finger",
-        "/input/pinky": "Pinky Finger",
-		"/input/indexmiddlesplay": "Index Middle Splay",
-        "/input/middleringsplay": "Middle Ring Splay",
-        "/input/ringpinkysplay": "Ring Pinky Splay"
+        "/input/index": "Index Finger Curl",
+        "/input/middle": "Middle Finger Curl",
+        "/input/ring": "Ring Finger Curl",
+        "/input/pinky": "Pinky Finger Curl",
+		"/input/indexsplay": "Index Finger Splay",
+        "/input/middlesplay": "Middle Finger Splay",
+        "/input/ringsplay": "Ring Finger Splay",
+		"/input/pinkysplay": "Pinky Finger Splay"
     }
 ]
