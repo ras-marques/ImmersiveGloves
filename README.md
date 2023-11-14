@@ -1,10 +1,10 @@
 # ImmersiveGloves
 
-I want to share how I am making vr gloves using 2 Tundra Trackers, 2 interface boards and 12 inertial sensors. These gloves do not have force feedback and probably will never have, but haptics are a possibility in the future.
+I want to share how I am making vr gloves using 2 Tundra Trackers, 2 interface boards and 12 inertial sensors.
 
-https://github.com/ras-marques/ImmersiveGloves/assets/6479742/5a5f25be-386e-40be-8135-42ff1db2880f
+https://github.com/ras-marques/ImmersiveGloves/assets/6479742/3d3f5d54-22ea-44d6-a413-07e7460a17d0
 
-Everything is in a prototyping phase, currently I have finger curl working on 4 fingers, development of the splay and thumb movement is next in line.
+Everything is in a prototyping phase, but currently I have finger curl and splay working on all 5 fingers, next development efforts are directed at implementing a gesture based joystick and button interface.
 
 Why base these gloves around the Tundra Tracker? Using a Tundra Tracker and a development board avoids having to deal with batteries, since the Tundra Tracker can power everything. Also, the tracker takes care of transmiting the data from the gloves to the computer wirelessly. An RP2040 takes care of acquiring the data from the 6 inertial sensors, processing it and delivering it to the tracker.
 
@@ -16,9 +16,14 @@ This project is for people that already have a laser tracked VR setup with base 
 
 If you don't have the Tundra Trackers yet, you could buy 2 bundles of individual tundra tracker and SW1 dongle https://unboundxr.eu/tundra-tracker?sqr=tundra + https://unboundxr.eu/tundra-sw1-dongle, but that would be ~400€ and you will need 2 USB ports, or you could go for the 4 Tundra Tracker bundle https://unboundxr.eu/tundra-x4-bundel?sqr=tundra for ~600€. On top of this, if you don't have base stations, those go for 159€ from valve and it is better to have 2.
 
-I have already designed smaller BNO085 boards compatible with SparkFun's Qwiic Connect System, but I haven't ordered them yet, if you do, do it at your own risk and tell me if it works :) There are boards for the finger tip and finger base (digital phalanx and proximal phalanx bones).
+## End goal for these gloves
 
-I am also designing a custom interface board for the Tundra Tracker so it is easier to assemble the glove without soldering and for good looks.
+- These will always use the Tundra tracker unless another lighthouse based tracker is available that can send inputs to openvr like the Tundra can. I expect this to always be the largest part of the cost.
+- The inertial sensors are going to be next. Currently the gloves use the Slime VR BNO085 boards that go for 12€ each. Even in bulk, these don't get much cheaper, but I will support two additional versions of the gloves in the future, one with 11 BNO085 boards instead of 6 per glove and another with 6 cheaper IMU boards that I expect to be approximately half the cost but that may or may not include a magnetometer to correct for drift, needing a callibration gesture/button press from time to time.
+- I have already designed smaller BNO085 boards compatible with SparkFun's Qwiic Connect System but haven't ordered or tested anything yet. There are boards for the finger tip and finger base (digital phalanx and proximal phalanx bones).
+- I am also designing a custom interface board for the Tundra Tracker so it is easier to assemble the glove without soldering and for good looks. This should be much cheaper if you want to make them yourself than the ones from Tundra.
+- My gloves have finger mobility and a low profile as top priorities, so I have no plans for implementing physical buttons unless absolutelly necessary nor force feedback, but vibration haptics are possible if small enough. I do encourage you to do so and share your own variation!
+- Oh and maybe the most endest of the goals is to have fun in the development process!!
 
 ## Steps to make the gloves:
 
