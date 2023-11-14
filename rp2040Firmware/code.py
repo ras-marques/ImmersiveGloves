@@ -129,6 +129,9 @@ class Quaternion:
         self.x = x
         self.y = y
         self.z = z
+    
+    def printMe(self):
+        print(str(self.w) + " " + str(self.x) + " " + str(self.y) + " " + str(self.z))
 
 # confirmed ok
 def quaternion_conjugate(q):
@@ -218,7 +221,7 @@ def quaternionFromAngle(angle, axis):
     if axis == 2:
         return Quaternion(np.cos(angle/2),0,0,np.sin(angle/2))
 
-thumbActive = False
+thumbActive = True
 indexActive = True
 middleActive = True
 ringActive = True
@@ -243,8 +246,8 @@ bnoRef.enable_feature(BNO_REPORT_ROTATION_VECTOR)
 
 if thumbActive:
     i2c_1 = bitbangio.I2C(board.GP10, board.GP11, frequency = 400000, timeout = 8000)
-    bnoIndex = BNO08X_I2C(i2c_1, None, 0x4B)
-    bnoIndex.enable_feature(BNO_REPORT_ROTATION_VECTOR)
+    bnoThumb = BNO08X_I2C(i2c_1, None, 0x4B)
+    bnoThumb.enable_feature(BNO_REPORT_ROTATION_VECTOR)
 if indexActive:
     i2c_2 = bitbangio.I2C(board.GP8, board.GP9, frequency = 400000, timeout = 8000)
     bnoIndex = BNO08X_I2C(i2c_2, None, 0x4B)
@@ -266,20 +269,22 @@ spi_protocol_rev = 1
 frame_id = 0
 report_mode = 3         # MI_PROTOCOL_REVISION_GENERIC
 status = 0              # 0 normal, 1 bootloader
-input_data_length = 10  # 10 bytes, 80 bits, see a bit below
+input_data_length = 13  # 13 bytes, 100 bits, see a bit below
 backchannel_length = 0  # only for RX, probably for haptics that I am not using yet (YET!)
 event_data_length = 0   # only for RX, probably for haptics that I am not using yet (YET!)
 reserved = 0
 
-index_axis = 0           # 10  0
-middle_axis = 0          # 10  10
-ring_axis = 0            # 10  20
-pinky_axis = 0           # 10  30
-index_splay_axis = 0     # 10  40
-middle_splay_axis = 0    # 10  50
-ring_splay_axis = 0      # 10  60
-pinky_splay_axis = 0     # 10  70
-# 80 bits are 10 bytes
+thumb_axis = 0           # 10  0
+index_axis = 0           # 10  20
+middle_axis = 0          # 10  30
+ring_axis = 0            # 10  40
+pinky_axis = 0           # 10  50
+thumb_splay_axis = 0     # 10  60
+index_splay_axis = 0     # 10  70
+middle_splay_axis = 0    # 10  80
+ring_splay_axis = 0      # 10  90
+pinky_splay_axis = 0     # 10  100
+# 100 bits are 13 bytes
 
 first_header_32bits  = (spi_protocol_rev << 24) + (frame_id << 16) + (report_mode << 8) + (status << 0)
 second_header_32bits = (input_data_length << 24) + (backchannel_length << 16) + (event_data_length << 8) + (reserved << 0)
@@ -289,6 +294,10 @@ second_header_32bits = (input_data_length << 24) + (backchannel_length << 16) + 
 # for that, I take the relative quaternion from the reference IMU to this quaternion and then use this relative quaternion to rotate every IMU into this reference frame
 # then, finally, I do all my calculations.
 handQuaternionThatWorks = Quaternion(np.sqrt(2)/2,0,0,-np.sqrt(2)/2)
+
+# for the thumb movement, I needed to get a first neutral position from which to take rotations
+# the relative rotation to the reference IMU is represented by the quaternion below, taken experimentally
+thumbNeutralToHandQuaternion = Quaternion(0.623351, 0.0097146, 0.754592, 0.204794)
 
 # for splay, I took measurements of the results of my calculations and the splay angle results are as follows:
 # finger   min  rest  max
@@ -300,6 +309,33 @@ while True:
     handQuaternion = Quaternion(bnoRef.quaternion[3],bnoRef.quaternion[0],bnoRef.quaternion[1],bnoRef.quaternion[2])                    # get the reference IMU quaternion
     relativeQuaternion = quaternion_multiply(handQuaternionThatWorks, quaternion_conjugate(handQuaternion))                             # get the relative quaternion between the reference IMU quaternion and the coordinate frame where my calculations work
     handQuaternion = quaternion_multiply(relativeQuaternion, handQuaternion)                                                            # rotate the handQuaternion to be in the coordinate frame where my calculations work
+    #handQuaternion.printMe()
+
+    if thumbActive:
+        thumbQuaternion = Quaternion(bnoThumb.quaternion[3],bnoThumb.quaternion[0],bnoThumb.quaternion[1],bnoThumb.quaternion[2])       # get the thumb IMU quaternion
+        thumbQuaternion = quaternion_multiply(relativeQuaternion, thumbQuaternion)                                                      # rotate the thumbQuaternion to be in the coordinate frame where my calculations work
+        thumbToHandQuaternion = quaternion_multiply(handQuaternion, quaternion_conjugate(thumbQuaternion))                              # get the relative quaternion between the reference IMU quaternion and the thumb IMU quaternion
+        thumbQuaternion = quaternion_multiply(thumbNeutralToHandQuaternion, thumbQuaternion)                                      # rotate the relative quaternion between the reference IMU quaternion and the thumb IMU quaternion by the neutral thumb quaternion (is it? I don't know if I did exactly this, but it works)
+        thumbCurlAmount = getCurl(thumbQuaternion)
+        thumbAngle = int(thumbCurlAmount*180/3.14)
+        thumb_axis = int(512+512*thumbAngle/90.)
+        if thumb_axis < 0:
+            thumb_axis = 0
+        elif thumb_axis > 1023:
+            thumb_axis = 1023
+        #print(thumb_axis)
+        
+        thumbCurlQuaternion = quaternionFromAngle(thumbCurlAmount, 0)                                                                   # create a quaternion that represents just the amount of curl in the x axis
+        thumbDecurledQuaternion = quaternion_multiply(thumbCurlQuaternion, thumbQuaternion)                                             # rotate the indexQuaternion by the curl angle in the x axis        
+        thumbDecurledToNeutralQuaternion = quaternion_multiply(handQuaternion, quaternion_conjugate(thumbDecurledQuaternion))              # get the relative quaternion between the reference IMU quaternion and the quaternion representing the index IMU rotated back by the curl angle
+        thumbSplayAmount = getSplay(thumbDecurledToNeutralQuaternion)                                                                      # get the splay angle in radians from the quaternion calculated above
+        thumbSplayAngle = int(thumbSplayAmount*180/3.14)                                                                                # convert the splay angle to degrees
+        thumb_splay_axis = int(512+512*thumbSplayAngle/42.)
+        if thumb_splay_axis < 0:
+            thumb_splay_axis = 0
+        elif thumb_splay_axis > 1023:
+            thumb_splay_axis = 1023
+        #print(thumb_splay_axis)
 
     if indexActive:
         indexQuaternion = Quaternion(bnoIndex.quaternion[3],bnoIndex.quaternion[0],bnoIndex.quaternion[1],bnoIndex.quaternion[2])       # get the index IMU quaternion
@@ -415,19 +451,23 @@ while True:
             pinky_splay_axis = 1023
     
     #print(str(indexSplayAngle) + " " + str(middleSplayAngle) + " " + str(ringSplayAngle) + " " + str(pinkySplayAngle))
-    print(str(index_splay_axis) + " " + str(middle_splay_axis) + " " + str(ring_splay_axis) + " " + str(pinky_splay_axis))
+    #print(str(index_splay_axis) + " " + str(middle_splay_axis) + " " + str(ring_splay_axis) + " " + str(pinky_splay_axis))
     
     # I did a lot of tweaking without knowing exactly what was going on, but I compared the original signals from the development board with the ones I generated using the rp2040 PIO, and figured I needed to invert the bit order for the tundra tracker to receive the SPI communication correctly
     # the next few lines take of this inversion and the header construction
+    thumb_axis_inverted = 0
     index_axis_inverted = 0
     middle_axis_inverted = 0
     ring_axis_inverted = 0
     pinky_axis_inverted = 0
+    thumb_splay_axis_inverted = 0
     index_splay_axis_inverted = 0
     middle_splay_axis_inverted = 0
     ring_splay_axis_inverted = 0
     pinky_splay_axis_inverted = 0
     for i in range(10):
+        bit = (thumb_axis >> i) & 1  # Get the ith bit from the original_value
+        thumb_axis_inverted |= (bit << (9 - i))  # Set the bit in the reversed_value
         bit = (index_axis >> i) & 1  # Get the ith bit from the original_value
         index_axis_inverted |= (bit << (9 - i))  # Set the bit in the reversed_value
         bit = (middle_axis >> i) & 1  # Get the ith bit from the original_value
@@ -436,6 +476,8 @@ while True:
         ring_axis_inverted |= (bit << (9 - i))  # Set the bit in the reversed_value
         bit = (pinky_axis >> i) & 1  # Get the ith bit from the original_value
         pinky_axis_inverted |= (bit << (9 - i))  # Set the bit in the reversed_value
+        bit = (thumb_splay_axis >> i) & 1  # Get the ith bit from the original_value
+        thumb_splay_axis_inverted |= (bit << (9 - i))  # Set the bit in the reversed_value
         bit = (index_splay_axis >> i) & 1  # Get the ith bit from the original_value
         index_splay_axis_inverted |= (bit << (9 - i))  # Set the bit in the reversed_value
         bit = (middle_splay_axis >> i) & 1  # Get the ith bit from the original_value
@@ -446,9 +488,10 @@ while True:
         pinky_splay_axis_inverted |= (bit << (9 - i))  # Set the bit in the reversed_value
     
     first_header_32bits  = (spi_protocol_rev << 24) + (frame_id << 16) + (report_mode << 8) + (status << 0)
-    first_data_32_bits  = (index_axis_inverted << 22) + (middle_axis_inverted << 12) + (ring_axis_inverted << 2) + (ring_axis_inverted >> 8)
-    second_data_32_bits  = (pinky_axis_inverted << 24) + (index_splay_axis_inverted << 14) + (middle_splay_axis_inverted << 4) + (ring_splay_axis_inverted >> 6)
-    third_data_32_bits  = (ring_splay_axis_inverted << 26) + (pinky_splay_axis_inverted << 16)
+    first_data_32_bits  = (thumb_axis_inverted << 22) + (index_axis_inverted << 12) + (middle_axis_inverted << 2) + (ring_axis_inverted >> 8)
+    second_data_32_bits  = (ring_axis_inverted << 24) + (pinky_axis_inverted << 14) + (thumb_splay_axis_inverted << 4) + (index_splay_axis_inverted >> 6)
+    third_data_32_bits  = (index_splay_axis_inverted << 26) + (middle_splay_axis_inverted << 16) + (ring_splay_axis_inverted << 6) + (pinky_splay_axis_inverted >> 4)
+    forth_data_32_bits  = (pinky_splay_axis_inverted << 28)
     
     byte1 = ((first_data_32_bits >> 24) & 0xFF)
     byte2 = ((first_data_32_bits >> 16) & 0xFF)
@@ -508,7 +551,26 @@ while True:
         byte4Inverted |= (bit << (7 - i))  # Set the bit in the reversed_value
     third_data_32_bits = (byte1Inverted << 24) + (byte2Inverted << 16) + (byte3Inverted << 8) + (byte4Inverted << 0)
     
-    fullframe = array.array('L',[first_header_32bits, second_header_32bits, first_data_32_bits, second_data_32_bits, third_data_32_bits])
+    byte1 = ((forth_data_32_bits >> 24) & 0xFF)
+    byte2 = ((forth_data_32_bits >> 16) & 0xFF)
+    byte3 = ((forth_data_32_bits >> 8) & 0xFF)
+    byte4 = ((forth_data_32_bits >> 0) & 0xFF)
+    byte1Inverted = 0
+    byte2Inverted = 0
+    byte3Inverted = 0
+    byte4Inverted = 0
+    for i in range(8):
+        bit = (byte1 >> i) & 1  # Get the ith bit from the original_value
+        byte1Inverted |= (bit << (7 - i))  # Set the bit in the reversed_value
+        bit = (byte2 >> i) & 1  # Get the ith bit from the original_value
+        byte2Inverted |= (bit << (7 - i))  # Set the bit in the reversed_value
+        bit = (byte3 >> i) & 1  # Get the ith bit from the original_value
+        byte3Inverted |= (bit << (7 - i))  # Set the bit in the reversed_value
+        bit = (byte4 >> i) & 1  # Get the ith bit from the original_value
+        byte4Inverted |= (bit << (7 - i))  # Set the bit in the reversed_value
+    forth_data_32_bits = (byte1Inverted << 24) + (byte2Inverted << 16) + (byte3Inverted << 8) + (byte4Inverted << 0)
+    
+    fullframe = array.array('L',[first_header_32bits, second_header_32bits, first_data_32_bits, second_data_32_bits, third_data_32_bits, forth_data_32_bits])
 #     print(fullframe)
     
     sm.write(fullframe)      # write the fullframe to the PIO

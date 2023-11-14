@@ -10,61 +10,75 @@
         "image": "{htc}/icons/vive_tracker.svg"
     },
     "input_source": {
-        "/input/index" : {
+		"/input/thumb" : {
           "type" : "trigger",
           "touch" : false,
           "value" : true,
           "binding_image_point" : [ 56, 86 ],
           "order" : 100
         },
-        "/input/middle" : {
+        "/input/index" : {
           "type" : "trigger",
           "touch" : false,
           "value" : true,
           "binding_image_point" : [ 56, 86 ],
           "order" : 101
         },
-        "/input/ring" : {
+        "/input/middle" : {
           "type" : "trigger",
           "touch" : false,
           "value" : true,
           "binding_image_point" : [ 56, 86 ],
           "order" : 102
         },
-        "/input/pinky" : {
+        "/input/ring" : {
           "type" : "trigger",
           "touch" : false,
           "value" : true,
           "binding_image_point" : [ 56, 86 ],
           "order" : 103
         },
-		"/input/indexsplay" : {
+        "/input/pinky" : {
           "type" : "trigger",
           "touch" : false,
           "value" : true,
           "binding_image_point" : [ 56, 86 ],
           "order" : 104
         },
-        "/input/middlesplay" : {
+		"/input/thumbsplay" : {
           "type" : "trigger",
           "touch" : false,
           "value" : true,
           "binding_image_point" : [ 56, 86 ],
           "order" : 105
         },
-        "/input/ringsplay" : {
+		"/input/indexsplay" : {
           "type" : "trigger",
           "touch" : false,
           "value" : true,
           "binding_image_point" : [ 56, 86 ],
           "order" : 106
         },
-        "/input/pinkysplay" : {
+        "/input/middlesplay" : {
           "type" : "trigger",
           "touch" : false,
           "value" : true,
           "binding_image_point" : [ 56, 86 ],
           "order" : 107
+        },
+        "/input/ringsplay" : {
+          "type" : "trigger",
+          "touch" : false,
+          "value" : true,
+          "binding_image_point" : [ 56, 86 ],
+          "order" : 108
+        },
+        "/input/pinkysplay" : {
+          "type" : "trigger",
+          "touch" : false,
+          "value" : true,
+          "binding_image_point" : [ 56, 86 ],
+          "order" : 109
         },
         "/pose/raw": {
             "type": "pose",
@@ -75,7 +89,7 @@
         }
     },
     "input_components": {
-        "/input/index/value": {
+		"/input/thumb/value": {
             "bit_offset": 0,
             "bit_width": 10,
             "type": "scalar",
@@ -83,7 +97,7 @@
             "max": 1023,
             "unit": "onesided"
         },
-        "/input/middle/value": {
+        "/input/index/value": {
             "bit_offset": 10,
             "bit_width": 10,
             "type": "scalar",
@@ -91,7 +105,7 @@
             "max": 1023,
             "unit": "onesided"
         },
-        "/input/ring/value": {
+        "/input/middle/value": {
             "bit_offset": 20,
             "bit_width": 10,
             "type": "scalar",
@@ -99,7 +113,7 @@
             "max": 1023,
             "unit": "onesided"
         },
-        "/input/pinky/value": {
+        "/input/ring/value": {
             "bit_offset": 30,
             "bit_width": 10,
             "type": "scalar",
@@ -107,7 +121,7 @@
             "max": 1023,
             "unit": "onesided"
         },
-		"/input/indexsplay/value": {
+        "/input/pinky/value": {
             "bit_offset": 40,
             "bit_width": 10,
             "type": "scalar",
@@ -115,7 +129,7 @@
             "max": 1023,
             "unit": "onesided"
         },
-        "/input/middlesplay/value": {
+		"/input/thumbsplay/value": {
             "bit_offset": 50,
             "bit_width": 10,
             "type": "scalar",
@@ -123,7 +137,7 @@
             "max": 1023,
             "unit": "onesided"
         },
-        "/input/ringsplay/value": {
+		"/input/indexsplay/value": {
             "bit_offset": 60,
             "bit_width": 10,
             "type": "scalar",
@@ -131,8 +145,24 @@
             "max": 1023,
             "unit": "onesided"
         },
-        "/input/pinkysplay/value": {
+        "/input/middlesplay/value": {
             "bit_offset": 70,
+            "bit_width": 10,
+            "type": "scalar",
+            "min": 0,
+            "max": 1023,
+            "unit": "onesided"
+        },
+        "/input/ringsplay/value": {
+            "bit_offset": 80,
+            "bit_width": 10,
+            "type": "scalar",
+            "min": 0,
+            "max": 1023,
+            "unit": "onesided"
+        },
+        "/input/pinkysplay/value": {
+            "bit_offset": 90,
             "bit_width": 10,
             "type": "scalar",
             "min": 0,

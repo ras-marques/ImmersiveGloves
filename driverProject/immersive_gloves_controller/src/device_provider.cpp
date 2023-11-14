@@ -36,6 +36,7 @@ vr::EVRInitError DeviceProvider::Init(vr::IVRDriverContext* pDriverContext) {
     m_trackerDiscovery = std::make_unique<TrackerDiscovery>(pDriverContext);
     m_trackerDiscovery->StartDiscovery([&](vr::ETrackedControllerRole role, int deviceId, std::string inputName, float data) {
         //vr::VRDriverLog()->Log("Callback!");
+        my_left_device_->data.splay[0] = 1.;
         if (role == 1) {
             if (inputName == "/input/thumb/value") {
                 my_left_device_->data.flexion[0][0] = data;
