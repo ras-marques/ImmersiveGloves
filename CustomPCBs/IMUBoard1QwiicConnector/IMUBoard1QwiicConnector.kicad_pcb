@@ -89,9 +89,9 @@
       (subtractmaskfromsilk false)
       (outputformat 1)
       (mirror false)
-      (drillshape 1)
+      (drillshape 0)
       (scaleselection 1)
-      (outputdirectory "")
+      (outputdirectory "Gerbers/")
     )
   )
 
@@ -343,8 +343,8 @@
       (net 16 "SCL") (pinfunction "Pin_3") (pintype "passive") (tstamp 1e15b83c-4bf6-488d-af22-675320063b3d))
     (pad "4" smd roundrect (at 1.5 -2) (size 0.6 1.55) (layers "F.Cu" "F.Paste" "F.Mask") (roundrect_rratio 0.25)
       (net 12 "GND") (pinfunction "Pin_4") (pintype "passive") (tstamp 1933c0c3-e08e-4315-8aeb-16ac36a6e4ac))
-    (pad "MP" smd roundrect (at -2.8 1.875) (size 1.2 1.8) (layers "F.Cu" "F.Paste" "F.Mask") (roundrect_rratio 0.208333) (tstamp 719c3391-d23a-49ee-b333-28a469b7048d))
-    (pad "MP" smd roundrect (at 2.8 1.875) (size 1.2 1.8) (layers "F.Cu" "F.Paste" "F.Mask") (roundrect_rratio 0.208333) (tstamp 79caaca1-b494-473c-802e-4eb90084c6a9))
+    (pad "MP" smd roundrect (at -2.8 1.875) (size 1.2 1.8) (layers "F.Cu" "F.Paste" "F.Mask") (roundrect_rratio 0.2083333333) (tstamp 719c3391-d23a-49ee-b333-28a469b7048d))
+    (pad "MP" smd roundrect (at 2.8 1.875) (size 1.2 1.8) (layers "F.Cu" "F.Paste" "F.Mask") (roundrect_rratio 0.2083333333) (tstamp 79caaca1-b494-473c-802e-4eb90084c6a9))
     (model "${KICAD6_3DMODEL_DIR}/Connector_JST.3dshapes/JST_SH_SM04B-SRSS-TB_1x04-1MP_P1.00mm_Horizontal.wrl"
       (offset (xyz 0 0 0))
       (scale (xyz 1 1 1))
