@@ -14,88 +14,6 @@ import usb_cdc
 
 serial = usb_cdc.data
 
-# probepin = adafruit_pioasm.assemble("""
-# .program spidebug
-# .wrap_target:
-#     wait 0 pin 0
-#     set pins 0
-#     wait 1 pin 0
-#     set pins 1
-# .wrap
-# """)
-# 
-# sm12 = rp2pio.StateMachine(
-#     probepin,
-#     frequency=0,
-#     first_in_pin=board.GP12,
-#     in_pin_count=1,
-#     first_set_pin=board.GP9,
-#     set_pin_count=1
-# )
-# 
-# sm13 = rp2pio.StateMachine(
-#     probepin,
-#     frequency=0,
-#     first_in_pin=board.GP13,
-#     in_pin_count=1,
-#     first_set_pin=board.GP10,
-#     set_pin_count=1
-# )
-# 
-# sm14 = rp2pio.StateMachine(
-#     probepin,
-#     frequency=0,
-#     first_in_pin=board.GP14,
-#     in_pin_count=1,
-#     first_set_pin=board.GP11,
-#     set_pin_count=1
-# )
-# 
-# sm15 = rp2pio.StateMachine(
-#     probepin,
-#     frequency=0,
-#     first_in_pin=board.GP15,
-#     in_pin_count=1,
-#     first_set_pin=board.GP16,
-#     set_pin_count=1
-# )
-# 
-# while True:
-#     pass
-
-# THIS IS THE NOT THE GOOD ONE
-# assembled = adafruit_pioasm.assemble("""
-# .program spi_slave
-# .wrap_target:
-#     set x, 31
-#     pull
-# loop:
-#     wait 0 pin 0
-#     wait 0 pin 1
-#     out pins 1
-#     wait 1 pin 1
-#     jmp x-- loop
-# .wrap
-# """)
-
-# sm = rp2pio.StateMachine(
-#     assembled,
-#     frequency=0,
-#     first_out_pin=board.GP12,
-#     out_pin_count=1,
-#     first_in_pin=board.GP13,
-#     in_pin_count=3
-# )
-# sm = rp2pio.StateMachine(
-#     assembled,
-#     frequency=0,
-#     first_out_pin=board.GP11,
-#     out_pin_count=1,
-#     first_in_pin=board.GP13,
-#     in_pin_count=3,
-#     out_shift_right=True
-# )
-
 assembled = adafruit_pioasm.assemble("""
 .program spi_slave
 .wrap_target:
@@ -222,10 +140,10 @@ def quaternionFromAngle(angle, axis):
         return Quaternion(np.cos(angle/2),0,0,np.sin(angle/2))
 
 thumbActive = True
-indexActive = True
-middleActive = True
-ringActive = True
-pinkyActive = True
+indexActive = False
+middleActive = False
+ringActive = False
+pinkyActive = False
 
 i2c_0 = 0
 i2c_1 = 0
@@ -240,29 +158,28 @@ bnoMiddle = 0
 bnoRing = 0
 bnoPinky = 0
 
-i2c_0 = bitbangio.I2C(board.GP16, board.GP17, frequency = 400000, timeout = 8000)
+i2c_0 = busio.I2C(board.GP9, board.GP8, frequency = 400000, timeout = 8000)
+i2c_1 = busio.I2C(board.GP7, board.GP6, frequency = 400000, timeout = 8000)
+
 bnoRef = BNO08X_I2C(i2c_0, None, 0x4B)
 bnoRef.enable_feature(BNO_REPORT_ROTATION_VECTOR)
 
 if thumbActive:
-    i2c_1 = bitbangio.I2C(board.GP10, board.GP11, frequency = 400000, timeout = 8000)
-    bnoThumb = BNO08X_I2C(i2c_1, None, 0x4B)
+    bnoThumb = BNO08X_I2C(i2c_0, None, 0x4A)
     bnoThumb.enable_feature(BNO_REPORT_ROTATION_VECTOR)
 if indexActive:
-    i2c_2 = bitbangio.I2C(board.GP8, board.GP9, frequency = 400000, timeout = 8000)
-    bnoIndex = BNO08X_I2C(i2c_2, None, 0x4B)
+    bnoIndex = BNO08X_I2C(i2c_1, None, 0x4B)
     bnoIndex.enable_feature(BNO_REPORT_ROTATION_VECTOR)
 if middleActive:
-    i2c_3 = bitbangio.I2C(board.GP6, board.GP7, frequency = 400000, timeout = 8000)
-    bnoMiddle = BNO08X_I2C(i2c_3, None, 0x4B)
+    bnoMiddle = BNO08X_I2C(i2c_1, None, 0x4A)
     bnoMiddle.enable_feature(BNO_REPORT_ROTATION_VECTOR)
 if ringActive:
-    i2c_4 = bitbangio.I2C(board.GP4, board.GP5, frequency = 400000, timeout = 8000)
-    bnoRing = BNO08X_I2C(i2c_4, None, 0x4B)
+    i2c_2_bitbanged = bitbangio.I2C(board.GP4, board.GP5, frequency = 400000, timeout = 8000)
+    bnoRing = BNO08X_I2C(i2c_2_bitbanged, None, 0x4B)
     bnoRing.enable_feature(BNO_REPORT_ROTATION_VECTOR)
 if pinkyActive:
-    i2c_5 = bitbangio.I2C(board.GP0, board.GP1, frequency = 400000, timeout = 8000)
-    bnoPinky = BNO08X_I2C(i2c_5, None, 0x4B)
+    i2c_3_bitbanged = bitbangio.I2C(board.GP0, board.GP1, frequency = 400000, timeout = 8000)
+    bnoPinky = BNO08X_I2C(i2c_3_bitbanged, None, 0x4B)
     bnoPinky.enable_feature(BNO_REPORT_ROTATION_VECTOR)
 
 spi_protocol_rev = 1
@@ -306,6 +223,7 @@ thumbNeutralToHandQuaternion = Quaternion(0.623351, 0.0097146, 0.754592, 0.20479
 # ring     -14   -5    14
 # pinky    -40  -25    -2
 while True:
+    timeStart = time.monotonic()
     handQuaternion = Quaternion(bnoRef.quaternion[3],bnoRef.quaternion[0],bnoRef.quaternion[1],bnoRef.quaternion[2])                    # get the reference IMU quaternion
     relativeQuaternion = quaternion_multiply(handQuaternionThatWorks, quaternion_conjugate(handQuaternion))                             # get the relative quaternion between the reference IMU quaternion and the coordinate frame where my calculations work
     handQuaternion = quaternion_multiply(relativeQuaternion, handQuaternion)                                                            # rotate the handQuaternion to be in the coordinate frame where my calculations work
@@ -574,7 +492,8 @@ while True:
 #     print(fullframe)
     
     sm.write(fullframe)      # write the fullframe to the PIO
-    time.sleep(0.001)        # wait for 1 ms
     frame_id = frame_id + 1  # increment the frame_id
     if frame_id > 255:       # be sure to keep frame_id below 256 to fit one byte
         frame_id = 0
+    timeEnd = time.monotonic()
+    print(str(timeEnd-timeStart))

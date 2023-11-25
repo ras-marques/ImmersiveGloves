@@ -3852,7 +3852,7 @@
   (symbol (lib_id "Connector_Generic:Conn_01x04") (at 242.57 82.55 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
     (uuid 73fcca7d-d9dc-4778-b5a6-0f5e4ebd8050)
-    (property "Reference" "PINKY_IMUs1" (at 245.11 82.55 0)
+    (property "Reference" "PINKY1" (at 245.11 82.55 0)
       (effects (font (size 1.27 1.27)) (justify left))
     )
     (property "Value" "Conn_01x04" (at 245.11 85.09 0)
@@ -3871,7 +3871,7 @@
     (instances
       (project "tundraIOExpansion"
         (path "/6bc6d498-c151-42bc-9dad-57407f39c6cd"
-          (reference "PINKY_IMUs1") (unit 1)
+          (reference "PINKY1") (unit 1)
         )
       )
     )
@@ -4019,7 +4019,7 @@
   (symbol (lib_id "Connector_Generic:Conn_01x04") (at 242.57 214.63 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
     (uuid 7c596094-9042-4895-ae3a-25c1fb193b45)
-    (property "Reference" "THUMB_IMUs1" (at 245.11 214.63 0)
+    (property "Reference" "THUMB1" (at 245.11 214.63 0)
       (effects (font (size 1.27 1.27)) (justify left))
     )
     (property "Value" "Conn_01x04" (at 245.11 217.17 0)
@@ -4038,7 +4038,7 @@
     (instances
       (project "tundraIOExpansion"
         (path "/6bc6d498-c151-42bc-9dad-57407f39c6cd"
-          (reference "THUMB_IMUs1") (unit 1)
+          (reference "THUMB1") (unit 1)
         )
       )
     )
@@ -4467,7 +4467,7 @@
   (symbol (lib_id "Connector_Generic:Conn_01x04") (at 242.57 71.12 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
     (uuid 98d64573-9584-4c0c-b9af-9c4bbfd83840)
-    (property "Reference" "RING_IMUs1" (at 245.11 71.12 0)
+    (property "Reference" "RING1" (at 245.11 71.12 0)
       (effects (font (size 1.27 1.27)) (justify left))
     )
     (property "Value" "Conn_01x04" (at 245.11 73.66 0)
@@ -4486,7 +4486,7 @@
     (instances
       (project "tundraIOExpansion"
         (path "/6bc6d498-c151-42bc-9dad-57407f39c6cd"
-          (reference "RING_IMUs1") (unit 1)
+          (reference "RING1") (unit 1)
         )
       )
     )
@@ -4495,7 +4495,7 @@
   (symbol (lib_id "Connector_Generic:Conn_01x04") (at 242.57 43.18 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
     (uuid 9a46d3c9-748c-4b40-882d-fe69d7aa47b1)
-    (property "Reference" "INDEX_IMUs1" (at 245.11 43.18 0)
+    (property "Reference" "INDEX1" (at 245.11 43.18 0)
       (effects (font (size 1.27 1.27)) (justify left))
     )
     (property "Value" "Conn_01x04" (at 245.11 45.72 0)
@@ -4514,7 +4514,7 @@
     (instances
       (project "tundraIOExpansion"
         (path "/6bc6d498-c151-42bc-9dad-57407f39c6cd"
-          (reference "INDEX_IMUs1") (unit 1)
+          (reference "INDEX1") (unit 1)
         )
       )
     )
@@ -4974,7 +4974,7 @@
   (symbol (lib_id "Connector_Generic:Conn_01x04") (at 242.57 54.61 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
     (uuid e837793a-3990-4a79-9768-97bb92b42faf)
-    (property "Reference" "MIDDLE_IMUs1" (at 245.11 54.61 0)
+    (property "Reference" "MIDDLE1" (at 245.11 54.61 0)
       (effects (font (size 1.27 1.27)) (justify left))
     )
     (property "Value" "Conn_01x04" (at 245.11 57.15 0)
@@ -4993,7 +4993,7 @@
     (instances
       (project "tundraIOExpansion"
         (path "/6bc6d498-c151-42bc-9dad-57407f39c6cd"
-          (reference "MIDDLE_IMUs1") (unit 1)
+          (reference "MIDDLE1") (unit 1)
         )
       )
     )
