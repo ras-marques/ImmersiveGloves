@@ -36,8 +36,9 @@ vr::EVRInitError DeviceProvider::Init(vr::IVRDriverContext* pDriverContext) {
     m_trackerDiscovery = std::make_unique<TrackerDiscovery>(pDriverContext);
     m_trackerDiscovery->StartDiscovery([&](vr::ETrackedControllerRole role, int deviceId, std::string inputName, float data) {
         //vr::VRDriverLog()->Log("Callback!");
-        my_left_device_->data.splay[0] = 1.;
+        //my_left_device_->data.splay[0] = 1.;
         if (role == 1) {
+            //vr::VRDriverLog()->Log(inputName.c_str());
             if (inputName == "/input/thumb/value") {
                 my_left_device_->data.flexion[0][0] = data;
                 my_left_device_->data.flexion[0][1] = data;
@@ -75,9 +76,9 @@ vr::EVRInitError DeviceProvider::Init(vr::IVRDriverContext* pDriverContext) {
                 my_left_device_->data.splay[1] = (float)(2 * (data - 0.5));
             }
             else if (inputName == "/input/middlesplay/value") {
-                char logstring[50] = {};
-                sprintf_s(logstring, "middlesplay: %f", (float)(2 * (data - 0.5)));
-                vr::VRDriverLog()->Log(logstring);
+                //char logstring[50] = {};
+                //sprintf_s(logstring, "middlesplay: %f", (float)(2 * (data - 0.5)));
+                //vr::VRDriverLog()->Log(logstring);
                 my_left_device_->data.splay[2] = (float)(2 * (data - 0.5));
             }
             else if (inputName == "/input/ringsplay/value") {
@@ -85,6 +86,12 @@ vr::EVRInitError DeviceProvider::Init(vr::IVRDriverContext* pDriverContext) {
             }
             else if (inputName == "/input/pinkysplay/value") {
                 my_left_device_->data.splay[4] = (float)(2 * (data - 0.5));
+            }
+            else if (inputName == "/input/thumbstickx/value") {
+                my_left_device_->data.joyX = (float)(2 * (data - 0.5));;
+            }
+            else if (inputName == "/input/thumbsticky/value") {
+                my_left_device_->data.joyY = (float)(2 * (data - 0.5));;
             }
             my_left_device_->WritePipe();
         }
@@ -133,6 +140,12 @@ vr::EVRInitError DeviceProvider::Init(vr::IVRDriverContext* pDriverContext) {
             }
             else if (inputName == "/input/pinkysplay/value") {
                 my_right_device_->data.splay[4] = (float)(2 * (data - 0.5));
+            }
+            else if (inputName == "/input/thumbstickx/value") {
+                my_right_device_->data.joyX = (float)(2 * (data - 0.5));
+            }
+            else if (inputName == "/input/thumbsticky/value") {
+                my_right_device_->data.joyY = (float)(2 * (data - 0.5));
             }
             my_right_device_->WritePipe();
         }

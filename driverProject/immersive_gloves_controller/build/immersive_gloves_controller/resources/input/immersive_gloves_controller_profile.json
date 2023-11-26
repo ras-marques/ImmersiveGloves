@@ -80,6 +80,20 @@
           "binding_image_point" : [ 56, 86 ],
           "order" : 109
         },
+		"/input/thumbstickx" : {
+          "type" : "trigger",
+          "touch" : false,
+          "value" : true,
+          "binding_image_point" : [ 56, 86 ],
+          "order" : 110
+        },
+		"/input/thumbsticky" : {
+          "type" : "trigger",
+          "touch" : false,
+          "value" : true,
+          "binding_image_point" : [ 56, 86 ],
+          "order" : 111
+        },
         "/pose/raw": {
             "type": "pose",
             "binding_image_point": [
@@ -153,7 +167,7 @@
             "max": 1023,
             "unit": "onesided"
         },
-        "/input/ringsplay/value": {
+		"/input/thumbstickx/value": {
             "bit_offset": 80,
             "bit_width": 10,
             "type": "scalar",
@@ -161,8 +175,24 @@
             "max": 1023,
             "unit": "onesided"
         },
-        "/input/pinkysplay/value": {
+        "/input/thumbsticky/value": {
             "bit_offset": 90,
+            "bit_width": 10,
+            "type": "scalar",
+            "min": 0,
+            "max": 1023,
+            "unit": "onesided"
+        },
+        "/input/ringsplay/value": {
+            "bit_offset": 100,
+            "bit_width": 10,
+            "type": "scalar",
+            "min": 0,
+            "max": 1023,
+            "unit": "onesided"
+        },
+        "/input/pinkysplay/value": {
+            "bit_offset": 110,
             "bit_width": 10,
             "type": "scalar",
             "min": 0,

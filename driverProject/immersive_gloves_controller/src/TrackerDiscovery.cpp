@@ -15,12 +15,15 @@ static const std::string indexSplayValueInputName = "/input/indexsplay/value";
 static const std::string middleSplayValueInputName = "/input/middlesplay/value";
 static const std::string ringSplayValueInputName = "/input/ringsplay/value";
 static const std::string pinkySplayValueInputName = "/input/pinkysplay/value";
+static const std::string thumbstickXInputName = "/input/thumbstickx/value";
+static const std::string thumbstickYValueInputName = "/input/thumbsticky/value";
 
 std::string tundraTrackerLeftSerNum, tundraTrackerRightSerNum;
 
-static std::array<std::string, 10> expectedInputNames = {
+static std::array<std::string, 12> expectedInputNames = {
     thumbValueInputName, indexValueInputName, middleValueInputName, ringValueInputName, pinkyValueInputName,
-    thumbSplayValueInputName, indexSplayValueInputName, middleSplayValueInputName, ringSplayValueInputName, pinkySplayValueInputName
+    thumbSplayValueInputName, indexSplayValueInputName, middleSplayValueInputName, ringSplayValueInputName, pinkySplayValueInputName,
+    thumbstickXInputName, thumbstickYValueInputName
 };
 
 int TrackerDiscovery::FindTrackerDeviceIdByContainer(vr::PropertyContainerHandle_t ulContainer) {
@@ -66,13 +69,14 @@ void TrackerDiscovery::CreateBooleanComponent(vr::PropertyContainerHandle_t ulCo
 }
 
 void TrackerDiscovery::CreateScalarComponent(vr::PropertyContainerHandle_t ulContainer, const char* pchName, vr::VRInputComponentHandle_t* pHandle) {
-    vr::VRDriverLog()->Log(pchName);
     if (std::find(expectedInputNames.begin(), expectedInputNames.end(), std::string(pchName)) != expectedInputNames.end()) {
         int deviceId = FindTrackerDeviceIdByContainer(ulContainer);
 
 
         if (deviceId != -1) {
             m_inputComponentDeviceIdMap.insert_or_assign(*pHandle, InputComponentInfo(std::string(pchName), deviceId));
+            vr::VRDriverLog()->Log("Creating scalar component below");
+            vr::VRDriverLog()->Log(pchName);
         }
     }
 }

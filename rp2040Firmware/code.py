@@ -2,14 +2,16 @@ import array
 import board
 import busio
 from adafruit_bno08x.i2c import BNO08X_I2C
-#from adafruit_bno08x import BNO_REPORT_ACCELEROMETER
-from adafruit_bno08x import BNO_REPORT_ROTATION_VECTOR
+#from adafruit_bno08x import BNO_REPORT_ACCELEROMETER        # gives the acceleration with the gravity included
+from adafruit_bno08x import BNO_REPORT_LINEAR_ACCELERATION   # gives the acceleration with the gravity removed
+from adafruit_bno08x import BNO_REPORT_ROTATION_VECTOR       # gives a quaternion from sensor fusion, including the magnetometer data
 # import pyquaternion
 from ulab import numpy as np
 import time
 import rp2pio
 import adafruit_pioasm
 import bitbangio
+import digitalio
 import usb_cdc
 
 serial = usb_cdc.data
@@ -50,6 +52,13 @@ class Quaternion:
     
     def printMe(self):
         print(str(self.w) + " " + str(self.x) + " " + str(self.y) + " " + str(self.z))
+    
+    def rotateBy(rotationQuaternion):
+        return quaternion_multiply(rotationQuaternion, self)
+    
+    def getRelativeTo(referenceQuaternion):
+        return quaternion_multiply(referenceQuaternion, quaternion_conjugate(self))
+        
 
 # confirmed ok
 def quaternion_conjugate(q):
@@ -72,7 +81,8 @@ def getCurl(q):
     return np.arctan2(2 * (q.x * q.w - q.y * q.z), 1 - 2 * (q.x * q.x + q.y * q.y))
 def getSplay(q):
     return np.arctan2(2 * (q.x * q.y + q.z * q.w), 1 - 2 * (q.y * q.y + q.z * q.z))
-
+def getRoll(q):
+    return np.arctan2(2 * (q.y * q.z + q.w * q.x), 1 - 2 * (q.x * q.x + q.y * q.y))
 
 def quaternion_rotation_matrix(Q):
     """
@@ -163,10 +173,12 @@ i2c_1 = busio.I2C(board.GP7, board.GP6, frequency = 400000, timeout = 8000)
 
 bnoRef = BNO08X_I2C(i2c_0, None, 0x4B)
 bnoRef.enable_feature(BNO_REPORT_ROTATION_VECTOR)
+bnoRef.enable_feature(BNO_REPORT_LINEAR_ACCELERATION)
 
 if thumbActive:
     bnoThumb = BNO08X_I2C(i2c_0, None, 0x4A)
     bnoThumb.enable_feature(BNO_REPORT_ROTATION_VECTOR)
+    bnoThumb.enable_feature(BNO_REPORT_LINEAR_ACCELERATION)
 if indexActive:
     bnoIndex = BNO08X_I2C(i2c_1, None, 0x4B)
     bnoIndex.enable_feature(BNO_REPORT_ROTATION_VECTOR)
@@ -216,14 +228,27 @@ handQuaternionThatWorks = Quaternion(np.sqrt(2)/2,0,0,-np.sqrt(2)/2)
 # the relative rotation to the reference IMU is represented by the quaternion below, taken experimentally
 thumbNeutralToHandQuaternion = Quaternion(0.623351, 0.0097146, 0.754592, 0.204794)
 
+# for the joystick emulation, I need a neutral rotation from which to take roll and pitch and map it into joystick values
+# the relative rotation to the reference IMU is represented by the quaternion below, taken experimentally
+thumbNeutralJoystickToHandQuaternion = Quaternion(0.586889, -0.168701, 0.779479, 0.140207)
+
 # for splay, I took measurements of the results of my calculations and the splay angle results are as follows:
 # finger   min  rest  max
 # index    -22   18    35
 # middle   -11    4    28
 # ring     -14   -5    14
 # pinky    -40  -25    -2
+
+refAccelTime = time.monotonic()
+thumbAccelTime = time.monotonic()
+
+joystickIsEnabled = False
+joystick_enabled = digitalio.DigitalInOut(board.GP10)
+joystick_enabled.pull = digitalio.Pull.UP
+joystick_x = 0;
+joystick_y = 0;
+
 while True:
-    timeStart = time.monotonic()
     handQuaternion = Quaternion(bnoRef.quaternion[3],bnoRef.quaternion[0],bnoRef.quaternion[1],bnoRef.quaternion[2])                    # get the reference IMU quaternion
     relativeQuaternion = quaternion_multiply(handQuaternionThatWorks, quaternion_conjugate(handQuaternion))                             # get the relative quaternion between the reference IMU quaternion and the coordinate frame where my calculations work
     handQuaternion = quaternion_multiply(relativeQuaternion, handQuaternion)                                                            # rotate the handQuaternion to be in the coordinate frame where my calculations work
@@ -232,8 +257,12 @@ while True:
     if thumbActive:
         thumbQuaternion = Quaternion(bnoThumb.quaternion[3],bnoThumb.quaternion[0],bnoThumb.quaternion[1],bnoThumb.quaternion[2])       # get the thumb IMU quaternion
         thumbQuaternion = quaternion_multiply(relativeQuaternion, thumbQuaternion)                                                      # rotate the thumbQuaternion to be in the coordinate frame where my calculations work
+        thumbQuaternionBackupForJoystick = thumbQuaternion
+        
+        # weirdly I don't need this, but don't know why
         thumbToHandQuaternion = quaternion_multiply(handQuaternion, quaternion_conjugate(thumbQuaternion))                              # get the relative quaternion between the reference IMU quaternion and the thumb IMU quaternion
-        thumbQuaternion = quaternion_multiply(thumbNeutralToHandQuaternion, thumbQuaternion)                                      # rotate the relative quaternion between the reference IMU quaternion and the thumb IMU quaternion by the neutral thumb quaternion (is it? I don't know if I did exactly this, but it works)
+        
+        thumbQuaternion = quaternion_multiply(thumbNeutralToHandQuaternion, thumbQuaternion)                                            # rotate the relative quaternion between the reference IMU quaternion and the thumb IMU quaternion by the neutral thumb quaternion (is it? I don't know if I did exactly this, but it works)
         thumbCurlAmount = getCurl(thumbQuaternion)
         thumbAngle = int(thumbCurlAmount*180/3.14)
         thumb_axis = int(512+512*thumbAngle/90.)
@@ -245,8 +274,8 @@ while True:
         
         thumbCurlQuaternion = quaternionFromAngle(thumbCurlAmount, 0)                                                                   # create a quaternion that represents just the amount of curl in the x axis
         thumbDecurledQuaternion = quaternion_multiply(thumbCurlQuaternion, thumbQuaternion)                                             # rotate the indexQuaternion by the curl angle in the x axis        
-        thumbDecurledToNeutralQuaternion = quaternion_multiply(handQuaternion, quaternion_conjugate(thumbDecurledQuaternion))              # get the relative quaternion between the reference IMU quaternion and the quaternion representing the index IMU rotated back by the curl angle
-        thumbSplayAmount = getSplay(thumbDecurledToNeutralQuaternion)                                                                      # get the splay angle in radians from the quaternion calculated above
+        thumbDecurledToNeutralQuaternion = quaternion_multiply(handQuaternion, quaternion_conjugate(thumbDecurledQuaternion))           # get the relative quaternion between the reference IMU quaternion and the quaternion representing the index IMU rotated back by the curl angle
+        thumbSplayAmount = getSplay(thumbDecurledToNeutralQuaternion)                                                                   # get the splay angle in radians from the quaternion calculated above
         thumbSplayAngle = int(thumbSplayAmount*180/3.14)                                                                                # convert the splay angle to degrees
         thumb_splay_axis = int(512+512*thumbSplayAngle/42.)
         if thumb_splay_axis < 0:
@@ -254,7 +283,42 @@ while True:
         elif thumb_splay_axis > 1023:
             thumb_splay_axis = 1023
         #print(thumb_splay_axis)
-
+        #thumbAccel_x, thumbAccel_y, thumbAccel_z = bnoThumb.linear_acceleration
+        
+        # inverted logic, this is when the joystick is enabled
+        if not joystick_enabled.value:
+            #if not joystickIsEnabled:
+            #    thumbNeutralJoystickToHandQuaternion = thumbToHandQuaternion # fix this value on the top and don't reset it each time joystick is reenabled
+            #thumbToHandQuaternion.printMe()
+            
+            thumbJoystickQuaternion = quaternion_multiply(thumbNeutralJoystickToHandQuaternion, thumbQuaternionBackupForJoystick) #thumbQuaternionBackupForJoystick.rotateBy(thumbNeutralJoystickToHandQuaternion)
+            
+            joystick_x_angleRadians = getRoll(thumbJoystickQuaternion)
+            joystick_x_angleDegrees = (joystick_x_angleRadians*180/3.14)
+            joystick_x = int((joystick_x_angleDegrees + 25)*1023/50)
+            if joystick_x < 0:
+                joystick_x = 0
+            elif joystick_x > 1023:
+                joystick_x = 1023
+            
+            joystick_y_angleRadians = getCurl(thumbJoystickQuaternion)
+            joystick_y_angleDegrees = (joystick_y_angleRadians*180/3.14)
+            joystick_y = int((joystick_y_angleDegrees + 25)*1023/50)
+            if joystick_y < 0:
+                joystick_y = 0
+            elif joystick_y > 1023:
+                joystick_y = 1023
+            
+            joystickIsEnabled = True
+        else:
+            joystick_x = 512
+            joystick_y = 512
+            
+            joystickIsEnabled = False
+        
+        #print("x: " + str(joystick_x))
+        #print("y: " + str(joystick_y))
+        
     if indexActive:
         indexQuaternion = Quaternion(bnoIndex.quaternion[3],bnoIndex.quaternion[0],bnoIndex.quaternion[1],bnoIndex.quaternion[2])       # get the index IMU quaternion
         indexQuaternion = quaternion_multiply(relativeQuaternion, indexQuaternion)                                                      # rotate the indexQuaternion to be in the coordinate frame where my calculations work
@@ -383,6 +447,8 @@ while True:
     middle_splay_axis_inverted = 0
     ring_splay_axis_inverted = 0
     pinky_splay_axis_inverted = 0
+    joystick_x_inverted = 0
+    joystick_y_inverted = 0
     for i in range(10):
         bit = (thumb_axis >> i) & 1  # Get the ith bit from the original_value
         thumb_axis_inverted |= (bit << (9 - i))  # Set the bit in the reversed_value
@@ -404,12 +470,18 @@ while True:
         ring_splay_axis_inverted |= (bit << (9 - i))  # Set the bit in the reversed_value
         bit = (pinky_splay_axis >> i) & 1  # Get the ith bit from the original_value
         pinky_splay_axis_inverted |= (bit << (9 - i))  # Set the bit in the reversed_value
+        bit = (joystick_x >> i) & 1  # Get the ith bit from the original_value
+        joystick_x_inverted |= (bit << (9 - i))  # Set the bit in the reversed_value
+        bit = (joystick_y >> i) & 1  # Get the ith bit from the original_value
+        joystick_y_inverted |= (bit << (9 - i))  # Set the bit in the reversed_value
     
     first_header_32bits  = (spi_protocol_rev << 24) + (frame_id << 16) + (report_mode << 8) + (status << 0)
     first_data_32_bits  = (thumb_axis_inverted << 22) + (index_axis_inverted << 12) + (middle_axis_inverted << 2) + (ring_axis_inverted >> 8)
     second_data_32_bits  = (ring_axis_inverted << 24) + (pinky_axis_inverted << 14) + (thumb_splay_axis_inverted << 4) + (index_splay_axis_inverted >> 6)
-    third_data_32_bits  = (index_splay_axis_inverted << 26) + (middle_splay_axis_inverted << 16) + (ring_splay_axis_inverted << 6) + (pinky_splay_axis_inverted >> 4)
-    forth_data_32_bits  = (pinky_splay_axis_inverted << 28)
+    #third_data_32_bits  = (index_splay_axis_inverted << 26) + (middle_splay_axis_inverted << 16) + (ring_splay_axis_inverted << 6) + (pinky_splay_axis_inverted >> 4)
+    #forth_data_32_bits  = (pinky_splay_axis_inverted << 28) + (joystick_x_inverted << 18) + (joystick_y_inverted << 8) + (joystickIsEnabled << 7)
+    third_data_32_bits  = (index_splay_axis_inverted << 26) + (middle_splay_axis_inverted << 16) + (joystick_x_inverted << 6) + (joystick_y_inverted >> 4)
+    forth_data_32_bits  = (joystick_y_inverted << 28) + (joystick_x_inverted << 18) + (joystick_y_inverted << 8) + (joystickIsEnabled << 7)
     
     byte1 = ((first_data_32_bits >> 24) & 0xFF)
     byte2 = ((first_data_32_bits >> 16) & 0xFF)
@@ -495,5 +567,5 @@ while True:
     frame_id = frame_id + 1  # increment the frame_id
     if frame_id > 255:       # be sure to keep frame_id below 256 to fit one byte
         frame_id = 0
-    timeEnd = time.monotonic()
-    print(str(timeEnd-timeStart))
+    #timeEnd = time.monotonic()
+    #print(str(timeEnd-timeStart))

@@ -4,14 +4,6 @@
 #include "openvr_driver.h"
 #include <windows.h>
 
-enum InputHandles {
-	kInputHandle_index_value,
-	kInputHandle_middle_value,
-	kInputHandle_ring_value,
-	kInputHandle_pinky_value,
-	kInputHandle_COUNT
-};
-
 struct InputData {
 	float flexion[5][4];
 	float splay[5];
@@ -53,8 +45,6 @@ public:
 	DWORD dwWritten;
 
 private:
-	std::array<vr::VRInputComponentHandle_t, kInputHandle_COUNT> input_handles_;
-
 	vr::ETrackedControllerRole role_;
 	vr::TrackedDeviceIndex_t device_id_;
 };
