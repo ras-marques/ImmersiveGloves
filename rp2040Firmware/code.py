@@ -198,22 +198,26 @@ spi_protocol_rev = 1
 frame_id = 0
 report_mode = 3         # MI_PROTOCOL_REVISION_GENERIC
 status = 0              # 0 normal, 1 bootloader
-input_data_length = 13  # 13 bytes, 100 bits, see a bit below
+input_data_length = 15  # 15 bytes, 120 bits, see a bit below
 backchannel_length = 0  # only for RX, probably for haptics that I am not using yet (YET!)
 event_data_length = 0   # only for RX, probably for haptics that I am not using yet (YET!)
 reserved = 0
 
-thumb_axis = 0           # 10  0
-index_axis = 0           # 10  20
-middle_axis = 0          # 10  30
-ring_axis = 0            # 10  40
-pinky_axis = 0           # 10  50
-thumb_splay_axis = 0     # 10  60
-index_splay_axis = 0     # 10  70
-middle_splay_axis = 0    # 10  80
-ring_splay_axis = 0      # 10  90
-pinky_splay_axis = 0     # 10  100
-# 100 bits are 13 bytes
+thumb_axis = 0             # 10  0
+index_axis = 0             # 10  10
+middle_axis = 0            # 10  20
+ring_axis = 0              # 10  30
+pinky_axis = 0             # 10  40
+thumb_splay_axis = 0       # 10  50
+index_splay_axis = 0       # 10  60
+middle_splay_axis = 0      # 10  70
+ring_splay_axis = 0        # 10  80
+pinky_splay_axis = 0       # 10  90
+joystick_x = 0             # 10  100
+joystick_y = 0             # 10  110
+joystickIsEnabled = False  #  1  120
+
+# 120 bits are 15 bytes
 
 first_header_32bits  = (spi_protocol_rev << 24) + (frame_id << 16) + (report_mode << 8) + (status << 0)
 second_header_32bits = (input_data_length << 24) + (backchannel_length << 16) + (event_data_length << 8) + (reserved << 0)
@@ -242,11 +246,8 @@ thumbNeutralJoystickToHandQuaternion = Quaternion(0.586889, -0.168701, 0.779479,
 refAccelTime = time.monotonic()
 thumbAccelTime = time.monotonic()
 
-joystickIsEnabled = False
 joystick_enabled = digitalio.DigitalInOut(board.GP10)
 joystick_enabled.pull = digitalio.Pull.UP
-joystick_x = 0;
-joystick_y = 0;
 
 while True:
     handQuaternion = Quaternion(bnoRef.quaternion[3],bnoRef.quaternion[0],bnoRef.quaternion[1],bnoRef.quaternion[2])                    # get the reference IMU quaternion
@@ -478,10 +479,10 @@ while True:
     first_header_32bits  = (spi_protocol_rev << 24) + (frame_id << 16) + (report_mode << 8) + (status << 0)
     first_data_32_bits  = (thumb_axis_inverted << 22) + (index_axis_inverted << 12) + (middle_axis_inverted << 2) + (ring_axis_inverted >> 8)
     second_data_32_bits  = (ring_axis_inverted << 24) + (pinky_axis_inverted << 14) + (thumb_splay_axis_inverted << 4) + (index_splay_axis_inverted >> 6)
-    #third_data_32_bits  = (index_splay_axis_inverted << 26) + (middle_splay_axis_inverted << 16) + (ring_splay_axis_inverted << 6) + (pinky_splay_axis_inverted >> 4)
-    #forth_data_32_bits  = (pinky_splay_axis_inverted << 28) + (joystick_x_inverted << 18) + (joystick_y_inverted << 8) + (joystickIsEnabled << 7)
-    third_data_32_bits  = (index_splay_axis_inverted << 26) + (middle_splay_axis_inverted << 16) + (joystick_x_inverted << 6) + (joystick_y_inverted >> 4)
-    forth_data_32_bits  = (joystick_y_inverted << 28) + (joystick_x_inverted << 18) + (joystick_y_inverted << 8) + (joystickIsEnabled << 7)
+    third_data_32_bits  = (index_splay_axis_inverted << 26) + (middle_splay_axis_inverted << 16) + (ring_splay_axis_inverted << 6) + (pinky_splay_axis_inverted >> 4)
+    forth_data_32_bits  = (pinky_splay_axis_inverted << 28) + (joystick_x_inverted << 18) + (joystick_y_inverted << 8) + (joystickIsEnabled << 7)
+    #third_data_32_bits  = (index_splay_axis_inverted << 26) + (middle_splay_axis_inverted << 16) + (joystick_x_inverted << 6) + (joystick_y_inverted >> 4)
+    #forth_data_32_bits  = (joystick_y_inverted << 28) + (joystick_x_inverted << 18) + (joystick_y_inverted << 8) + (joystickIsEnabled << 7)
     
     byte1 = ((first_data_32_bits >> 24) & 0xFF)
     byte2 = ((first_data_32_bits >> 16) & 0xFF)
