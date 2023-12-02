@@ -514,6 +514,9 @@
   (junction (at 40.64 38.1) (diameter 0) (color 0 0 0 0)
     (uuid 6ed46e79-8f83-498b-a6cb-abe1aec02500)
   )
+  (junction (at 90.17 22.86) (diameter 0) (color 0 0 0 0)
+    (uuid 760f804f-4e2f-4ba5-ab64-4d2d044d1b54)
+  )
   (junction (at 173.99 40.64) (diameter 0) (color 0 0 0 0)
     (uuid 9eb4a843-484c-446a-84e9-9c943e66fe64)
   )
@@ -533,10 +536,6 @@
     (uuid f034d2d8-93d4-435c-a54c-c6d8eab7ec58)
   )
 
-  (wire (pts (xy 80.01 40.64) (xy 93.98 40.64))
-    (stroke (width 0) (type default))
-    (uuid 0268585a-7af3-4d38-9717-b4b0ee5bb90a)
-  )
   (wire (pts (xy 90.17 73.66) (xy 93.98 73.66))
     (stroke (width 0) (type default))
     (uuid 0333d4ae-741a-4c5c-ab73-dd281adbc16c)
@@ -569,6 +568,10 @@
     (stroke (width 0) (type default))
     (uuid 1d854b56-cf2a-40aa-9162-68ac9af4288b)
   )
+  (wire (pts (xy 78.74 22.86) (xy 90.17 22.86))
+    (stroke (width 0) (type default))
+    (uuid 2168eed6-a95c-4a0c-9bc2-10bc0335f86c)
+  )
   (wire (pts (xy 50.8 40.64) (xy 30.48 40.64))
     (stroke (width 0) (type default))
     (uuid 221c1a08-6b20-47e3-8442-6760191afd56)
@@ -577,9 +580,17 @@
     (stroke (width 0) (type default))
     (uuid 31903914-d0d2-4722-9c78-7887745dd165)
   )
+  (wire (pts (xy 78.74 40.64) (xy 93.98 40.64))
+    (stroke (width 0) (type default))
+    (uuid 33b1ef93-7579-4ef7-8d70-2b2c94c6a1bb)
+  )
   (wire (pts (xy 173.99 40.64) (xy 173.99 41.91))
     (stroke (width 0) (type default))
     (uuid 352779ad-f5c1-4e3c-bc38-59885a522777)
+  )
+  (wire (pts (xy 78.74 40.64) (xy 78.74 22.86))
+    (stroke (width 0) (type default))
+    (uuid 3e28771a-f6a4-4e45-8cf9-8a52c73e2cb8)
   )
   (wire (pts (xy 166.37 50.8) (xy 173.99 50.8))
     (stroke (width 0) (type default))
@@ -608,6 +619,10 @@
   (wire (pts (xy 50.8 40.64) (xy 55.88 40.64))
     (stroke (width 0) (type default))
     (uuid 6332c8e6-03ac-4556-9e7e-ef0823284d56)
+  )
+  (wire (pts (xy 90.17 22.86) (xy 90.17 24.13))
+    (stroke (width 0) (type default))
+    (uuid 65dcb67d-d066-48e4-9c50-60397672344b)
   )
   (wire (pts (xy 90.17 81.28) (xy 90.17 83.82))
     (stroke (width 0) (type default))
@@ -645,7 +660,7 @@
     (stroke (width 0) (type default))
     (uuid 7c147e80-2c16-4898-9cad-eb0f4e646c37)
   )
-  (wire (pts (xy 90.17 21.59) (xy 90.17 24.13))
+  (wire (pts (xy 90.17 21.59) (xy 90.17 22.86))
     (stroke (width 0) (type default))
     (uuid 7c5224b3-0bba-4b87-932b-52139f6aa06f)
   )
@@ -798,31 +813,6 @@
     )
   )
 
-  (symbol (lib_id "power:GND") (at 80.01 40.64 0) (unit 1)
-    (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
-    (uuid 02e077e3-23a0-4b35-a580-cc42b1ccdfc6)
-    (property "Reference" "#PWR04" (at 80.01 46.99 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Value" "GND" (at 80.01 45.72 0)
-      (effects (font (size 1.27 1.27)))
-    )
-    (property "Footprint" "" (at 80.01 40.64 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Datasheet" "" (at 80.01 40.64 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (pin "1" (uuid d7e5e976-148c-4596-bc1f-d115834b2b37))
-    (instances
-      (project "BNO085_0x4A_Board"
-        (path "/70e5a8fd-d79a-42f0-963c-2c04abcfaf88"
-          (reference "#PWR04") (unit 1)
-        )
-      )
-    )
-  )
-
   (symbol (lib_id "Device:R") (at 140.97 50.8 270) (unit 1)
     (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
     (uuid 192e4a97-d680-4733-89a2-cac4298005fd)
@@ -841,7 +831,7 @@
     (pin "1" (uuid fe20e2d3-8873-4da9-8bab-01b4004fbeec))
     (pin "2" (uuid e2ef6f34-6349-4854-9b80-b968dab7eeeb))
     (instances
-      (project "BNO085_0x4A_Board"
+      (project "BNO085_0x4B_Board"
         (path "/70e5a8fd-d79a-42f0-963c-2c04abcfaf88"
           (reference "R4") (unit 1)
         )
@@ -867,7 +857,7 @@
     (pin "1" (uuid 32e194d5-7ff6-4f0b-92a8-3f276c95e050))
     (pin "2" (uuid cdc657c8-054d-430d-b062-c184636e6daf))
     (instances
-      (project "BNO085_0x4A_Board"
+      (project "BNO085_0x4B_Board"
         (path "/70e5a8fd-d79a-42f0-963c-2c04abcfaf88"
           (reference "R1") (unit 1)
         )
@@ -893,7 +883,7 @@
     (pin "1" (uuid bd16e9a7-1ad9-4a87-aa42-da67e87076ea))
     (pin "2" (uuid 8abacc72-d4a7-4bba-a6c6-bf07414a4674))
     (instances
-      (project "BNO085_0x4A_Board"
+      (project "BNO085_0x4B_Board"
         (path "/70e5a8fd-d79a-42f0-963c-2c04abcfaf88"
           (reference "C6") (unit 1)
         )
@@ -919,7 +909,7 @@
     (pin "1" (uuid ca0a767d-63bf-401d-bf3e-8995ebfbf6f8))
     (pin "2" (uuid 216ba910-8245-4091-8902-8c68872d84ac))
     (instances
-      (project "BNO085_0x4A_Board"
+      (project "BNO085_0x4B_Board"
         (path "/70e5a8fd-d79a-42f0-963c-2c04abcfaf88"
           (reference "C1") (unit 1)
         )
@@ -944,7 +934,7 @@
     )
     (pin "1" (uuid 5bc2986b-5dac-4fef-b1a0-8a08b4449b18))
     (instances
-      (project "BNO085_0x4A_Board"
+      (project "BNO085_0x4B_Board"
         (path "/70e5a8fd-d79a-42f0-963c-2c04abcfaf88"
           (reference "#PWR02") (unit 1)
         )
@@ -969,7 +959,7 @@
     )
     (pin "1" (uuid 3d6003be-5a01-4d38-b290-f1d57fc3d2e0))
     (instances
-      (project "BNO085_0x4A_Board"
+      (project "BNO085_0x4B_Board"
         (path "/70e5a8fd-d79a-42f0-963c-2c04abcfaf88"
           (reference "#PWR011") (unit 1)
         )
@@ -995,7 +985,7 @@
     (pin "1" (uuid 17ffb21e-948b-4bfe-9c2d-9c7396ac1ff3))
     (pin "2" (uuid b869c9ce-3a74-417d-bc53-d9ba43d33b0e))
     (instances
-      (project "BNO085_0x4A_Board"
+      (project "BNO085_0x4B_Board"
         (path "/70e5a8fd-d79a-42f0-963c-2c04abcfaf88"
           (reference "C5") (unit 1)
         )
@@ -1012,7 +1002,7 @@
     (property "Value" "Conn_01x04_Pin" (at 26.035 33.02 0)
       (effects (font (size 1.27 1.27)))
     )
-    (property "Footprint" "Connector_JST:JST_SH_SM04B-SRSS-TB_1x04-1MP_P1.00mm_Horizontal" (at 25.4 38.1 0)
+    (property "Footprint" "Library:WireToBoard2x2Wide" (at 25.4 38.1 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Datasheet" "~" (at 25.4 38.1 0)
@@ -1023,7 +1013,7 @@
     (pin "3" (uuid 79e1b575-54cc-4152-a9a0-a79f476ce6dd))
     (pin "4" (uuid 3c4acc4f-9316-41eb-ab6c-97e10c00bc41))
     (instances
-      (project "BNO085_0x4A_Board"
+      (project "BNO085_0x4B_Board"
         (path "/70e5a8fd-d79a-42f0-963c-2c04abcfaf88"
           (reference "J1") (unit 1)
         )
@@ -1075,7 +1065,7 @@
     (pin "8" (uuid 88e40bf7-8b6e-42c5-a914-2d3e9cd060da))
     (pin "9" (uuid 4878a32d-3584-4d76-9aab-1f1be414632b))
     (instances
-      (project "BNO085_0x4A_Board"
+      (project "BNO085_0x4B_Board"
         (path "/70e5a8fd-d79a-42f0-963c-2c04abcfaf88"
           (reference "U1") (unit 1)
         )
@@ -1100,7 +1090,7 @@
     )
     (pin "1" (uuid 4098a3c4-d2bf-43cd-8bc2-f36c2469479e))
     (instances
-      (project "BNO085_0x4A_Board"
+      (project "BNO085_0x4B_Board"
         (path "/70e5a8fd-d79a-42f0-963c-2c04abcfaf88"
           (reference "#PWR06") (unit 1)
         )
@@ -1125,7 +1115,7 @@
     )
     (pin "1" (uuid 267f8bf2-8bf9-4e3c-88bc-abf90a4acae2))
     (instances
-      (project "BNO085_0x4A_Board"
+      (project "BNO085_0x4B_Board"
         (path "/70e5a8fd-d79a-42f0-963c-2c04abcfaf88"
           (reference "#PWR08") (unit 1)
         )
@@ -1151,7 +1141,7 @@
     (pin "1" (uuid 4c68312e-8b50-471e-a33a-f38667898494))
     (pin "2" (uuid 0f96f7cf-c82f-4b84-92bd-c3c4222844c3))
     (instances
-      (project "BNO085_0x4A_Board"
+      (project "BNO085_0x4B_Board"
         (path "/70e5a8fd-d79a-42f0-963c-2c04abcfaf88"
           (reference "C4") (unit 1)
         )
@@ -1177,7 +1167,7 @@
     (pin "1" (uuid 21ecbcca-cd58-4776-b7d7-99b3aa436190))
     (pin "2" (uuid c4d6902a-da47-44a5-8d10-ad46c1f72854))
     (instances
-      (project "BNO085_0x4A_Board"
+      (project "BNO085_0x4B_Board"
         (path "/70e5a8fd-d79a-42f0-963c-2c04abcfaf88"
           (reference "Y1") (unit 1)
         )
@@ -1202,7 +1192,7 @@
     )
     (pin "1" (uuid 1a61071a-4d12-4052-8ea7-382037234b39))
     (instances
-      (project "BNO085_0x4A_Board"
+      (project "BNO085_0x4B_Board"
         (path "/70e5a8fd-d79a-42f0-963c-2c04abcfaf88"
           (reference "#PWR03") (unit 1)
         )
@@ -1227,7 +1217,7 @@
     )
     (pin "1" (uuid 8acfb899-103c-40b7-8d1f-602f219cdc6b))
     (instances
-      (project "BNO085_0x4A_Board"
+      (project "BNO085_0x4B_Board"
         (path "/70e5a8fd-d79a-42f0-963c-2c04abcfaf88"
           (reference "#PWR010") (unit 1)
         )
@@ -1253,7 +1243,7 @@
     (pin "1" (uuid 5f7cb4da-04ea-4a53-9c6b-6a35db885209))
     (pin "2" (uuid 0035e3bf-8a57-47a6-8388-ba3ef2091659))
     (instances
-      (project "BNO085_0x4A_Board"
+      (project "BNO085_0x4B_Board"
         (path "/70e5a8fd-d79a-42f0-963c-2c04abcfaf88"
           (reference "C2") (unit 1)
         )
@@ -1278,7 +1268,7 @@
     )
     (pin "1" (uuid 450f85dc-d80f-40bc-bfbb-49756d1adfcb))
     (instances
-      (project "BNO085_0x4A_Board"
+      (project "BNO085_0x4B_Board"
         (path "/70e5a8fd-d79a-42f0-963c-2c04abcfaf88"
           (reference "#PWR01") (unit 1)
         )
@@ -1303,7 +1293,7 @@
     )
     (pin "1" (uuid c47ba113-b9c8-4b4c-be2b-6b349dedb711))
     (instances
-      (project "BNO085_0x4A_Board"
+      (project "BNO085_0x4B_Board"
         (path "/70e5a8fd-d79a-42f0-963c-2c04abcfaf88"
           (reference "#PWR09") (unit 1)
         )
@@ -1329,7 +1319,7 @@
     (pin "1" (uuid 013377f5-a965-42ae-a1d8-20b324801687))
     (pin "2" (uuid e3a9b61e-fc1e-4471-8038-3841fe8569e5))
     (instances
-      (project "BNO085_0x4A_Board"
+      (project "BNO085_0x4B_Board"
         (path "/70e5a8fd-d79a-42f0-963c-2c04abcfaf88"
           (reference "R3") (unit 1)
         )
@@ -1355,7 +1345,7 @@
     (pin "1" (uuid 4ae9953a-51be-45df-9d9e-d5207d4dba3d))
     (pin "2" (uuid feea7df5-ef14-41da-8aa5-ab1f923a6a46))
     (instances
-      (project "BNO085_0x4A_Board"
+      (project "BNO085_0x4B_Board"
         (path "/70e5a8fd-d79a-42f0-963c-2c04abcfaf88"
           (reference "R2") (unit 1)
         )
@@ -1380,7 +1370,7 @@
     )
     (pin "1" (uuid 362c1567-4393-441c-8e38-258494342030))
     (instances
-      (project "BNO085_0x4A_Board"
+      (project "BNO085_0x4B_Board"
         (path "/70e5a8fd-d79a-42f0-963c-2c04abcfaf88"
           (reference "#PWR012") (unit 1)
         )

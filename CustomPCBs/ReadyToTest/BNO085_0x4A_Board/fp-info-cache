@@ -1,22 +1,8 @@
-5103384313361
-my_connectors
-25PIN FRONT FLIP 0.6mm PITCH AYF332535A
+1701537289393
+Library
+WireToBoard2x2Wide
 
 
 0
-25
-25
-my_connectors
-JST_SH_SM04B-SRSS-TB_1x04-1MP_P1.00mm_Horizontal
-JST SH series connector, SM04B-SRSS-TB (http://www.jst-mfg.com/product/pdf/eng/eSH.pdf), generated with kicad-footprint-generator
-connector JST SH top entry
-0
-6
-5
-my_connectors
-JST_SH_SM08B-SRSS-TB_1x08-1MP_P1.00mm_Horizontal
-JST SH series connector, SM08B-SRSS-TB (http://www.jst-mfg.com/product/pdf/eng/eSH.pdf), generated with kicad-footprint-generator
-connector JST SH top entry
-0
-10
-9
+4
+4

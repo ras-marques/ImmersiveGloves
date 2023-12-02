@@ -823,7 +823,7 @@
     (pin "1" (uuid fe20e2d3-8873-4da9-8bab-01b4004fbeec))
     (pin "2" (uuid e2ef6f34-6349-4854-9b80-b968dab7eeeb))
     (instances
-      (project "IMUBoard1QwiicConnector"
+      (project "BNO085_0x4A_Board"
         (path "/70e5a8fd-d79a-42f0-963c-2c04abcfaf88"
           (reference "R4") (unit 1)
         )
@@ -849,7 +849,7 @@
     (pin "1" (uuid 32e194d5-7ff6-4f0b-92a8-3f276c95e050))
     (pin "2" (uuid cdc657c8-054d-430d-b062-c184636e6daf))
     (instances
-      (project "IMUBoard1QwiicConnector"
+      (project "BNO085_0x4A_Board"
         (path "/70e5a8fd-d79a-42f0-963c-2c04abcfaf88"
           (reference "R1") (unit 1)
         )
@@ -875,7 +875,7 @@
     (pin "1" (uuid bd16e9a7-1ad9-4a87-aa42-da67e87076ea))
     (pin "2" (uuid 8abacc72-d4a7-4bba-a6c6-bf07414a4674))
     (instances
-      (project "IMUBoard1QwiicConnector"
+      (project "BNO085_0x4A_Board"
         (path "/70e5a8fd-d79a-42f0-963c-2c04abcfaf88"
           (reference "C6") (unit 1)
         )
@@ -901,7 +901,7 @@
     (pin "1" (uuid ca0a767d-63bf-401d-bf3e-8995ebfbf6f8))
     (pin "2" (uuid 216ba910-8245-4091-8902-8c68872d84ac))
     (instances
-      (project "IMUBoard1QwiicConnector"
+      (project "BNO085_0x4A_Board"
         (path "/70e5a8fd-d79a-42f0-963c-2c04abcfaf88"
           (reference "C1") (unit 1)
         )
@@ -926,7 +926,7 @@
     )
     (pin "1" (uuid 5bc2986b-5dac-4fef-b1a0-8a08b4449b18))
     (instances
-      (project "IMUBoard1QwiicConnector"
+      (project "BNO085_0x4A_Board"
         (path "/70e5a8fd-d79a-42f0-963c-2c04abcfaf88"
           (reference "#PWR02") (unit 1)
         )
@@ -951,7 +951,7 @@
     )
     (pin "1" (uuid 3d6003be-5a01-4d38-b290-f1d57fc3d2e0))
     (instances
-      (project "IMUBoard1QwiicConnector"
+      (project "BNO085_0x4A_Board"
         (path "/70e5a8fd-d79a-42f0-963c-2c04abcfaf88"
           (reference "#PWR011") (unit 1)
         )
@@ -977,7 +977,7 @@
     (pin "1" (uuid 17ffb21e-948b-4bfe-9c2d-9c7396ac1ff3))
     (pin "2" (uuid b869c9ce-3a74-417d-bc53-d9ba43d33b0e))
     (instances
-      (project "IMUBoard1QwiicConnector"
+      (project "BNO085_0x4A_Board"
         (path "/70e5a8fd-d79a-42f0-963c-2c04abcfaf88"
           (reference "C5") (unit 1)
         )
@@ -994,7 +994,7 @@
     (property "Value" "Conn_01x04_Pin" (at 26.035 33.02 0)
       (effects (font (size 1.27 1.27)))
     )
-    (property "Footprint" "Connector_JST:JST_SH_SM04B-SRSS-TB_1x04-1MP_P1.00mm_Horizontal" (at 25.4 38.1 0)
+    (property "Footprint" "Library:WireToBoard2x2Wide" (at 25.4 38.1 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Datasheet" "~" (at 25.4 38.1 0)
@@ -1005,7 +1005,7 @@
     (pin "3" (uuid 79e1b575-54cc-4152-a9a0-a79f476ce6dd))
     (pin "4" (uuid 3c4acc4f-9316-41eb-ab6c-97e10c00bc41))
     (instances
-      (project "IMUBoard1QwiicConnector"
+      (project "BNO085_0x4A_Board"
         (path "/70e5a8fd-d79a-42f0-963c-2c04abcfaf88"
           (reference "J1") (unit 1)
         )
@@ -1057,7 +1057,7 @@
     (pin "8" (uuid 88e40bf7-8b6e-42c5-a914-2d3e9cd060da))
     (pin "9" (uuid 4878a32d-3584-4d76-9aab-1f1be414632b))
     (instances
-      (project "IMUBoard1QwiicConnector"
+      (project "BNO085_0x4A_Board"
         (path "/70e5a8fd-d79a-42f0-963c-2c04abcfaf88"
           (reference "U1") (unit 1)
         )
@@ -1082,7 +1082,7 @@
     )
     (pin "1" (uuid 4098a3c4-d2bf-43cd-8bc2-f36c2469479e))
     (instances
-      (project "IMUBoard1QwiicConnector"
+      (project "BNO085_0x4A_Board"
         (path "/70e5a8fd-d79a-42f0-963c-2c04abcfaf88"
           (reference "#PWR06") (unit 1)
         )
@@ -1107,7 +1107,7 @@
     )
     (pin "1" (uuid 267f8bf2-8bf9-4e3c-88bc-abf90a4acae2))
     (instances
-      (project "IMUBoard1QwiicConnector"
+      (project "BNO085_0x4A_Board"
         (path "/70e5a8fd-d79a-42f0-963c-2c04abcfaf88"
           (reference "#PWR08") (unit 1)
         )
@@ -1133,7 +1133,7 @@
     (pin "1" (uuid 4c68312e-8b50-471e-a33a-f38667898494))
     (pin "2" (uuid 0f96f7cf-c82f-4b84-92bd-c3c4222844c3))
     (instances
-      (project "IMUBoard1QwiicConnector"
+      (project "BNO085_0x4A_Board"
         (path "/70e5a8fd-d79a-42f0-963c-2c04abcfaf88"
           (reference "C4") (unit 1)
         )
@@ -1159,7 +1159,7 @@
     (pin "1" (uuid 21ecbcca-cd58-4776-b7d7-99b3aa436190))
     (pin "2" (uuid c4d6902a-da47-44a5-8d10-ad46c1f72854))
     (instances
-      (project "IMUBoard1QwiicConnector"
+      (project "BNO085_0x4A_Board"
         (path "/70e5a8fd-d79a-42f0-963c-2c04abcfaf88"
           (reference "Y1") (unit 1)
         )
@@ -1184,7 +1184,7 @@
     )
     (pin "1" (uuid 1a61071a-4d12-4052-8ea7-382037234b39))
     (instances
-      (project "IMUBoard1QwiicConnector"
+      (project "BNO085_0x4A_Board"
         (path "/70e5a8fd-d79a-42f0-963c-2c04abcfaf88"
           (reference "#PWR03") (unit 1)
         )
@@ -1209,7 +1209,7 @@
     )
     (pin "1" (uuid 8acfb899-103c-40b7-8d1f-602f219cdc6b))
     (instances
-      (project "IMUBoard1QwiicConnector"
+      (project "BNO085_0x4A_Board"
         (path "/70e5a8fd-d79a-42f0-963c-2c04abcfaf88"
           (reference "#PWR010") (unit 1)
         )
@@ -1235,7 +1235,7 @@
     (pin "1" (uuid 5f7cb4da-04ea-4a53-9c6b-6a35db885209))
     (pin "2" (uuid 0035e3bf-8a57-47a6-8388-ba3ef2091659))
     (instances
-      (project "IMUBoard1QwiicConnector"
+      (project "BNO085_0x4A_Board"
         (path "/70e5a8fd-d79a-42f0-963c-2c04abcfaf88"
           (reference "C2") (unit 1)
         )
@@ -1260,7 +1260,7 @@
     )
     (pin "1" (uuid 450f85dc-d80f-40bc-bfbb-49756d1adfcb))
     (instances
-      (project "IMUBoard1QwiicConnector"
+      (project "BNO085_0x4A_Board"
         (path "/70e5a8fd-d79a-42f0-963c-2c04abcfaf88"
           (reference "#PWR01") (unit 1)
         )
@@ -1285,7 +1285,7 @@
     )
     (pin "1" (uuid c47ba113-b9c8-4b4c-be2b-6b349dedb711))
     (instances
-      (project "IMUBoard1QwiicConnector"
+      (project "BNO085_0x4A_Board"
         (path "/70e5a8fd-d79a-42f0-963c-2c04abcfaf88"
           (reference "#PWR09") (unit 1)
         )
@@ -1311,7 +1311,7 @@
     (pin "1" (uuid 013377f5-a965-42ae-a1d8-20b324801687))
     (pin "2" (uuid e3a9b61e-fc1e-4471-8038-3841fe8569e5))
     (instances
-      (project "IMUBoard1QwiicConnector"
+      (project "BNO085_0x4A_Board"
         (path "/70e5a8fd-d79a-42f0-963c-2c04abcfaf88"
           (reference "R3") (unit 1)
         )
@@ -1337,7 +1337,7 @@
     (pin "1" (uuid 4ae9953a-51be-45df-9d9e-d5207d4dba3d))
     (pin "2" (uuid feea7df5-ef14-41da-8aa5-ab1f923a6a46))
     (instances
-      (project "IMUBoard1QwiicConnector"
+      (project "BNO085_0x4A_Board"
         (path "/70e5a8fd-d79a-42f0-963c-2c04abcfaf88"
           (reference "R2") (unit 1)
         )
@@ -1362,7 +1362,7 @@
     )
     (pin "1" (uuid 362c1567-4393-441c-8e38-258494342030))
     (instances
-      (project "IMUBoard1QwiicConnector"
+      (project "BNO085_0x4A_Board"
         (path "/70e5a8fd-d79a-42f0-963c-2c04abcfaf88"
           (reference "#PWR012") (unit 1)
         )
