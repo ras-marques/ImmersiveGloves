@@ -15,7 +15,7 @@ You can refer to https://github.com/ras-marques/ImmersiveGloves/blob/main/Custom
 
 ## Tracking method
 
-Why base these gloves around the Tundra Tracker? Using a Tundra Tracker and an expansion board avoids having to deal with batteries, since the Tundra Tracker can power everything. Also, the tracker takes care of transmiting the data from the gloves to the computer wirelessly. An RP2040 takes care of acquiring the data from the 6 inertial sensors, processing it and delivering it to the tracker. I'm prototyping tiny IMU boards based around the BNO085 chip, one for each finger, and an expansion board for the Tundra Tracker. Total component cost for the electronics, not counting with the Tundra Tracker, should be around 200€ for a pair of gloves.
+Why base these gloves around the Tundra Tracker? Using a Tundra Tracker and an expansion board avoids having to deal with batteries, since the Tundra Tracker can power everything. Also, the tracker takes care of transmiting the data from the gloves to the computer wirelessly. An RP2040 takes care of acquiring the data from the 6 inertial sensors, processing it and delivering it to the tracker.
 
 This project is for people that already have a laser tracked VR setup with base stations and ideally for people using Tundra Trackers for full body tracking. That said, if you don't have the Tundra Trackers yet, there are some options:
 - 400€: 2 bundles of individual tundra tracker and SW1 dongle (2 USB ports needed) https://unboundxr.eu/tundra-tracker?sqr=tundra + https://unboundxr.eu/tundra-sw1-dongle
