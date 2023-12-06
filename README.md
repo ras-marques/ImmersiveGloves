@@ -6,6 +6,15 @@ https://github.com/ras-marques/ImmersiveGloves/assets/6479742/3d3f5d54-22ea-44d6
 
 Everything is in a prototyping phase, but currently I have finger curl and splay working on all 5 fingers and an emulated joystick from thumb rotation. Now moving to custom boards that will make everything smaller, prettier and more robust.
 
+## Cost analysis
+
+You can refer to https://github.com/ras-marques/ImmersiveGloves/blob/main/CustomPCBs/cost_analysis.xlsx for the complete BOM, but in summary the current cost is described below:
+- 4€/pair times 50 = 200€: Cost to make enough boards for exactly 50 pairs of these gloves
+- 170€/pair: Cost to source enough components and some spares for a pair of these gloves
+- 130€/pair times 50 = 6500€: Cost to source enough compoents for 50 pairs of these gloves
+
+## Tracking method
+
 Why base these gloves around the Tundra Tracker? Using a Tundra Tracker and an expansion board avoids having to deal with batteries, since the Tundra Tracker can power everything. Also, the tracker takes care of transmiting the data from the gloves to the computer wirelessly. An RP2040 takes care of acquiring the data from the 6 inertial sensors, processing it and delivering it to the tracker. I'm prototyping tiny IMU boards based around the BNO085 chip, one for each finger, and an expansion board for the Tundra Tracker. Total component cost for the electronics, not counting with the Tundra Tracker, should be around 200€ for a pair of gloves.
 
 This project is for people that already have a laser tracked VR setup with base stations and ideally for people using Tundra Trackers for full body tracking. That said, if you don't have the Tundra Trackers yet, there are some options:
