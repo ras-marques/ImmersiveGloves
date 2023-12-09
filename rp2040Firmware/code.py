@@ -2,9 +2,13 @@ import array
 import board
 import busio
 from adafruit_bno08x.i2c import BNO08X_I2C
-#from adafruit_bno08x import BNO_REPORT_ACCELEROMETER        # gives the acceleration with the gravity included
 from adafruit_bno08x import BNO_REPORT_LINEAR_ACCELERATION   # gives the acceleration with the gravity removed
 from adafruit_bno08x import BNO_REPORT_ROTATION_VECTOR       # gives a quaternion from sensor fusion, including the magnetometer data
+
+from adafruit_bno08x import BNO_REPORT_ACCELEROMETER
+from adafruit_bno08x import BNO_REPORT_MAGNETOMETER
+from adafruit_bno08x import BNO_REPORT_GYROSCOPE
+
 # import pyquaternion
 from ulab import numpy as np
 import time
@@ -149,7 +153,7 @@ def quaternionFromAngle(angle, axis):
     if axis == 2:
         return Quaternion(np.cos(angle/2),0,0,np.sin(angle/2))
 
-thumbActive = True
+thumbActive = False
 indexActive = False
 middleActive = False
 ringActive = False
@@ -174,6 +178,10 @@ i2c_1 = busio.I2C(board.GP7, board.GP6, frequency = 400000, timeout = 8000)
 bnoRef = BNO08X_I2C(i2c_0, None, 0x4B)
 bnoRef.enable_feature(BNO_REPORT_ROTATION_VECTOR)
 bnoRef.enable_feature(BNO_REPORT_LINEAR_ACCELERATION)
+
+bnoRef.enable_feature(BNO_REPORT_ACCELEROMETER)
+bnoRef.enable_feature(BNO_REPORT_GYROSCOPE)
+bnoRef.enable_feature(BNO_REPORT_MAGNETOMETER)
 
 if thumbActive:
     bnoThumb = BNO08X_I2C(i2c_0, None, 0x4A)
@@ -248,6 +256,333 @@ thumbAccelTime = time.monotonic()
 
 joystick_enabled = digitalio.DigitalInOut(board.GP10)
 joystick_enabled.pull = digitalio.Pull.UP
+
+#################################
+# SENSOR FUSION BENCHMARK START #
+#################################
+def TO_RAD(x):
+    return x * 0.01745329252 # *pi/180
+def TO_DEG(x):
+    return x * 57.2957795131 # *180/pi
+
+# Multiply two 3x3 matrices: out = a * b
+def Matrix_Multiply(a, b):
+    return np.dot(a,b)
+
+# Adds two vectors
+def Vector_Add(v1, v2):
+    return v1+v2
+
+# Computes the dot product of two vectors
+def Vector_Dot_Product(v1, v2):
+    return np.dot(v1,v2)
+
+def Vector_Cross_Product(v1, v2):
+    out = np.empty([3])
+    out[0] = (v1[1] * v2[2]) - (v1[2] * v2[1])
+    out[1] = (v1[2] * v2[0]) - (v1[0] * v2[2])
+    out[2] = (v1[0] * v2[1]) - (v1[1] * v2[0])
+    return out
+
+# Multiply the vector by a scalar
+def Vector_Scale(v, scale):
+    return v*scale
+
+# Init rotation matrix using euler angles
+def init_rotation_matrix(yaw, pitch, roll):
+    m = np.empty([3, 3])
+    c1 = np.cos(roll)
+    s1 = np.sin(roll)
+    c2 = np.cos(pitch)
+    s2 = np.sin(pitch)
+    c3 = np.cos(yaw)
+    s3 = np.sin(yaw)
+    # Euler angles, right-handed, intrinsic, XYZ convention
+    # (which means: rotate around body axes Z, Y', X'')
+    m[0][0] = c2 * c3
+    m[0][1] = c3 * s1 * s2 - c1 * s3
+    m[0][2] = s1 * s3 + c1 * c3 * s2
+
+    m[1][0] = c2 * s3
+    m[1][1] = c1 * c3 + s1 * s2 * s3
+    m[1][2] = c1 * s2 * s3 - c3 * s1
+
+    m[2][0] = -s2
+    m[2][1] = c2 * s1
+    m[2][2] = c1 * c2
+
+    return m
+
+def read_sensors():
+    global accel_xyz
+    global gyro_xyz
+    global magn_xyz
+    accel_xyz = bnoRef.acceleration
+    gyro_xyz = bnoRef.gyro
+    magn_xyz = bnoRef.magnetic
+
+def reset_sensor_fusion():
+    global DCM_Matrix
+    global pitch
+    global roll
+    global MAG_Heading
+    global yaw
+    global DCM_Matrix
+    global timer
+
+    xAxis = [1, 0, 0]
+
+    read_sensors()
+    timer = time.monotonic()
+
+    # GET PITCH
+    # Using y-z-plane-component/x-component of gravity vector
+    pitch = -np.arctan2(accel_xyz[0], np.sqrt(accel_xyz[1] * accel_xyz[1] + accel_xyz[2] * accel_xyz[2]))
+    # GET ROLL
+    # Compensate pitch of gravity vector
+    temp1 = Vector_Cross_Product(accel_xyz, xAxis)
+    temp2 = Vector_Cross_Product(xAxis, temp1)
+    # Normally using x-z-plane-component/y-component of compensated gravity vector
+    # roll = atan2(temp2[1], sqrt(temp2[0] * temp2[0] + temp2[2] * temp2[2]))
+    # Since we compensated for pitch, x-z-plane-component equals z-component:
+    roll = np.arctan2(temp2[1], temp2[2])
+
+    # GET YAW
+    Compass_Heading()
+    yaw = MAG_Heading
+
+    # Init rotation matrix
+    DCM_Matrix = init_rotation_matrix(yaw, pitch, roll)
+
+def compensate_gyro_offset():
+    global gyro_xyz
+    gyro_xyz = list(gyro_xyz)
+    gyro_xyz[0] = gyro_xyz[0] - GYRO_AVERAGE_OFFSET_X
+    gyro_xyz[1] = gyro_xyz[1] - GYRO_AVERAGE_OFFSET_Y
+    gyro_xyz[2] = gyro_xyz[2] - GYRO_AVERAGE_OFFSET_Z
+
+def Compass_Heading():
+    global MAG_Heading
+    
+    cos_roll = np.cos(roll)
+    sin_roll = np.sin(roll)
+    cos_pitch = np.cos(pitch)
+    sin_pitch = np.sin(pitch)
+
+    # Tilt compensated magnetic field X
+    mag_x = magn_xyz[0] * cos_pitch + magn_xyz[1] * sin_roll * sin_pitch + magn_xyz[2] * cos_roll * sin_pitch
+    # Tilt compensated magnetic field Y
+    mag_y = magn_xyz[1] * cos_roll - magn_xyz[2] * sin_roll
+    # Magnetic Heading
+    MAG_Heading = np.arctan2(-mag_y, mag_x)
+    # MAG_Heading = 0
+
+def Matrix_update():
+    global Omega
+    global Omega_Vector
+    global gyro_xyz
+    global DCM_Matrix
+    global Temporary_Matrix
+    
+    # gyro_xyz[0] = TO_RAD(gyro_xyz[0]*GYRO_GAIN)
+    # gyro_xyz[1] = TO_RAD(gyro_xyz[1]*GYRO_GAIN)
+    # gyro_xyz[2] = TO_RAD(gyro_xyz[2]*GYRO_GAIN)
+    # gyro_xyz[0] = TO_RAD(gyro_xyz[0])
+    # gyro_xyz[1] = TO_RAD(gyro_xyz[1])
+    # gyro_xyz[2] = TO_RAD(gyro_xyz[2])
+
+    Update_Matrix = np.empty([3,3])
+
+    Omega = Vector_Add(gyro_xyz, Omega_I) # adding proportional term calculated in Drift_Correction()
+    Omega_Vector = Vector_Add(Omega, Omega_P) # adding Integrator term calculated in Drift_Correction()
+
+    #Ver equacoes 15 16 e 17 no paper Direction Cosine Matrix IMU: Theory - William Premerlani and Paul Bizard
+    #Omega_Vector e o vetor do giroscopio com correcao ao drift
+    Update_Matrix[0][0] =0
+    Update_Matrix[0][1]=-G_Dt*Omega_Vector[2] # -z
+    Update_Matrix[0][2]=G_Dt*Omega_Vector[1] # y
+    Update_Matrix[1][0]=G_Dt*Omega_Vector[2] # z
+    Update_Matrix[1][1]=0
+    Update_Matrix[1][2]=-G_Dt*Omega_Vector[0] # -x
+    Update_Matrix[2][0]=-G_Dt*Omega_Vector[1] #-y
+    Update_Matrix[2][1]=G_Dt*Omega_Vector[0] # x
+    Update_Matrix[2][2]=0
+
+    Temporary_Matrix = Matrix_Multiply(DCM_Matrix,Update_Matrix)
+    DCM_Matrix = DCM_Matrix + Temporary_Matrix
+
+def Normalize():  # confirmei pelo paper e esta bem
+    temporary = np.empty([3, 3])
+
+    error = -Vector_Dot_Product(DCM_Matrix[0], DCM_Matrix[1]) * .5  # eq.19
+
+    temporary[0] = Vector_Scale(DCM_Matrix[1], error)  # eq.19
+    temporary[1] = Vector_Scale(DCM_Matrix[0], error)  # eq.19
+
+    temporary[0] = Vector_Add(temporary[0], DCM_Matrix[0])  # eq.19
+    temporary[1] = Vector_Add(temporary[1], DCM_Matrix[1])  # eq.19
+
+    temporary[2] = Vector_Cross_Product(temporary[0], temporary[1])  # c= a x b //eq.20
+
+    renorm = .5 * (3 - Vector_Dot_Product(temporary[0], temporary[0]))  # eq.21
+    DCM_Matrix[0] = Vector_Scale(temporary[0], renorm)
+
+    renorm = .5 * (3 - Vector_Dot_Product(temporary[1], temporary[1]))  # eq.21
+    DCM_Matrix[1] = Vector_Scale(temporary[1], renorm)
+
+    renorm = .5 * (3 - Vector_Dot_Product(temporary[2], temporary[2]))  # eq.21
+    DCM_Matrix[2] = Vector_Scale(temporary[2], renorm)
+
+def Drift_correction():  # AINDA NAO ACABEI DE PORTAR PARA PYTHON!!!
+    # Global variables
+    global Omega_P
+    global Omega_I
+    global errorRollPitch
+    global errorYaw
+    
+    # Compensation the Roll, Pitch and Yaw drift.
+    # Scaled_Omega_P
+    # Scaled_Omega_I
+    # Accel_magnitude
+    # Accel_weight
+
+    # *****Roll and Pitch***************
+
+    # Calculate the magnitude of the accelerometer vector
+    Accel_magnitude = np.sqrt(accel_xyz[0] * accel_xyz[0] + accel_xyz[1] * accel_xyz[1] + accel_xyz[2] * accel_xyz[2])
+
+    # Dynamic weighting of accelerometer info (reliability filter)
+    # Weight for accelerometer info (<0.5G = 0.0, 1G = 1.0 , >1.5G = 0.0)
+    accel_test = 1 - 2 * abs(1 - Accel_magnitude)
+    if accel_test > 1:
+        Accel_weight = 1
+    elif accel_test < 0:
+        Accel_weight = 0
+    else:
+        Accel_weight = accel_test
+
+    errorRollPitch = Vector_Cross_Product(accel_xyz, DCM_Matrix[2])  # adjust the ground of reference
+    Omega_P = Vector_Scale(errorRollPitch, Kp_ROLLPITCH * Accel_weight)
+
+    Scaled_Omega_I = Vector_Scale(errorRollPitch, Ki_ROLLPITCH * Accel_weight)
+    Omega_I = Vector_Add(Omega_I, Scaled_Omega_I)
+
+    # *****YAW***************
+    # We make the gyro YAW drift correction based on compass magnetic heading
+
+    mag_heading_x = np.cos(MAG_Heading)
+    mag_heading_y = np.sin(MAG_Heading)
+    errorCourse = (DCM_Matrix[0][0] * mag_heading_y) - (DCM_Matrix[1][0] * mag_heading_x)  # Calculating YAW error
+    errorYaw = Vector_Scale(DCM_Matrix[2], errorCourse)  # Applys the yaw correction to the XYZ rotation of the aircraft, depeding the position.
+
+    Scaled_Omega_P = Vector_Scale(errorYaw, Kp_YAW)  # .01proportional of YAW.
+    Omega_P = Vector_Add(Omega_P, Scaled_Omega_P)  # Adding  Proportional.
+
+    Scaled_Omega_I = Vector_Scale(errorYaw, Ki_YAW)  # .00001Integrator
+    Omega_I = Vector_Add(Omega_I, Scaled_Omega_I)  # adding integrator to the Omega_I
+
+def Euler_angles():
+    global pitch
+    global roll
+    global yaw
+
+    global pitch_deg
+    global roll_deg
+    global yaw_deg
+    
+    # Vem das identidades trigonometricas da matriz de rotacao: Direct Cosine Matrix (DCM)
+    # Ja confirmei, esta certo, nao perder tempo aqui, ver como a DCM_Matrix e construida antes
+    pitch = -np.asin(DCM_Matrix[2][0])
+    roll = np.arctan2(DCM_Matrix[2][1],DCM_Matrix[2][2])
+    yaw = np.arctan2(DCM_Matrix[1][0],DCM_Matrix[0][0])
+
+    pitch_deg = TO_DEG(pitch)
+    roll_deg = TO_DEG(roll)
+    yaw_deg = TO_DEG(yaw)
+
+def print_angles():
+    print("yaw   = %.0f" % yaw_deg)
+    print("pitch = %.0f" % pitch_deg)
+    print("roll  = %.0f" % roll_deg)
+    print("")
+
+accel_xyz = np.empty([3])
+gyro_xyz = np.empty([3])
+magn_xyz = np.empty([3])
+MAG_Heading = 0
+
+gyro_offset = np.empty([3])
+for i in range(0, 63):
+    gyro_result = bnoRef.gyro
+    gyro_offset[0] += gyro_result[0]
+    gyro_offset[1] += gyro_result[1]
+    gyro_offset[2] += gyro_result[2]
+
+GYRO_AVERAGE_OFFSET_X = gyro_offset[0] * 0.015625  # 1/64
+GYRO_AVERAGE_OFFSET_Y = gyro_offset[1] * 0.015625  # 1/64
+GYRO_AVERAGE_OFFSET_Z = gyro_offset[2] * 0.015625  # 1/64
+
+#DCM parameters
+Kp_ROLLPITCH = 0.02
+Ki_ROLLPITCH = 0.00002
+Kp_YAW = 1.2
+Ki_YAW = 0.00002
+
+# DCM variables
+MAG_Heading = 0
+#Accel_Vector = np.empty([3]) # Store the acceleration in a vector
+#Gyro_Vector = np.empty([3]) # Store the gyros turn rate in a vector
+Omega_Vector = np.zeros(3) # Corrected Gyro_Vector data
+Omega_P = np.zeros(3) # Omega Proportional correction
+Omega_I = np.zeros(3) # Omega Integrator
+Omega = np.zeros(3)
+errorRollPitch = np.empty([3])
+errorYaw = np.empty([3])
+DCM_Matrix = np.array([[1,0,0],[0,1,0],[0,0,1]])
+Temporary_Matrix = np.empty([3,3])
+
+reset_sensor_fusion()
+
+timer = time.monotonic_ns()/1000000
+while True:
+    if time.monotonic_ns()/1000000 - timer >= 20:  # Main loop runs at 50Hz
+        timer_old = timer
+        timer = time.monotonic_ns()/1000000
+        if timer > timer_old:
+            G_Dt = (timer - timer_old) / 1000.0  # Real time of loop run. We use this on the DCM algorithm (gyro integration time)
+        else:
+            G_Dt = 0
+        
+        read_sensors()
+        secondTimer = time.monotonic_ns()/1000000
+        
+        for i in range(6):        
+            #pitch_test = -np.arctan2(accel_xyz[0], np.sqrt(accel_xyz[1] * accel_xyz[1] + accel_xyz[2] * accel_xyz[2]))
+            #print TO_DEG(pitch_test)
+            #print_accel()
+
+            compensate_gyro_offset()
+            #compensate_sensor_errors()
+
+            #print_gyro()
+
+            # Run DCM algorithm
+            if magn_xyz[0] != 0 and magn_xyz[0] != 0 and magn_xyz[0] != 0:
+                Compass_Heading()  # Calculate magnetic heading
+                #print(MAG_Heading)
+            Matrix_update()
+            Normalize()
+            Drift_correction()
+            # ***
+            Euler_angles()
+
+        #print_angles()
+        
+        print(time.monotonic_ns()/1000000 - secondTimer)
+
+###############################
+# SENSOR FUSION BENCHMARK END #
+###############################
 
 while True:
     handQuaternion = Quaternion(bnoRef.quaternion[3],bnoRef.quaternion[0],bnoRef.quaternion[1],bnoRef.quaternion[2])                    # get the reference IMU quaternion
