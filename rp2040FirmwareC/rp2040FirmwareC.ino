@@ -29,6 +29,7 @@
 // 20    Sensor-specific configuration word MSB              0
 
 BNO085 bnoRef;
+BNO085 bnoThumb;
 
 // the setup function runs once when you press reset or power the board
 void setup() {
@@ -45,11 +46,19 @@ void setup() {
   gpio_set_function(5, GPIO_FUNC_I2C); // set pin 5 as an I2C pin (SCL in this case)
   gpio_pull_up(4);                     // use internal pull up on pin 4
   gpio_pull_up(5);                     // use internal pull up on pin 5
-  delay(1000);                         // Give the IMUs time to boot up
-
   Serial.println("I2C0 configured");
 
+  _i2c_init(i2c1, 400000);             // Init I2C1 peripheral at 400kHz
+  gpio_set_function(14, GPIO_FUNC_I2C); // set pin 2 as an I2C pin (SDA in this case)
+  gpio_set_function(15, GPIO_FUNC_I2C); // set pin 3 as an I2C pin (SCL in this case)
+  gpio_pull_up(14);                     // use internal pull up on pin 2
+  gpio_pull_up(15);                     // use internal pull up on pin 3
+  Serial.println("I2C1 configured");
+  
+  delay(1000);                         // Give the IMUs time to boot up
+
   bnoRef.begin(i2c0, 0x4A);
+  bnoThumb.begin(i2c1, 0x4B);
   
   // pinMode(LED_BUILTIN, OUTPUT);
 }
@@ -57,6 +66,7 @@ void setup() {
 // the loop function runs over and over again forever
 void loop() {
   bnoRef.getReadings();
+  bnoThumb.getReadings();
   // bool success = receivePacket();
   // if(!success){/*Serial.println("no report available");*/}
   // else Serial.println("report available");

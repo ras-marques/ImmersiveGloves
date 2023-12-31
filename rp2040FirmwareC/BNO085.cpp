@@ -307,7 +307,6 @@ bool BNO085::begin(i2c_inst_t* i2cInterface, uint8_t address){
 	// Wait max 2.5s for the product_id_response and ignore other packets received during that time.
 	while (millis() - tInitialResetTimeMS < 10000 && (!tBoardInfoReceived)) {
 		receivePacket();
-    Serial.println("product id requested: ");
     // Serial.println(shtpHeader[2]);
 		if (shtpHeader[2] == 2 && shtpData[0] == SHTP_REPORT_PRODUCT_ID_RESPONSE) {
 			tBoardInfoReceived = true;
@@ -484,13 +483,13 @@ uint16_t BNO085::parseInputReport(void)
 			rawGameQuatJ = data2;
 			rawGameQuatK = data3;
 			rawGameQuatReal = data4;
-      Serial.print(rawGameQuatI);
-      Serial.print(",");
-      Serial.print(rawGameQuatJ);
-      Serial.print(",");
-      Serial.print(rawGameQuatK);
-      Serial.print(",");
-      Serial.println(rawGameQuatReal);
+      // Serial.print(rawGameQuatI);
+      // Serial.print(",");
+      // Serial.print(rawGameQuatJ);
+      // Serial.print(",");
+      // Serial.print(rawGameQuatK);
+      // Serial.print(",");
+      // Serial.println(rawGameQuatReal);
 		}
 	}
 	else if (shtpData[5] == SENSOR_REPORTID_TAP_DETECTOR)
