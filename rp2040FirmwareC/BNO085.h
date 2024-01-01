@@ -3,6 +3,34 @@
 
 #include <Arduino.h>
 
+//SH-2 Protocol (always starting with this)
+// Byte  Field                                 Example
+//  0    Length LSB                            21
+//  1    Length MSB                             0
+//  2    Channel                                2
+//  3    SeqNum                                 0
+
+//Then depending on what we want to do, the format of the next bytes may change
+//if we want to enable the accel report, 
+
+//  4    Report ID                                           0xFD  Set Feature Command
+//  5    Feature Report ID                                   0x01  Accelerometer
+//  6    Feature flags                                       0
+//  7    Change sensitivity [absolute | relative ] LSB       0
+//  8    Change sensitivity [absolute | relative ] MSB       0
+//  9    Report Interval LSB                                 10000&255
+// 10    Report Interval                                     (10000>>8)&255
+// 11    Report Interval                                     (10000>>16)&255
+// 12    Report Interval MSB                                 (10000>>24)&255
+// 13    Batch Interval LSB                                  0
+// 14    Batch Interval                                      0
+// 15    Batch Interval                                      0
+// 16    Batch Interval MSB                                  0
+// 17    Sensor-specific configuration word LSB              0
+// 18    Sensor-specific configuration word                  0
+// 19    Sensor-specific configuration word                  0
+// 20    Sensor-specific configuration word MSB              0
+
 #define CHANNEL_COMMAND 0
 #define CHANNEL_EXECUTABLE 1
 #define CHANNEL_CONTROL 2
@@ -90,7 +118,10 @@ class BNO085 {
     uint16_t getReadings(void);
 	  uint16_t parseInputReport(void);   //Parse sensor readings out of report
     uint16_t parseCommandReport(void); //Parse command responses out of report
-    
+
+    float qToFloat(int16_t fixedPointValue, uint8_t qPoint); //Given a Q value, converts fixed point floating to regular floating point number
+    void getGameQuat(float &i, float &j, float &k, float &real, uint8_t &accuracy);
+
     void setFeatureCommand(uint8_t reportID, uint16_t timeBetweenReports);
 	  void setFeatureCommand(uint8_t reportID, uint16_t timeBetweenReports, uint32_t specificConfig);
 
@@ -100,6 +131,43 @@ class BNO085 {
     uint8_t shtpHeader[4]; //Each packet has a header of 4 bytes
     uint8_t shtpData[MAX_PACKET_SIZE];
     uint8_t sequenceNumber[6] = {0, 0, 0, 0, 0, 0}; //There are 6 com channels. Each channel has its own seqnum
+
+    bool hasNewQuaternion, hasNewGameQuaternion, hasNewMagQuaternion, hasNewAccel_;
+  
+  private:
+    
+    boolean _printDebug = false; //Flag to print debugging variables
+
+    //These are the raw sensor values (without Q applied) pulled from the user requested Input Report
+    uint16_t rawAccelX, rawAccelY, rawAccelZ, accelAccuracy;
+    uint16_t rawLinAccelX, rawLinAccelY, rawLinAccelZ, accelLinAccuracy;
+    uint16_t rawGyroX, rawGyroY, rawGyroZ, gyroAccuracy;
+    uint16_t rawMagX, rawMagY, rawMagZ, magAccuracy;
+    uint16_t rawQuatI, rawQuatJ, rawQuatK, rawQuatReal, rawQuatRadianAccuracy, quatAccuracy;
+    uint16_t rawGameQuatI, rawGameQuatJ, rawGameQuatK, rawGameQuatReal, quatGameAccuracy;
+    uint16_t rawMagQuatI, rawMagQuatJ, rawMagQuatK, rawMagQuatReal, rawMagQuatRadianAccuracy, quatMagAccuracy;
+    uint16_t rawFastGyroX, rawFastGyroY, rawFastGyroZ;
+    uint8_t tapDetector;
+    bool hasNewTap;
+    uint16_t stepCount;
+    uint32_t timeStamp;
+    uint8_t stabilityClassifier;
+    uint8_t activityClassifier;
+    uint8_t *_activityConfidences;						  //Array that store the confidences of the 9 possible activities
+    uint8_t calibrationStatus;							  //Byte R0 of ME Calibration Response
+    uint16_t memsRawAccelX, memsRawAccelY, memsRawAccelZ; //Raw readings from MEMS sensor
+    uint16_t memsRawGyroX, memsRawGyroY, memsRawGyroZ;	//Raw readings from MEMS sensor
+    uint16_t memsRawMagX, memsRawMagY, memsRawMagZ;		  //Raw readings from MEMS sensor
+
+    //These Q values are defined in the datasheet but can also be obtained by querying the meta data records
+    //See the read metadata example for more info
+    int16_t rotationVector_Q1 = 14;
+    int16_t rotationVectorAccuracy_Q1 = 12; //Heading accuracy estimate in radians. The Q point is 12.
+    int16_t accelerometer_Q1 = 8;
+    int16_t linear_accelerometer_Q1 = 8;
+    int16_t gyro_Q1 = 9;
+    int16_t magnetometer_Q1 = 4;
+    int16_t angular_velocity_Q1 = 10;
 };
 
 #endif

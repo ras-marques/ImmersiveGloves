@@ -350,39 +350,6 @@ bool BNO085::begin(i2c_inst_t* i2cInterface, uint8_t address){
 
 uint16_t BNO085::parseInputReport(void)
 {
-  boolean _printDebug = false; //Flag to print debugging variables
-  //These are the raw sensor values (without Q applied) pulled from the user requested Input Report
-	uint16_t rawAccelX, rawAccelY, rawAccelZ, accelAccuracy;
-	uint16_t rawLinAccelX, rawLinAccelY, rawLinAccelZ, accelLinAccuracy;
-	uint16_t rawGyroX, rawGyroY, rawGyroZ, gyroAccuracy;
-	uint16_t rawMagX, rawMagY, rawMagZ, magAccuracy;
-	uint16_t rawQuatI, rawQuatJ, rawQuatK, rawQuatReal, rawQuatRadianAccuracy, quatAccuracy;
-	uint16_t rawGameQuatI, rawGameQuatJ, rawGameQuatK, rawGameQuatReal, quatGameAccuracy;
-	uint16_t rawMagQuatI, rawMagQuatJ, rawMagQuatK, rawMagQuatReal, rawMagQuatRadianAccuracy, quatMagAccuracy;
-	bool hasNewQuaternion, hasNewGameQuaternion, hasNewMagQuaternion, hasNewAccel_;
-	uint16_t rawFastGyroX, rawFastGyroY, rawFastGyroZ;
-	uint8_t tapDetector;
-	bool hasNewTap;
-	uint16_t stepCount;
-	uint32_t timeStamp;
-	uint8_t stabilityClassifier;
-	uint8_t activityClassifier;
-	uint8_t *_activityConfidences;						  //Array that store the confidences of the 9 possible activities
-  uint8_t calibrationStatus;							  //Byte R0 of ME Calibration Response
-	uint16_t memsRawAccelX, memsRawAccelY, memsRawAccelZ; //Raw readings from MEMS sensor
-	uint16_t memsRawGyroX, memsRawGyroY, memsRawGyroZ;	//Raw readings from MEMS sensor
-	uint16_t memsRawMagX, memsRawMagY, memsRawMagZ;		  //Raw readings from MEMS sensor
-
-	//These Q values are defined in the datasheet but can also be obtained by querying the meta data records
-	//See the read metadata example for more info
-	int16_t rotationVector_Q1 = 14;
-	int16_t rotationVectorAccuracy_Q1 = 12; //Heading accuracy estimate in radians. The Q point is 12.
-	int16_t accelerometer_Q1 = 8;
-	int16_t linear_accelerometer_Q1 = 8;
-	int16_t gyro_Q1 = 9;
-	int16_t magnetometer_Q1 = 4;
-	int16_t angular_velocity_Q1 = 10;
-
 	//Calculate the number of data bytes in this packet
 	int16_t dataLength = ((uint16_t)shtpHeader[1] << 8 | shtpHeader[0]);
 	dataLength &= ~(1 << 15); //Clear the MSbit. This bit indicates if this package is a continuation of the last.
@@ -584,6 +551,25 @@ uint16_t BNO085::parseCommandReport(void){
 
 	//TODO additional feature reports may be strung together. Parse them all.
 	return 0;
+}
+
+//Given a register value and a Q point, convert to float
+//See https://en.wikipedia.org/wiki/Q_(number_format)
+float BNO085::qToFloat(int16_t fixedPointValue, uint8_t qPoint)
+{
+	float qFloat = fixedPointValue;
+	qFloat *= pow(2, qPoint * -1);
+	return (qFloat);
+}
+
+void BNO085::getGameQuat(float &i, float &j, float &k, float &real, uint8_t &accuracy)
+{
+	i = qToFloat(rawGameQuatI, rotationVector_Q1);
+	j = qToFloat(rawGameQuatJ, rotationVector_Q1);
+	k = qToFloat(rawGameQuatK, rotationVector_Q1);
+	real = qToFloat(rawGameQuatReal, rotationVector_Q1);
+	accuracy = quatGameAccuracy;
+	hasNewGameQuaternion = false;
 }
 
 uint16_t BNO085::getReadings(void){
