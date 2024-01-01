@@ -4,13 +4,8 @@
 
 BNO085 bnoRef;
 BNO085 bnoThumb;
-BNO085 bnoIndex;
-BNO085 bnoMiddle;
-BNO085 bnoRing;
-BNO085 bnoPinky;
 
 Quaternion handQuaternionThatWorks;
-// Quaternion handQuaternionThatWorks = Quaternion(sqrt(2)/2,0,0,-sqrt(2)/2);
 Quaternion handQuaternion;
 Quaternion relativeQuaternion;
 
