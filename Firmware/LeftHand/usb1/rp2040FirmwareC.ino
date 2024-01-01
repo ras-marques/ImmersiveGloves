@@ -63,6 +63,23 @@ Quaternion quaternionFromAngle(float angle, int axis){
   }
 }
 
+// this will be sent by serial to the main MCU - 23 bytes are enough for 184 bits, this struct has 183
+typedef struct __attribute__( ( packed, aligned( 1 ) ) )
+{
+  uint8_t       a               : 1;  //0
+  uint8_t       b               : 1;  //1
+  uint8_t       thumbstick_en   : 1;  //2
+  uint16_t      thumbstick_x    : 10; //3
+  uint16_t      thumbstick_y    : 10; //13
+  uint16_t      thumbCurl       : 10; //23
+  uint16_t      thumbSplay      : 10; //33
+  uint16_t      refQuaternion_w : 32; //55
+  uint16_t      refQuaternion_x : 32; //87
+  uint16_t      refQuaternion_y : 32; //119
+  uint16_t      refQuaternion_z : 32; //151
+} serial_data_t;
+serial_data_t serial_data;
+
 // the setup function runs once when you press reset or power the board
 void setup() {
 
@@ -71,6 +88,7 @@ void setup() {
 
   delay(1000);
   Serial.println("ImmersiveGloves starting...");
+
 
   // Initialize I2C
   _i2c_init(i2c0, 400000);             // Init I2C0 peripheral at 400kHz
@@ -87,6 +105,18 @@ void setup() {
   // gpio_pull_up(15);                     // use internal pull up on pin 3
   // Serial.println("I2C1 configured");
   
+  // Set up our UART with the required speed.
+  uart_init(uart1, 115200);
+  // Set the TX and RX pins by using the function select on the GPIO
+  // Set datasheet for more information on function select
+  gpio_set_function(4, GPIO_FUNC_UART);
+  gpio_set_function(5, GPIO_FUNC_UART);
+
+  // Reference functions below:
+  // uart_putc_raw(uart1, 'A');           // Send out a character without any conversions
+  // uart_putc(uart1, 'B');               // Send out a character but do CR/LF conversions
+  // uart_puts(uart1, " Hello, UART!\n"); // Send out a string, with CR/LF conversions
+
   delay(1000);                         // Give the IMUs time to boot up
 
   bnoRef.begin(i2c0, 0x4A);
@@ -118,21 +148,26 @@ void setup() {
   gpio_set_dir(22,false); // set GPIO22 as input
 }
 
-bool joystickIsEnabled = false;
-int joystick_x = 512;
-int joystick_y = 512;
-
 bool thumbActive = true;
 bool indexActive = false;
 bool middleActive = false;
 bool ringActive = false;
 bool pinkyActive = false;
 
+bool joystickIsEnabled = false;
+int joystick_x = 512;
+int joystick_y = 512;
+int thumb_axis = 0;
+int thumb_splay_axis = 0;
+
 // the loop function runs over and over again forever
 void loop() {
   bnoRef.getReadings();
   bnoThumb.getReadings();
   // bnoIndex.getReadings();
+  // bnoMiddle.getReadings();
+  // bnoRing.getReadings();
+  // bnoPinky.getReadings();
 
   if(bnoRef.hasNewGameQuaternion){
     uint8_t accuracy;
@@ -167,7 +202,7 @@ void loop() {
     Quaternion thumbDecurledToNeutralQuaternion = quaternion_multiply(handQuaternion, quaternion_conjugate(thumbDecurledQuaternion)); // get the relative quaternion between the reference IMU quaternion and the quaternion representing the index IMU rotated back by the curl angle
     int thumbSplayAmount = getSplay(thumbDecurledToNeutralQuaternion);                                                                // get the splay angle in radians from the quaternion calculated above
     int thumbSplayAngle = (int)(thumbSplayAmount*180/3.14);                                                                           // convert the splay angle to degrees
-    int thumb_splay_axis = (int)(512+512*thumbSplayAngle/42.);
+    thumb_splay_axis = (int)(512+512*thumbSplayAngle/42.);
     if (thumb_splay_axis < 0)
       thumb_splay_axis = 0;
     else if (thumb_splay_axis > 1023)
@@ -214,6 +249,21 @@ void loop() {
     Serial.println(joystick_y);
   }
 
+  serial_data.thumbstick_en = joystickIsEnabled;
+  serial_data.thumbstick_x = joystick_x;
+  serial_data.thumbstick_y = joystick_y;
+  serial_data.thumbCurl = thumb_axis;
+  serial_data.thumbSplay = thumb_splay_axis;
+  serial_data.refQuaternion_w = (int)(32767. * handQuaternion.w);
+  serial_data.refQuaternion_x = (int)(32767. * handQuaternion.x);
+  serial_data.refQuaternion_y = (int)(32767. * handQuaternion.y);
+  serial_data.refQuaternion_z = (int)(32767. * handQuaternion.z);
+  uint8_t *data_ptr = (uint8_t *)&serial_data;
+  size_t data_size = sizeof(serial_data_t);
+  for (size_t i = 0; i < data_size; i++) {
+    uart_putc_raw(uart1, data_ptr[i]); // Print each byte as a two-digit hexadecimal number
+  }
+
   if(indexActive && bnoIndex.hasNewGameQuaternion){
     uint8_t accuracy;
     bnoIndex.getGameQuat(indexQuaternion.x, indexQuaternion.y, indexQuaternion.z, indexQuaternion.w, accuracy);                    // get the index IMU quaternion
@@ -254,8 +304,4 @@ void loop() {
     Serial.print(",");
     Serial.println(index_splay_axis);
   }
-
-  // bool success = receivePacket();
-  // if(!success){/*Serial.println("no report available");*/}
-  // else Serial.println("report available");
 }
