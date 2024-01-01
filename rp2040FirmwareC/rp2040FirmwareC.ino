@@ -12,12 +12,16 @@ BNO085 bnoPinky;
 Quaternion handQuaternionThatWorks;
 // Quaternion handQuaternionThatWorks = Quaternion(sqrt(2)/2,0,0,-sqrt(2)/2);
 Quaternion handQuaternion;
+Quaternion relativeQuaternion;
+
 Quaternion thumbQuaternion;
+Quaternion thumbNeutralToHandQuaternion;
+Quaternion thumbNeutralJoystickToHandQuaternion;
+
 Quaternion indexQuaternion;
 Quaternion middleQuaternion;
 Quaternion ringQuaternion;
 Quaternion pinkyQuaternion;
-Quaternion relativeQuaternion;
 
 float getCurl(Quaternion q){
   return atan2(2 * (q.x * q.w - q.y * q.z), 1 - 2 * (q.x * q.x + q.y * q.y));
@@ -70,24 +74,24 @@ void setup() {
 
   // Initialize I2C
   _i2c_init(i2c0, 400000);             // Init I2C0 peripheral at 400kHz
-  gpio_set_function(4, GPIO_FUNC_I2C); // set pin 4 as an I2C pin (SDA in this case)
-  gpio_set_function(5, GPIO_FUNC_I2C); // set pin 5 as an I2C pin (SCL in this case)
-  gpio_pull_up(4);                     // use internal pull up on pin 4
-  gpio_pull_up(5);                     // use internal pull up on pin 5
+  gpio_set_function(0, GPIO_FUNC_I2C); // set pin 4 as an I2C pin (SDA in this case)
+  gpio_set_function(1, GPIO_FUNC_I2C); // set pin 5 as an I2C pin (SCL in this case)
+  gpio_pull_up(0);                     // use internal pull up on pin 4
+  gpio_pull_up(1);                     // use internal pull up on pin 5
   Serial.println("I2C0 configured");
 
-  _i2c_init(i2c1, 400000);             // Init I2C1 peripheral at 400kHz
-  gpio_set_function(14, GPIO_FUNC_I2C); // set pin 2 as an I2C pin (SDA in this case)
-  gpio_set_function(15, GPIO_FUNC_I2C); // set pin 3 as an I2C pin (SCL in this case)
-  gpio_pull_up(14);                     // use internal pull up on pin 2
-  gpio_pull_up(15);                     // use internal pull up on pin 3
-  Serial.println("I2C1 configured");
+  // _i2c_init(i2c1, 400000);             // Init I2C1 peripheral at 400kHz
+  // gpio_set_function(14, GPIO_FUNC_I2C); // set pin 2 as an I2C pin (SDA in this case)
+  // gpio_set_function(15, GPIO_FUNC_I2C); // set pin 3 as an I2C pin (SCL in this case)
+  // gpio_pull_up(14);                     // use internal pull up on pin 2
+  // gpio_pull_up(15);                     // use internal pull up on pin 3
+  // Serial.println("I2C1 configured");
   
   delay(1000);                         // Give the IMUs time to boot up
 
   bnoRef.begin(i2c0, 0x4A);
-  // bnoThumb.begin(i2c1, 0x4B);
-  bnoIndex.begin(i2c1, 0x4B);
+  bnoThumb.begin(i2c0, 0x4B);
+  // bnoIndex.begin(i2c0, 0x4B);
   // bnoMiddle.begin(i2c1, 0x4B);
   // bnoRing.begin(i2c1, 0x4B);
   // bnoPinky.begin(i2c1, 0x4B);
@@ -97,11 +101,29 @@ void setup() {
   handQuaternionThatWorks.y = 0;
   handQuaternionThatWorks.z = -sqrt(2)/2;
 
-  // pinMode(LED_BUILTIN, OUTPUT);
+  // for the thumb movement, I needed to get a first neutral position from which to take rotations
+  // the relative rotation to the reference IMU is represented by the quaternion below, taken experimentally
+  thumbNeutralToHandQuaternion.w = 0.623351;
+  thumbNeutralToHandQuaternion.x = 0.0097146;
+  thumbNeutralToHandQuaternion.y = 0.754592;
+  thumbNeutralToHandQuaternion.z = 0.204794;
+
+  // for the joystick emulation, I need a neutral rotation from which to take roll and pitch and map it into joystick values
+  // the relative rotation to the reference IMU is represented by the quaternion below, taken experimentally
+  thumbNeutralJoystickToHandQuaternion.w = 0.586889;
+  thumbNeutralJoystickToHandQuaternion.x = -0.168701;
+  thumbNeutralJoystickToHandQuaternion.y = 0.779479;
+  thumbNeutralJoystickToHandQuaternion.z = 0.140207;
+
+  gpio_set_dir(22,false); // set GPIO22 as input
 }
 
-bool thumbActive = false;
-bool indexActive = true;
+bool joystickIsEnabled = false;
+int joystick_x = 512;
+int joystick_y = 512;
+
+bool thumbActive = true;
+bool indexActive = false;
 bool middleActive = false;
 bool ringActive = false;
 bool pinkyActive = false;
@@ -109,8 +131,8 @@ bool pinkyActive = false;
 // the loop function runs over and over again forever
 void loop() {
   bnoRef.getReadings();
-  // bnoThumb.getReadings();
-  bnoIndex.getReadings();
+  bnoThumb.getReadings();
+  // bnoIndex.getReadings();
 
   if(bnoRef.hasNewGameQuaternion){
     uint8_t accuracy;
@@ -119,6 +141,77 @@ void loop() {
     relativeQuaternion = quaternion_multiply(handQuaternionThatWorks, quaternion_conjugate(handQuaternion)); // get the relative quaternion between the reference IMU quaternion and the coordinate frame where my calculations work
     handQuaternion = quaternion_multiply(relativeQuaternion, handQuaternion);                                           // rotate the handQuaternion to be in the coordinate frame where my calculations work
     // handQuaternion.printMe();
+  }
+
+  if(bnoThumb.hasNewGameQuaternion){
+    uint8_t accuracy;
+    bnoThumb.getGameQuat(thumbQuaternion.x, thumbQuaternion.y, thumbQuaternion.z, thumbQuaternion.w, accuracy);           // get the thumb IMU quaternion
+    thumbQuaternion = quaternion_multiply(relativeQuaternion, thumbQuaternion);                                           // rotate the thumbQuaternion to be in the coordinate frame where my calculations work
+    Quaternion thumbQuaternionBackupForJoystick = thumbQuaternion;
+    
+    // weirdly I don't need this, but don't know why
+    Quaternion thumbToHandQuaternion = quaternion_multiply(handQuaternion, quaternion_conjugate(thumbQuaternion));        // get the relative quaternion between the reference IMU quaternion and the thumb IMU quaternion
+    
+    thumbQuaternion = quaternion_multiply(thumbNeutralToHandQuaternion, thumbQuaternion);                                 // rotate the relative quaternion between the reference IMU quaternion and the thumb IMU quaternion by the neutral thumb quaternion (is it? I don't know if I did exactly this, but it works)
+    float thumbCurlAmount = getCurl(thumbQuaternion);
+    int thumbAngle = (int)(thumbCurlAmount*180/3.14);
+    int thumb_axis = (int)(512+512*thumbAngle/90.);
+    if (thumb_axis < 0)
+        thumb_axis = 0;
+    else if (thumb_axis > 1023)
+        thumb_axis = 1023;
+    //Serial.print(thumb_axis);
+    
+    Quaternion thumbCurlQuaternion = quaternionFromAngle(thumbCurlAmount, 0);                                                         // create a quaternion that represents just the amount of curl in the x axis
+    Quaternion thumbDecurledQuaternion = quaternion_multiply(thumbCurlQuaternion, thumbQuaternion);                                   // rotate the indexQuaternion by the curl angle in the x axis        
+    Quaternion thumbDecurledToNeutralQuaternion = quaternion_multiply(handQuaternion, quaternion_conjugate(thumbDecurledQuaternion)); // get the relative quaternion between the reference IMU quaternion and the quaternion representing the index IMU rotated back by the curl angle
+    int thumbSplayAmount = getSplay(thumbDecurledToNeutralQuaternion);                                                                // get the splay angle in radians from the quaternion calculated above
+    int thumbSplayAngle = (int)(thumbSplayAmount*180/3.14);                                                                           // convert the splay angle to degrees
+    int thumb_splay_axis = (int)(512+512*thumbSplayAngle/42.);
+    if (thumb_splay_axis < 0)
+      thumb_splay_axis = 0;
+    else if (thumb_splay_axis > 1023)
+      thumb_splay_axis = 1023;
+    //Serial.print(thumb_splay_axis)
+    
+    // inverted logic, this is when the joystick is enabled
+    if (!gpio_get(22)){
+      if(!joystickIsEnabled){
+        //thumbNeutralJoystickToHandQuaternion = thumbToHandQuaternion # fix this value on the top and don't reset it each time joystick is reenabled
+        //thumbToHandQuaternion.printMe()
+        
+        Quaternion thumbJoystickQuaternion = quaternion_multiply(thumbNeutralJoystickToHandQuaternion, thumbQuaternionBackupForJoystick); //thumbQuaternionBackupForJoystick.rotateBy(thumbNeutralJoystickToHandQuaternion)
+        
+        int joystick_x_angleRadians = getRoll(thumbJoystickQuaternion);
+        int joystick_x_angleDegrees = (int)(joystick_x_angleRadians*180/3.14);
+        joystick_x = (int)((joystick_x_angleDegrees + 25)*1023/50.);
+        if (joystick_x < 0)
+            joystick_x = 0;
+        else if (joystick_x > 1023)
+            joystick_x = 1023;
+        
+        int joystick_y_angleRadians = getCurl(thumbJoystickQuaternion);
+        int joystick_y_angleDegrees = (int)(joystick_y_angleRadians*180/3.14);
+        joystick_y = (int)((joystick_y_angleDegrees + 25)*1023/50);
+        if (joystick_y < 0)
+            joystick_y = 0;
+        else if (joystick_y > 1023)
+            joystick_y = 1023;
+        
+        joystickIsEnabled = true;
+      }
+    }
+    else{
+      joystick_x = 512;
+      joystick_y = 512;
+      
+      joystickIsEnabled = false;
+    }
+    
+    Serial.print("x: ");
+    Serial.println(joystick_x);
+    Serial.print("y: ");
+    Serial.println(joystick_y);
   }
 
   if(indexActive && bnoIndex.hasNewGameQuaternion){
