@@ -159,10 +159,6 @@ int thumb_splay_axis = 0;
 void loop() {
   bnoRef.getReadings();
   bnoThumb.getReadings();
-  // bnoIndex.getReadings();
-  // bnoMiddle.getReadings();
-  // bnoRing.getReadings();
-  // bnoPinky.getReadings();
 
   if(bnoRef.hasNewGameQuaternion){
     uint8_t accuracy;
@@ -249,54 +245,13 @@ void loop() {
   serial_data.thumbstick_y = joystick_y;
   serial_data.thumbCurl = thumb_axis;
   serial_data.thumbSplay = thumb_splay_axis;
-  serial_data.refQuaternion_w = (int)(32767. * handQuaternion.w);
-  serial_data.refQuaternion_x = (int)(32767. * handQuaternion.x);
-  serial_data.refQuaternion_y = (int)(32767. * handQuaternion.y);
-  serial_data.refQuaternion_z = (int)(32767. * handQuaternion.z);
+  serial_data.refQuaternion_w = (int)(32767. * relativeQuaternion.w);
+  serial_data.refQuaternion_x = (int)(32767. * relativeQuaternion.x);
+  serial_data.refQuaternion_y = (int)(32767. * relativeQuaternion.y);
+  serial_data.refQuaternion_z = (int)(32767. * relativeQuaternion.z);
   uint8_t *data_ptr = (uint8_t *)&serial_data;
   size_t data_size = sizeof(serial_data_t);
   for (size_t i = 0; i < data_size; i++) {
     uart_putc_raw(uart1, data_ptr[i]); // Print each byte as a two-digit hexadecimal number
-  }
-
-  if(indexActive && bnoIndex.hasNewGameQuaternion){
-    uint8_t accuracy;
-    bnoIndex.getGameQuat(indexQuaternion.x, indexQuaternion.y, indexQuaternion.z, indexQuaternion.w, accuracy);                    // get the index IMU quaternion
-    // indexQuaternion.printMe();
-    indexQuaternion = quaternion_multiply(relativeQuaternion, indexQuaternion);                                                    // rotate the indexQuaternion to be in the coordinate frame where my calculations work
-    Quaternion indexToHandQuaternion = quaternion_multiply(handQuaternion, quaternion_conjugate(indexQuaternion));                 // get the relative quaternion between the reference IMU quaternion and the index IMU quaternion
-    // indexToHandQuaternion.printMe();
-
-    float indexCurlAmount = getCurl(indexToHandQuaternion);                                                                        // get the curl angle in radians from the quaternion calculated above
-    // Serial.println(indexCurlAmount);
-    int indexAngle = (int)(indexCurlAmount*180/3.14);                                                                              // convert the curl angle to degrees
-    int index_axis = 0;
-    // remap the angle output in degrees to a value between 0 and 1023: the following calculations were a bit hacky when I implemented them and I didn't document them properly, still, they were based on observations of the outputs and you may be able to reverse engineer an explanation
-    if (indexAngle <= 0 && indexAngle >= -180)
-      index_axis = (int)(682 * -indexAngle / 180.);
-    else if (indexAngle <= 180 && indexAngle >= 90)
-      index_axis = (int)(682 - (341. / 90) * (indexAngle - 180));
-    
-    Quaternion indexCurlQuaternion = quaternionFromAngle(indexCurlAmount, 0);                                                      // create a quaternion that represents just the amount of curl in the x axis
-    Quaternion indexDecurledQuaternion = quaternion_multiply(indexCurlQuaternion, indexQuaternion);                                // rotate the indexQuaternion by the curl angle in the x axis
-    Quaternion indexDecurledToHandQuaternion = quaternion_multiply(handQuaternion, quaternion_conjugate(indexDecurledQuaternion)); // get the relative quaternion between the reference IMU quaternion and the quaternion representing the index IMU rotated back by the curl angle
-    float indexSplayAmount = getSplay(indexDecurledToHandQuaternion);                                                              // get the splay angle in radians from the quaternion calculated above
-    int indexSplayAngle = (int)(indexSplayAmount*180/3.14);                                                                        // convert the splay angle to degrees
-    //Serial.print(indexSplayAngle);
-    // finger   min  rest  max
-    // index    -22   18    35
-    int index_splay_axis = 0;
-    if (indexSplayAngle <= 18)
-      index_splay_axis = (int)(512+512*(indexSplayAngle-18)/40.);
-    else
-      index_splay_axis = (int)(512+512*(indexSplayAngle-18)/17.);
-    if (index_splay_axis < 0)
-      index_splay_axis = 0;
-    else if (index_splay_axis > 1023)
-      index_splay_axis = 1023;
-
-    Serial.print(index_axis);
-    Serial.print(",");
-    Serial.println(index_splay_axis);
   }
 }
