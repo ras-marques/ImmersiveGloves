@@ -58,7 +58,7 @@ Quaternion quaternionFromAngle(float angle, int axis){
   }
 }
 
-// this will be sent by serial to the main MCU - 23 bytes are enough for 184 bits, this struct has 183
+// this will be sent by serial to the main MCU - 22 bytes are enough for 176 bits, this struct has 171
 typedef struct __attribute__( ( packed, aligned( 1 ) ) )
 {
   uint8_t       a               : 1;  //0
@@ -68,10 +68,10 @@ typedef struct __attribute__( ( packed, aligned( 1 ) ) )
   uint16_t      thumbstick_y    : 10; //13
   uint16_t      thumbCurl       : 10; //23
   uint16_t      thumbSplay      : 10; //33
-  uint16_t      refQuaternion_w : 32; //55
-  uint16_t      refQuaternion_x : 32; //87
-  uint16_t      refQuaternion_y : 32; //119
-  uint16_t      refQuaternion_z : 32; //151
+  uint16_t      refQuaternion_w : 32; //43
+  uint16_t      refQuaternion_x : 32; //75
+  uint16_t      refQuaternion_y : 32; //107
+  uint16_t      refQuaternion_z : 32; //139
 } serial_data_t;
 serial_data_t serial_data;
 
@@ -79,10 +79,11 @@ serial_data_t serial_data;
 void setup() {
 
   Serial.begin(115200);
-  while(!Serial)
+  // while(!Serial) // can't use this here, otherwise it only works with usb connected!
 
   delay(1000);
   Serial.println("ImmersiveGloves starting...");
+  delay(3000); // wait 3 seconds, USB1 only waits 1 second, so that we are sure USB2 has UART aligned for now - probably will make this better later
 
 
   // Initialize I2C
@@ -139,8 +140,11 @@ void setup() {
   thumbNeutralJoystickToHandQuaternion.x = -0.168701;
   thumbNeutralJoystickToHandQuaternion.y = 0.779479;
   thumbNeutralJoystickToHandQuaternion.z = 0.140207;
-
+  
+  // _gpio_init(22);
   gpio_set_dir(22,false); // set GPIO22 as input
+
+  pinMode(LED_BUILTIN, OUTPUT);
 }
 
 bool joystickIsEnabled = false;
@@ -149,8 +153,19 @@ int joystick_y = 512;
 int thumb_axis = 0;
 int thumb_splay_axis = 0;
 
+int millisLast = 0;
+bool ledState = true;
+
 // the loop function runs over and over again forever
 void loop() {
+  if(millis() - millisLast > 1000){
+    ledState = !ledState;
+    // Serial.println(ledState);
+    // gpio_put(25, ledState);
+    digitalWrite(LED_BUILTIN, ledState);  // turn the LED on (HIGH is the voltage level)
+    millisLast = millis();
+  }
+
   bnoRef.getReadings();
   bnoThumb.getReadings();
 
@@ -228,10 +243,10 @@ void loop() {
       joystickIsEnabled = false;
     }
     
-    Serial.print("x: ");
-    Serial.println(joystick_x);
-    Serial.print("y: ");
-    Serial.println(joystick_y);
+    // Serial.print("x: ");
+    // Serial.println(joystick_x);
+    // Serial.print("y: ");
+    // Serial.println(joystick_y);
   }
 
   serial_data.thumbstick_en = joystickIsEnabled;
@@ -247,5 +262,8 @@ void loop() {
   size_t data_size = sizeof(serial_data_t);
   for (size_t i = 0; i < data_size; i++) {
     uart_putc_raw(uart1, data_ptr[i]); // Print each byte as a two-digit hexadecimal number
+    Serial.print(data_ptr[i]);
+    Serial.print("\t");
   }
+  Serial.println("");
 }
