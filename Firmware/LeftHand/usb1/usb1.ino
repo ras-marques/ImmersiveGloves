@@ -99,10 +99,17 @@ controller_data_t controller_data;
 
 int chars_rxed = 0;
 int uart_successes = 0;
+int last_received_char = 0;
 // RX interrupt handler
 void on_uart_rx() {
   while (uart_is_readable(uart1)) {
-      serial_data.chars_rxed_array[chars_rxed] = uart_getc(uart1);
+      uint8_t received_char = uart_getc(uart1);
+      if(received_char == 170 && last_received_char == 170){
+        chars_rxed = 0;
+        continue;
+      }
+      last_received_char = received_char;
+      serial_data.chars_rxed_array[chars_rxed] = received_char;
       chars_rxed++;
       if(chars_rxed == 22){
         controller_data.thumb_curl = serial_data.rxed_data.thumbCurl;
@@ -153,6 +160,8 @@ void setup() {
   handQuaternion.y = 0;
   handQuaternion.z = -sqrt(2)/2;
   
+  delay(1000);                         // Give the IMUs time to boot up
+
   // Set up our UART with the required speed.
   uart_init(uart1, 115200);
   // Set the TX and RX pins by using the function select on the GPIO
@@ -174,8 +183,6 @@ void setup() {
   // uart_putc_raw(uart1, 'A');           // Send out a character without any conversions
   // uart_putc(uart1, 'B');               // Send out a character but do CR/LF conversions
   // uart_puts(uart1, " Hello, UART!\n"); // Send out a string, with CR/LF conversions
-
-  delay(1000);                         // Give the IMUs time to boot up
 
   // bnoIndex.begin(i2c0, 0x4A);
   // bnoMiddle.begin(i2c0, 0x4B);
@@ -204,7 +211,7 @@ bool ledState = true;
 
 // the loop function runs over and over again forever
 void loop() {
-  if(millis() - millisLast > 1000){
+  if(millis() - millisLast > 10){
     ledState = !ledState;
     // Serial.println(ledState);
     // gpio_put(25, ledState);
@@ -215,8 +222,9 @@ void loop() {
       Serial.print(serial_data.chars_rxed_array[i]);
       Serial.print("\t");
     }
-    Serial.print(" ");
-    Serial.println(uart_successes);
+    Serial.println("");
+    // Serial.print(" ");
+    // Serial.println(chars_rxed);
   }
 
   // bnoIndex.getReadings();
