@@ -143,12 +143,6 @@ void setup() {
   gpio_set_dir(22,false); // set GPIO22 as input
 }
 
-bool thumbActive = true;
-bool indexActive = false;
-bool middleActive = false;
-bool ringActive = false;
-bool pinkyActive = false;
-
 bool joystickIsEnabled = false;
 int joystick_x = 512;
 int joystick_y = 512;
