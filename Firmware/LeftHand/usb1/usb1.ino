@@ -55,7 +55,7 @@ Quaternion quaternionFromAngle(float angle, int axis){
   }
 }
 
-// this will be sent by serial to the main MCU - 22 bytes are enough for 176 bits, this struct has 171
+// this will be sent by serial to the main MCU - 14 bytes are enough for 112 bits, this struct has 107
 typedef struct __attribute__( ( packed, aligned( 1 ) ) )
 {
   uint8_t       a               : 1;  //0
@@ -65,14 +65,14 @@ typedef struct __attribute__( ( packed, aligned( 1 ) ) )
   uint16_t      thumbstick_y    : 10; //13
   uint16_t      thumbCurl       : 10; //23
   uint16_t      thumbSplay      : 10; //33
-  uint16_t      refQuaternion_w : 32; //43
-  uint16_t      refQuaternion_x : 32; //75
-  uint16_t      refQuaternion_y : 32; //107
-  uint16_t      refQuaternion_z : 32; //139
+  int16_t       refQuaternion_w : 16; //43
+  int16_t       refQuaternion_x : 16; //59
+  int16_t       refQuaternion_y : 16; //75
+  int16_t       refQuaternion_z : 16; //91
 } serial_data_t;
 
 union serialDataUnion {
-  uint8_t chars_rxed_array[23];
+  uint8_t chars_rxed_array[14];
   serial_data_t rxed_data;
 } serial_data;
 
@@ -111,7 +111,7 @@ void on_uart_rx() {
       last_received_char = received_char;
       serial_data.chars_rxed_array[chars_rxed] = received_char;
       chars_rxed++;
-      if(chars_rxed == 22){
+      if(chars_rxed == 14){
         controller_data.thumb_curl = serial_data.rxed_data.thumbCurl;
         controller_data.thumb_splay = serial_data.rxed_data.thumbSplay;
         controller_data.thumbstick_x = serial_data.rxed_data.thumbstick_x;
@@ -119,10 +119,10 @@ void on_uart_rx() {
         controller_data.thumbstick_en = serial_data.rxed_data.thumbstick_en;
         controller_data.a = serial_data.rxed_data.a;
         controller_data.b = serial_data.rxed_data.b;
-        relativeQuaternion.w = serial_data.rxed_data.refQuaternion_w;
-        relativeQuaternion.x = serial_data.rxed_data.refQuaternion_x;
-        relativeQuaternion.y = serial_data.rxed_data.refQuaternion_y;
-        relativeQuaternion.z = serial_data.rxed_data.refQuaternion_z;
+        relativeQuaternion.w = serial_data.rxed_data.refQuaternion_w / 32767.;
+        relativeQuaternion.x = serial_data.rxed_data.refQuaternion_x / 32767.;
+        relativeQuaternion.y = serial_data.rxed_data.refQuaternion_y / 32767.;
+        relativeQuaternion.z = serial_data.rxed_data.refQuaternion_z / 32767.;
         chars_rxed = 0;
         uart_successes++;
         break;
@@ -217,14 +217,16 @@ void loop() {
     // gpio_put(25, ledState);
     digitalWrite(LED_BUILTIN, ledState);  // turn the LED on (HIGH is the voltage level)
     millisLast = millis();
-    // Serial.println(controller_data.thumb_curl);
-    for(int i = 0; i < 23; i++){
-      Serial.print(serial_data.chars_rxed_array[i]);
-      Serial.print("\t");
-    }
-    Serial.println("");
-    // Serial.print(" ");
-    // Serial.println(chars_rxed);
+    // for(int i = 0; i < 14; i++){
+    //   Serial.print(serial_data.chars_rxed_array[i]);
+    //   Serial.print("\t");
+    // }
+    // Serial.println("");
+
+    // Serial.print(controller_data.thumb_curl);
+    // Serial.print(",");
+    // Serial.println(controller_data.thumb_splay);
+    // relativeQuaternion.printMe();
   }
 
   // bnoIndex.getReadings();

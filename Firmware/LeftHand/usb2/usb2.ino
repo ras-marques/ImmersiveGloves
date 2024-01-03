@@ -58,7 +58,7 @@ Quaternion quaternionFromAngle(float angle, int axis){
   }
 }
 
-// this will be sent by serial to the main MCU - 22 bytes are enough for 176 bits, this struct has 171
+// this will be sent by serial to the main MCU - 14 bytes are enough for 112 bits, this struct has 107
 typedef struct __attribute__( ( packed, aligned( 1 ) ) )
 {
   uint8_t       a               : 1;  //0
@@ -68,10 +68,10 @@ typedef struct __attribute__( ( packed, aligned( 1 ) ) )
   uint16_t      thumbstick_y    : 10; //13
   uint16_t      thumbCurl       : 10; //23
   uint16_t      thumbSplay      : 10; //33
-  uint16_t      refQuaternion_w : 32; //43
-  uint16_t      refQuaternion_x : 32; //75
-  uint16_t      refQuaternion_y : 32; //107
-  uint16_t      refQuaternion_z : 32; //139
+  int16_t       refQuaternion_w : 16; //43
+  int16_t       refQuaternion_x : 16; //59
+  int16_t       refQuaternion_y : 16; //75
+  int16_t       refQuaternion_z : 16; //91
 } serial_data_t;
 serial_data_t serial_data;
 
@@ -190,7 +190,7 @@ void loop() {
     thumbQuaternion = quaternion_multiply(thumbNeutralToHandQuaternion, thumbQuaternion);                                 // rotate the relative quaternion between the reference IMU quaternion and the thumb IMU quaternion by the neutral thumb quaternion (is it? I don't know if I did exactly this, but it works)
     float thumbCurlAmount = getCurl(thumbQuaternion);
     int thumbAngle = (int)(thumbCurlAmount*180/3.14);
-    int thumb_axis = (int)(512+512*thumbAngle/90.);
+    thumb_axis = (int)(512+512*thumbAngle/90.);
     if (thumb_axis < 0)
         thumb_axis = 0;
     else if (thumb_axis > 1023)
@@ -200,7 +200,7 @@ void loop() {
     Quaternion thumbCurlQuaternion = quaternionFromAngle(thumbCurlAmount, 0);                                                         // create a quaternion that represents just the amount of curl in the x axis
     Quaternion thumbDecurledQuaternion = quaternion_multiply(thumbCurlQuaternion, thumbQuaternion);                                   // rotate the indexQuaternion by the curl angle in the x axis        
     Quaternion thumbDecurledToNeutralQuaternion = quaternion_multiply(handQuaternion, quaternion_conjugate(thumbDecurledQuaternion)); // get the relative quaternion between the reference IMU quaternion and the quaternion representing the index IMU rotated back by the curl angle
-    int thumbSplayAmount = getSplay(thumbDecurledToNeutralQuaternion);                                                                // get the splay angle in radians from the quaternion calculated above
+    float thumbSplayAmount = getSplay(thumbDecurledToNeutralQuaternion);                                                                // get the splay angle in radians from the quaternion calculated above
     int thumbSplayAngle = (int)(thumbSplayAmount*180/3.14);                                                                           // convert the splay angle to degrees
     thumb_splay_axis = (int)(512+512*thumbSplayAngle/42.);
     if (thumb_splay_axis < 0)
@@ -258,18 +258,31 @@ void loop() {
   serial_data.refQuaternion_x = (int)(32767. * relativeQuaternion.x);
   serial_data.refQuaternion_y = (int)(32767. * relativeQuaternion.y);
   serial_data.refQuaternion_z = (int)(32767. * relativeQuaternion.z);
+
+  // relativeQuaternion.printMe();
+  // Serial.print(serial_data.refQuaternion_w);
+  // Serial.print(",");
+  // Serial.print(serial_data.refQuaternion_x);
+  // Serial.print(",");
+  // Serial.print(serial_data.refQuaternion_y);
+  // Serial.print(",");
+  // Serial.println(serial_data.refQuaternion_z);
+  // Serial.print(serial_data.thumbCurl);
+  // Serial.print(",");
+  // Serial.println(serial_data.thumbSplay);
+
   uint8_t *data_ptr = (uint8_t *)&serial_data;
   size_t data_size = sizeof(serial_data_t);
   uart_putc_raw(uart1, 170); // Print initiator
   uart_putc_raw(uart1, 170); // Print initiator
-  Serial.print(170);
-  Serial.print("\t");
-  Serial.print(170);
-  Serial.print("\t");
+  // Serial.print(170);
+  // Serial.print("\t");
+  // Serial.print(170);
+  // Serial.print("\t");
   for (size_t i = 0; i < data_size; i++) {
     uart_putc_raw(uart1, data_ptr[i]); // Print each byte as a two-digit hexadecimal number
-    Serial.print(data_ptr[i]);
-    Serial.print("\t");
+    // Serial.print(data_ptr[i]);
+    // Serial.print("\t");
   }
-  Serial.println("");
+  // Serial.println("");
 }
