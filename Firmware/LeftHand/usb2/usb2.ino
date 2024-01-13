@@ -260,16 +260,16 @@ void loop() {
   serial_data.refQuaternion_z = (int)(32767. * relativeQuaternion.z);
 
   // relativeQuaternion.printMe();
-  // Serial.print(serial_data.refQuaternion_w);
-  // Serial.print(",");
-  // Serial.print(serial_data.refQuaternion_x);
-  // Serial.print(",");
-  // Serial.print(serial_data.refQuaternion_y);
-  // Serial.print(",");
-  // Serial.println(serial_data.refQuaternion_z);
-  // Serial.print(serial_data.thumbCurl);
-  // Serial.print(",");
-  // Serial.println(serial_data.thumbSplay);
+  Serial.print(serial_data.refQuaternion_w);
+  Serial.print(",");
+  Serial.print(serial_data.refQuaternion_x);
+  Serial.print(",");
+  Serial.print(serial_data.refQuaternion_y);
+  Serial.print(",");
+  Serial.println(serial_data.refQuaternion_z);
+  Serial.print(serial_data.thumbCurl);
+  Serial.print(",");
+  Serial.println(serial_data.thumbSplay);
 
   uint8_t *data_ptr = (uint8_t *)&serial_data;
   size_t data_size = sizeof(serial_data_t);
