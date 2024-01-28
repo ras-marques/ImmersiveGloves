@@ -332,7 +332,8 @@ bool BNO085::begin(i2c_inst_t* i2cInterface, uint8_t address){
   else{
     Serial.println("");
     Serial.println("Enabling ARVR stabilized game rotation vector");
-    enableARVRStabilizedGameRotationVector(10);
+    // enableARVRStabilizedGameRotationVector(10);
+    enableRotationVector(10);
     
     // Serial.println("");
     // Serial.println("Enabling raw accelerometer");
@@ -560,6 +561,17 @@ float BNO085::qToFloat(int16_t fixedPointValue, uint8_t qPoint)
 	float qFloat = fixedPointValue;
 	qFloat *= pow(2, qPoint * -1);
 	return (qFloat);
+}
+
+void BNO085::getQuat(float &i, float &j, float &k, float &real, float &radAccuracy, uint8_t &accuracy)
+{
+	i = qToFloat(rawQuatI, rotationVector_Q1);
+	j = qToFloat(rawQuatJ, rotationVector_Q1);
+	k = qToFloat(rawQuatK, rotationVector_Q1);
+	real = qToFloat(rawQuatReal, rotationVector_Q1);
+	radAccuracy = qToFloat(rawQuatRadianAccuracy, rotationVector_Q1);
+	accuracy = quatAccuracy;
+	hasNewQuaternion = false;
 }
 
 void BNO085::getGameQuat(float &i, float &j, float &k, float &real, uint8_t &accuracy)

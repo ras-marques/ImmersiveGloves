@@ -120,6 +120,7 @@ class BNO085 {
     uint16_t parseCommandReport(void); //Parse command responses out of report
 
     float qToFloat(int16_t fixedPointValue, uint8_t qPoint); //Given a Q value, converts fixed point floating to regular floating point number
+    void getQuat(float &i, float &j, float &k, float &real, float &radAccuracy, uint8_t &accuracy);
     void getGameQuat(float &i, float &j, float &k, float &real, uint8_t &accuracy);
 
     void setFeatureCommand(uint8_t reportID, uint16_t timeBetweenReports);
