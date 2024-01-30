@@ -11,12 +11,21 @@
 BNO085 bnoRef;
 BNO085 bnoThumb;
 
+Quaternion handRotationInNewGlove;
+Quaternion hackyHandRotation;
+Quaternion thumbRotationInNewGlove;
+Quaternion hackyThumbRotation;
+
 Quaternion handQuaternionThatWorks;
+Quaternion handQuaternionThatWorksForMainMCU; // this is here to speed things up, the four fingers should also follow handQuaternionThatWorks, but they were prepared for this first and I want to be fast now
 Quaternion handQuaternion;
 Quaternion relativeQuaternion;
+Quaternion relativeQuaternionForMainMCU; // this is here to speed things up, the four fingers should also follow handQuaternionThatWorks, but they were prepared for this first and I want to be fast now
+Quaternion relativeJoystickQuaternion;
 
 Quaternion thumbQuaternion;
 Quaternion thumbNeutralToHandQuaternion;
+Quaternion thumbNeutralToHandQuaternionForCurl;
 Quaternion thumbNeutralJoystickToHandQuaternion;
 
 Quaternion indexQuaternion;
@@ -24,17 +33,29 @@ Quaternion middleQuaternion;
 Quaternion ringQuaternion;
 Quaternion pinkyQuaternion;
 
-float getCurl(Quaternion q){
-  return atan2(2 * (q.x * q.w - q.y * q.z), 1 - 2 * (q.x * q.x + q.y * q.y));
-}
+// float getCurl(Quaternion q){
+//   return atan2(2 * (q.x * q.w - q.y * q.z), 1 - 2 * (q.x * q.x + q.y * q.y));
+// }
 
-float getSplay(Quaternion q){
-  return atan2(2 * (q.x * q.y + q.z * q.w), 1 - 2 * (q.y * q.y + q.z * q.z));
-}
+// float getSplay(Quaternion q){
+//   return atan2(2 * (q.x * q.y + q.z * q.w), 1 - 2 * (q.y * q.y + q.z * q.z));
+// }
 
-float getRoll(Quaternion q){
-  return atan2(2 * (q.y * q.z + q.w * q.x), 1 - 2 * (q.x * q.x + q.y * q.y));
-}
+// float getRoll(Quaternion q){
+//   return atan2(2 * (q.y * q.z + q.w * q.x), 1 - 2 * (q.x * q.x + q.y * q.y));
+// }
+
+// float getRoll(Quaternion q){
+//   return asin(2 * (q.x * q.y - q.w * q.z));
+// }
+
+// float getYaw(Quaternion q){
+//   return atan2(2 * (q.w * q.y + q.x * q.z), (q.w * q.w + q.x * q.x - q.y * q.y - q.z * q.z));
+// }
+
+// float getPitch(Quaternion q){
+//   return atan2(2 * (q.w * q.x + q.y * q.z), (q.w * q.w - q.x * q.x + q.y * q.y - q.z * q.z));
+// }
 
 Quaternion quaternionFromAngle(float angle, int axis){
   // angle is in radians, x axis is 0, y axis is 1, z axis is 2
@@ -128,34 +149,37 @@ void setup() {
   // bnoMiddle.begin(i2c1, 0x4A);
   // bnoRing.begin(i2c0, 0x4B);
   // bnoPinky.begin(i2c1, 0x4A);
-  
-  handQuaternionThatWorks.w = sqrt(2)/2;
+
+
+  handQuaternionThatWorks.w = 1;
   handQuaternionThatWorks.x = 0;
   handQuaternionThatWorks.y = 0;
-  handQuaternionThatWorks.z = -sqrt(2)/2;
+  handQuaternionThatWorks.z = 0;
+
+  handQuaternionThatWorksForMainMCU.w = sqrt(2)/2;
+  handQuaternionThatWorksForMainMCU.x = 0;
+  handQuaternionThatWorksForMainMCU.y = 0;
+  handQuaternionThatWorksForMainMCU.z = -sqrt(2)/2;
 
   // for the thumb movement, I needed to get a first neutral position from which to take rotations
   // the relative rotation to the reference IMU is represented by the quaternion below, taken experimentally
-  // thumbNeutralToHandQuaternion.w = 0.623351;
-  // thumbNeutralToHandQuaternion.x = 0.0097146;
-  // thumbNeutralToHandQuaternion.y = 0.754592;
-  // thumbNeutralToHandQuaternion.z = 0.204794;
 
-  thumbNeutralToHandQuaternion.w = 0.55;
-  thumbNeutralToHandQuaternion.x = -0.39;
-  thumbNeutralToHandQuaternion.y = 0.69;
-  thumbNeutralToHandQuaternion.z = -0.27;
+  thumbNeutralToHandQuaternion.w = 0.57;
+  thumbNeutralToHandQuaternion.x = 0.73;
+  thumbNeutralToHandQuaternion.y = -0.37;
+  thumbNeutralToHandQuaternion.z = 0.00;
+
+  thumbNeutralToHandQuaternionForCurl.w = 0.62;
+  thumbNeutralToHandQuaternionForCurl.x = 0.74;
+  thumbNeutralToHandQuaternionForCurl.y = 0.01;
+  thumbNeutralToHandQuaternionForCurl.z = -0.26;
 
   // for the joystick emulation, I need a neutral rotation from which to take roll and pitch and map it into joystick values
   // the relative rotation to the reference IMU is represented by the quaternion below, taken experimentally
-  // thumbNeutralJoystickToHandQuaternion.w = 0.586889;
-  // thumbNeutralJoystickToHandQuaternion.x = -0.168701;
-  // thumbNeutralJoystickToHandQuaternion.y = 0.779479;
-  // thumbNeutralJoystickToHandQuaternion.z = 0.140207;
-  thumbNeutralJoystickToHandQuaternion.w = 0.55;
-  thumbNeutralJoystickToHandQuaternion.x = -0.44;
-  thumbNeutralJoystickToHandQuaternion.y = 0.57;
-  thumbNeutralJoystickToHandQuaternion.z = -0.43;
+  thumbNeutralJoystickToHandQuaternion.w = 0.64;
+  thumbNeutralJoystickToHandQuaternion.x = 0.72;
+  thumbNeutralJoystickToHandQuaternion.y = -0.13;
+  thumbNeutralJoystickToHandQuaternion.z = -0.22;
 
   // _gpio_init(22);
   // gpio_set_dir(22,false); // set GPIO22 as input
@@ -202,10 +226,15 @@ void loop() {
     float radAccuracy;
     uint8_t accuracy;
     bnoRef.getQuat(handQuaternion.x, handQuaternion.y, handQuaternion.z, handQuaternion.w, radAccuracy, accuracy);
+    // handQuaternion.printMyEulerAngles_pry();
+    // handQuaternion = quaternion_multiply(hackyHandRotation, handQuaternion);
     // handQuaternion.printMe();
-    relativeQuaternion = quaternion_multiply(handQuaternionThatWorks, quaternion_conjugate(handQuaternion)); // get the relative quaternion between the reference IMU quaternion and the coordinate frame where my calculations work
-    handQuaternion = quaternion_multiply(relativeQuaternion, handQuaternion);                                           // rotate the handQuaternion to be in the coordinate frame where my calculations work
-    // handQuaternion.printMe();
+    // relativeQuaternion = quaternion_multiply(handQuaternionThatWorks, quaternion_conjugate(handQuaternion)); // get the relative quaternion between the reference IMU quaternion and the coordinate frame where my calculations work
+    relativeQuaternion = handQuaternion.getRelativeTo(handQuaternionThatWorks);
+    relativeQuaternionForMainMCU = handQuaternion.getRelativeTo(handQuaternionThatWorksForMainMCU);
+    // relativeQuaternion.printMe();
+    handQuaternion = handQuaternion.rotateBy(relativeQuaternion);                                // rotate the handQuaternion to be in the coordinate frame where my calculations work
+    // handQuaternion.printMe();                                                                                // from here on, handQuaternion is the same as handQuaternionThatWorks
   }
 
   if(bnoThumb.hasNewQuaternion){
@@ -213,84 +242,72 @@ void loop() {
     float radAccuracy;
     uint8_t accuracy;
     bnoThumb.getQuat(thumbQuaternion.x, thumbQuaternion.y, thumbQuaternion.z, thumbQuaternion.w, radAccuracy, accuracy);           // get the thumb IMU quaternion
-    //thumbQuaternion.printMe();
-    thumbQuaternion = quaternion_multiply(relativeQuaternion, thumbQuaternion);                                           // rotate the thumbQuaternion to be in the coordinate frame where my calculations work
-    // thumbQuaternion.printMe();
-    Quaternion thumbQuaternionBackupForJoystick;
-    thumbQuaternionBackupForJoystick.w = thumbQuaternion.w;
-    thumbQuaternionBackupForJoystick.x = thumbQuaternion.x;
-    thumbQuaternionBackupForJoystick.y = thumbQuaternion.y;
-    thumbQuaternionBackupForJoystick.z = thumbQuaternion.z;
-    // thumbQuaternionBackupForJoystick.printMe();
+    thumbQuaternion = thumbQuaternion.rotateBy(relativeQuaternion);
+    Quaternion relativeThumbQuaternion = thumbQuaternion.getRelativeTo(handQuaternion);
+    // relativeThumbQuaternion.printMe();
+    // relativeThumbQuaternion.printMyEulerAngles_pry();
+    Quaternion relativeThumbToNeutralQuaternion = relativeThumbQuaternion.getRelativeTo(thumbNeutralToHandQuaternion);
+    Quaternion relativeThumbToNeutralQuaternionForCurl = relativeThumbQuaternion.getRelativeTo(thumbNeutralToHandQuaternionForCurl);
     
-    // weirdly I don't need this, but don't know why
-    Quaternion thumbToHandQuaternion = quaternion_multiply(handQuaternion, quaternion_conjugate(thumbQuaternion));        // get the relative quaternion between the reference IMU quaternion and the thumb IMU quaternion
-    
-    thumbQuaternion = quaternion_multiply(thumbNeutralToHandQuaternion, thumbQuaternion);                                 // rotate the relative quaternion between the reference IMU quaternion and the thumb IMU quaternion by the neutral thumb quaternion (is it? I don't know if I did exactly this, but it works)
-    float thumbCurlAmount = getCurl(thumbQuaternion);
-    int thumbAngle = (int)(thumbCurlAmount*180/3.14);
-    thumbAngle = thumbAngle - 40;
-    if(thumbAngle < -100) thumbAngle = 140;
-    if(thumbAngle < 0) thumbAngle = 0;
-    // Serial.println(thumbAngle);
-    thumb_axis = 1023*thumbAngle/140.;
+    // relativeThumbToNeutralQuaternion.printMyEulerAngles_pry();
+
+    float thumbCurl_angleRadians = getPitch_pry(relativeThumbToNeutralQuaternionForCurl);
+    // float thumbCurl_angleRadians = getPitch_ryp(relativeThumbToNeutralQuaternion);
+    // float thumbCurl_angleRadians = getPitch_ypr(relativeThumbToNeutralQuaternion);
+    float thumbCurl_angleDegrees = thumbCurl_angleRadians*180/3.14;
+    // Serial.println(thumbCurl_angleDegrees); // -90 to 90
+    thumbCurl_angleDegrees += 90;
+    thumb_axis = 1023*thumbCurl_angleDegrees/180.;
+    if (thumb_axis < 0)
+        thumb_axis = 0;
+    else if (thumb_axis > 1023)
+        thumb_axis = 1023;
     // Serial.println(thumb_axis);
     
-    Quaternion thumbCurlQuaternion = quaternionFromAngle(thumbCurlAmount, 0);                                                         // create a quaternion that represents just the amount of curl in the x axis
-    Quaternion thumbDecurledQuaternion = quaternion_multiply(thumbCurlQuaternion, thumbQuaternion);                                   // rotate the indexQuaternion by the curl angle in the x axis        
-    Quaternion thumbDecurledToNeutralQuaternion = quaternion_multiply(handQuaternion, quaternion_conjugate(thumbDecurledQuaternion)); // get the relative quaternion between the reference IMU quaternion and the quaternion representing the index IMU rotated back by the curl angle
-    float thumbSplayAmount = getSplay(thumbDecurledToNeutralQuaternion);                                                                // get the splay angle in radians from the quaternion calculated above
-    int thumbSplayAngle = (int)(thumbSplayAmount*180/3.14);                                                                           // convert the splay angle to degrees
-    // Serial.println(thumbSplayAngle);
-    if(thumbSplayAngle > 0) thumbSplayAngle = 180 - thumbSplayAngle;
-    else thumbSplayAngle = - 180 - thumbSplayAngle;
-    thumbSplayAngle += 35;
-    if(thumbSplayAngle > 70) thumbSplayAngle = 70;
-    else if(thumbSplayAngle < 0) thumbSplayAngle = 0;
-    thumb_splay_axis = 1023.*thumbSplayAngle/70;
-    // Serial.println(thumb_splay_axis);
+    // Serial.println("");
+    // relativeThumbToNeutralQuaternion.printMyEulerAngles_pry();
+    // relativeThumbToNeutralQuaternion.printMyEulerAngles_ryp();
+    // relativeThumbToNeutralQuaternion.printMyEulerAngles_ypr();
+    // delay(100);
 
-    // thumb_splay_axis = (int)(512+512*thumbSplayAngle/42.);
-    // if (thumb_splay_axis < 0)
-    //   thumb_splay_axis = 0;
-    // else if (thumb_splay_axis > 1023)
-    //   thumb_splay_axis = 1023;
-    //Serial.print(thumb_splay_axis)
+    float thumbSplay_angleRadians = getRoll_ryp(relativeThumbToNeutralQuaternion);
+    float thumbSplay_angleDegrees = thumbSplay_angleRadians*180/3.14;
+    // Serial.println(thumbSplay_angleDegrees); // -25 to 35
+    thumbSplay_angleDegrees += 25;
+    thumb_splay_axis = 1023*thumbSplay_angleDegrees/60.;
+    if (thumb_splay_axis < 0)
+      thumb_splay_axis = 0;
+    else if (thumb_splay_axis > 1023)
+      thumb_splay_axis = 1023;
+    // Serial.println(thumb_splay_axis);
     
     // inverted logic, this is when the joystick is enabled
     if (!digitalRead(INDEX_CONTACT_PIN)){
-      // Serial.println("index");
-      // if(!joystickIsEnabled){
-        //thumbNeutralJoystickToHandQuaternion = thumbToHandQuaternion # fix this value on the top and don't reset it each time joystick is reenabled
-        //thumbToHandQuaternion.printMe()
-        
-        Quaternion thumbJoystickQuaternion = quaternion_multiply(thumbNeutralJoystickToHandQuaternion, thumbQuaternionBackupForJoystick); //thumbQuaternionBackupForJoystick.rotateBy(thumbNeutralJoystickToHandQuaternion)
-        
-        float joystick_x_angleRadians = getRoll(thumbJoystickQuaternion);
-        // Serial.println(joystick_x_angleRadians);
+        Quaternion relativeJoystickQuaternion = relativeThumbQuaternion.getRelativeTo(thumbNeutralJoystickToHandQuaternion);
+        float joystick_x_angleRadians = getRoll_pry(relativeJoystickQuaternion);
         float joystick_x_angleDegrees = joystick_x_angleRadians*180/3.14;
-        Serial.println(joystick_x_angleDegrees); // -150 to -20
+        // Serial.print("x: ");
+        // Serial.print(joystick_x_angleDegrees); // -20 to 20
         joystick_x_angleDegrees += 20;
         // Serial.println(joystick_x_angleDegrees);
-        joystick_x = -joystick_x_angleDegrees*1023/130.;
-        // Serial.println(joystick_x);
+        joystick_x = joystick_x_angleDegrees*1023/40.;
         if (joystick_x < 0)
             joystick_x = 0;
         else if (joystick_x > 1023)
             joystick_x = 1023;
         
-        float joystick_y_angleRadians = getCurl(thumbJoystickQuaternion);
+        float joystick_y_angleRadians = getPitch_pry(relativeJoystickQuaternion);
         float joystick_y_angleDegrees = joystick_y_angleRadians*180/3.14;
-        // Serial.println(joystick_y_angleDegrees); //90 to 110
-        joystick_y_angleDegrees -= 90;
-        joystick_y = joystick_y_angleDegrees*1023/20.;
+        // Serial.print("\ty: ");
+        // Serial.println(joystick_y_angleDegrees); // -20 to 20
+        joystick_y_angleDegrees += 40;
+        joystick_y = joystick_y_angleDegrees*1023/40.;
         if (joystick_y < 0)
             joystick_y = 0;
         else if (joystick_y > 1023)
             joystick_y = 1023;
         
         joystickIsEnabled = true;
-      // }
     }
     else{
       joystick_x = 512;
@@ -313,10 +330,10 @@ void loop() {
   serial_data.thumbstick_y = joystick_y;
   serial_data.thumbCurl = thumb_axis;
   serial_data.thumbSplay = thumb_splay_axis;
-  serial_data.refQuaternion_w = (int)(32767. * relativeQuaternion.w);
-  serial_data.refQuaternion_x = (int)(32767. * relativeQuaternion.x);
-  serial_data.refQuaternion_y = (int)(32767. * relativeQuaternion.y);
-  serial_data.refQuaternion_z = (int)(32767. * relativeQuaternion.z);
+  serial_data.refQuaternion_w = (int)(32767. * relativeQuaternionForMainMCU.w);
+  serial_data.refQuaternion_x = (int)(32767. * relativeQuaternionForMainMCU.x);
+  serial_data.refQuaternion_y = (int)(32767. * relativeQuaternionForMainMCU.y);
+  serial_data.refQuaternion_z = (int)(32767. * relativeQuaternionForMainMCU.z);
 
   // relativeQuaternion.printMe();
 

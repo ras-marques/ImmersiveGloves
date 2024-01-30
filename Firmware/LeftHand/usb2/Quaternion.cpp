@@ -1,5 +1,36 @@
 #include "Quaternion.h"
 
+
+float getPitch_pry(Quaternion q){
+  return asin(2 * (q.x * q.z - q.w * q.y));
+}
+float getRoll_pry(Quaternion q){
+  return atan2(2 * (q.y * q.z + q.w * q.x), (q.w * q.w - q.x * q.x - q.y * q.y + q.z * q.z));
+}
+float getYaw_pry(Quaternion q){
+  return atan2(2 * (q.x * q.y + q.w * q.z), (q.w * q.w + q.x * q.x - q.y * q.y - q.z * q.z));
+}
+
+float getPitch_ypr(Quaternion q){
+  return asin(-2 * (q.x * q.z - q.w * q.y));
+}
+float getRoll_ypr(Quaternion q){
+  return atan2(2 * (q.w * q.z + q.x * q.y), (q.w * q.w + q.x * q.x - q.y * q.y - q.z * q.z));
+}
+float getYaw_ypr(Quaternion q){
+  return atan2(2 * (q.w * q.x + q.y * q.z), (q.w * q.w - q.x * q.x - q.y * q.y + q.z * q.z));
+}
+
+float getRoll_ryp(Quaternion q){
+  return asin(-2 * (q.x * q.y - q.w * q.z));
+}
+float getYaw_ryp(Quaternion q){
+  return atan2(2 * (q.w * q.y + q.x * q.z), (q.w * q.w + q.x * q.x - q.y * q.y - q.z * q.z));
+}
+float getPitch_ryp(Quaternion q){
+  return atan2(2 * (q.w * q.x + q.y * q.z), (q.w * q.w - q.x * q.x + q.y * q.y - q.z * q.z));
+}
+
 Quaternion quaternion_conjugate(Quaternion q){
   Quaternion output;
   output.w = q.w;
@@ -30,6 +61,48 @@ Quaternion quaternion_multiply(Quaternion q1, Quaternion q2){
 }
 
 Quaternion::Quaternion(){}
+
+void Quaternion::printMyEulerAngles_pry(){
+  Quaternion self;
+  self.w = w;
+  self.x = x;
+  self.y = y;
+  self.z = z;
+  Serial.print("pyr: p ");
+  Serial.print(getPitch_pry(self)*180/3.14);
+  Serial.print("\tr ");
+  Serial.print(getRoll_pry(self)*180/3.14);
+  Serial.print("\ty ");
+  Serial.println(getYaw_pry(self)*180/3.14);
+}
+
+void Quaternion::printMyEulerAngles_ypr(){
+  Quaternion self;
+  self.w = w;
+  self.x = x;
+  self.y = y;
+  self.z = z;
+  Serial.print("ypr: p ");
+  Serial.print(getPitch_ypr(self)*180/3.14);
+  Serial.print("\tr ");
+  Serial.print(getRoll_ypr(self)*180/3.14);
+  Serial.print("\ty ");
+  Serial.println(getYaw_ypr(self)*180/3.14);
+}
+
+void Quaternion::printMyEulerAngles_ryp(){
+  Quaternion self;
+  self.w = w;
+  self.x = x;
+  self.y = y;
+  self.z = z;
+  Serial.print("ryp: p ");
+  Serial.print(getPitch_ryp(self)*180/3.14);
+  Serial.print("\tr ");
+  Serial.print(getRoll_ryp(self)*180/3.14);
+  Serial.print("\ty ");
+  Serial.println(getYaw_ryp(self)*180/3.14);
+}
 
 void Quaternion::printMe(){
   Serial.print(w);
