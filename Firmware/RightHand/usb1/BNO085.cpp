@@ -331,7 +331,7 @@ bool BNO085::begin(i2c_inst_t* i2cInterface, uint8_t address){
   if(!tBoardInfoReceived) Serial.println("BNO not detected!");
   else{
     Serial.println("");
-    Serial.println("Enabling ARVR stabilized game rotation vector");
+    Serial.println("Enabling rotation vector");
     // enableARVRStabilizedGameRotationVector(10);
     enableRotationVector(10);
     

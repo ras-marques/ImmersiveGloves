@@ -1,6 +1,11 @@
+#include "tundra_mapped_input.h"
 #include "BNO085.h"
 #include "Quaternion.h"
 #include <cmath>
+
+// Create TMI object to communicate with Tundra Tracker
+TMI tundra_tracker;
+void csn_irq( uint gpio, uint32_t event_mask );  // Chip select IRQ must be top level so let's make one and connect it later in setup
 
 BNO085 bnoIndex;
 BNO085 bnoMiddle;
@@ -143,6 +148,10 @@ void setup() {
   Serial.println("ImmersiveGloves starting...");
   delay(1000); // wait 1 seconds, USB2 waits 3 seconds, so that we are sure USB2 has UART aligned for now - probably will make this better later
 
+  // init the communication to Tundra Tracker, setup the CS irq callback (this has to be at Top level in arduino it seems)
+  tundra_tracker.init( );
+  gpio_set_irq_enabled_with_callback( tundra_tracker.get_cs_pin(), GPIO_IRQ_EDGE_RISE | GPIO_IRQ_EDGE_FALL, true, &csn_irq );
+
   // Initialize I2C
   _i2c_init(i2c0, 400000);             // Init I2C0 peripheral at 400kHz
   gpio_set_function(0, GPIO_FUNC_I2C); // set pin 0 as an I2C pin (SDA in this case)
@@ -257,7 +266,8 @@ void loop() {
     if(60 < indexAngle && indexAngle < 180) indexAngle = -180;
     else if(0 < indexAngle && indexAngle <= 60) indexAngle = 0;
     index_axis = 1023. * (indexAngle + 180)/180;
-    
+    controller_data.index_curl = index_axis;
+
     Quaternion indexCurlQuaternion = quaternionFromAngle(indexCurlAmount, 0);                                                      // create a quaternion that represents just the amount of curl in the x axis
     Quaternion indexDecurledQuaternion = quaternion_multiply(indexCurlQuaternion, indexQuaternion);                                // rotate the indexQuaternion by the curl angle in the x axis
     Quaternion indexDecurledToHandQuaternion = quaternion_multiply(handQuaternion, quaternion_conjugate(indexDecurledQuaternion)); // get the relative quaternion between the reference IMU quaternion and the quaternion representing the index IMU rotated back by the curl angle
@@ -270,18 +280,12 @@ void loop() {
     index_splay_axis = indexSplayAngle*1023/60.;
     if(index_splay_axis > 1023) index_splay_axis = 1023;
     else if(index_splay_axis < 0) index_splay_axis = 0;
-
-    //Serial.print(indexSplayAngle);
-    // finger   min  rest  max
-    // index    -22   18    35
-  //   if (indexSplayAngle <= 18)
-  //     index_splay_axis = (int)(512+512*(indexSplayAngle-18)/40.);
-  //   else
-  //     index_splay_axis = (int)(512+512*(indexSplayAngle-18)/17.);
-  //   if (index_splay_axis < 0)
-  //     index_splay_axis = 0;
-  //   else if (index_splay_axis > 1023)
-  //     index_splay_axis = 1023;
+    
+    // scale the splay inversely by how much curl there is -> high curl, low splay
+    index_splay_axis -= 512;
+    index_splay_axis = index_splay_axis * (1023 - index_axis)/1023.;
+    index_splay_axis += 512;
+    controller_data.index_splay = index_splay_axis;
   }
 
   if(bnoMiddle.hasNewQuaternion){
@@ -300,7 +304,8 @@ void loop() {
     if(60 < middleAngle && middleAngle < 180) middleAngle = -180;
     else if(0 < middleAngle && middleAngle <= 60) middleAngle = 0;
     middle_axis = 1023. * (middleAngle + 180)/180;
-    
+    controller_data.middle_curl = middle_axis;
+
     Quaternion middleCurlQuaternion = quaternionFromAngle(middleCurlAmount, 0);                                                      // create a quaternion that represents just the amount of curl in the x axis
     Quaternion middleDecurledQuaternion = quaternion_multiply(middleCurlQuaternion, middleQuaternion);                                // rotate the middleQuaternion by the curl angle in the x axis
     Quaternion middleDecurledToHandQuaternion = quaternion_multiply(handQuaternion, quaternion_conjugate(middleDecurledQuaternion)); // get the relative quaternion between the reference IMU quaternion and the quaternion representing the middle IMU rotated back by the curl angle
@@ -309,23 +314,17 @@ void loop() {
 
     if(middleSplayAngle > 0) middleSplayAngle = 180 - middleSplayAngle;
     else middleSplayAngle = - 180 - middleSplayAngle;
-    middleSplayAngle += 30;
-    middle_splay_axis = middleSplayAngle*1023/70.;
+    Serial.println(middleSplayAngle);
+    middleSplayAngle += 20;
+    middle_splay_axis = middleSplayAngle*1023/20.;
     if(middle_splay_axis > 1023) middle_splay_axis = 1023;
     else if(middle_splay_axis < 0) middle_splay_axis = 0;
-
-
-    //Serial.print(middleSplayAngle);
-    // finger   min  rest  max
-    // middle    -11    4   28
-  //   if (middleSplayAngle <= 4)
-  //     middle_splay_axis = (int)(512+512*(middleSplayAngle-4)/15.);
-  //   else
-  //     middle_splay_axis = (int)(512+512*(middleSplayAngle-4)/24.);
-  //   if (middle_splay_axis < 0)
-  //     middle_splay_axis = 0;
-  //   else if (middle_splay_axis > 1023)
-  //     middle_splay_axis = 1023;
+    
+    // scale the splay inversely by how much curl there is -> high curl, low splay
+    middle_splay_axis -= 512;
+    middle_splay_axis = middle_splay_axis * (1023 - middle_axis)/1023.;
+    middle_splay_axis += 512;
+    controller_data.middle_splay = middle_splay_axis;
   }
 
   if(bnoRing.hasNewQuaternion){
@@ -344,7 +343,8 @@ void loop() {
     if(60 < ringAngle && ringAngle < 180) ringAngle = -180;
     else if(0 < ringAngle && ringAngle <= 60) ringAngle = 0;
     ring_axis = 1023. * (ringAngle + 180)/180;
-    
+    controller_data.ring_curl = ring_axis;
+
     Quaternion ringCurlQuaternion = quaternionFromAngle(ringCurlAmount, 0);                                                      // create a quaternion that represents just the amount of curl in the x axis
     Quaternion ringDecurledQuaternion = quaternion_multiply(ringCurlQuaternion, ringQuaternion);                                // rotate the ringQuaternion by the curl angle in the x axis
     Quaternion ringDecurledToHandQuaternion = quaternion_multiply(handQuaternion, quaternion_conjugate(ringDecurledQuaternion)); // get the relative quaternion between the reference IMU quaternion and the quaternion representing the ring IMU rotated back by the curl angle
@@ -357,18 +357,12 @@ void loop() {
     ring_splay_axis = ringSplayAngle*1023/65.;
     if(ring_splay_axis > 1023) ring_splay_axis = 1023;
     else if(ring_splay_axis < 0) ring_splay_axis = 0;
-
-    //Serial.print(ringSplayAngle);
-    // finger   min  rest  max
-    // ring     -14    -5   14
-    // if (ringSplayAngle <= -5)
-    //   ring_splay_axis = (int)(512+512*(ringSplayAngle+5)/9.);
-    // else
-    //   ring_splay_axis = (int)(512+512*(ringSplayAngle+5)/21.);
-    // if (ring_splay_axis < 0)
-    //   ring_splay_axis = 0;
-    // else if (ring_splay_axis > 1023)
-    //   ring_splay_axis = 1023;
+    
+    // scale the splay inversely by how much curl there is -> high curl, low splay
+    ring_splay_axis -= 512;
+    ring_splay_axis = ring_splay_axis * (1023 - ring_axis)/1023.;
+    ring_splay_axis += 512;
+    controller_data.ring_splay = ring_splay_axis;
   }
 
   if(bnoPinky.hasNewQuaternion){
@@ -387,7 +381,8 @@ void loop() {
     if(60 < pinkyAngle && pinkyAngle < 180) pinkyAngle = -180;
     else if(0 < pinkyAngle && pinkyAngle <= 60) pinkyAngle = 0;
     pinky_axis = 1023. * (pinkyAngle + 180)/180;
-    
+    controller_data.pinky_curl = pinky_axis;
+
     Quaternion pinkyCurlQuaternion = quaternionFromAngle(pinkyCurlAmount, 0);                                                      // create a quaternion that represents just the amount of curl in the x axis
     Quaternion pinkyDecurledQuaternion = quaternion_multiply(pinkyCurlQuaternion, pinkyQuaternion);                                // rotate the pinkyQuaternion by the curl angle in the x axis
     Quaternion pinkyDecurledToHandQuaternion = quaternion_multiply(handQuaternion, quaternion_conjugate(pinkyDecurledQuaternion)); // get the relative quaternion between the reference IMU quaternion and the quaternion representing the pinky IMU rotated back by the curl angle
@@ -401,22 +396,36 @@ void loop() {
     if(pinky_splay_axis > 1023) pinky_splay_axis = 1023;
     else if(pinky_splay_axis < 0) pinky_splay_axis = 0;
 
-    //Serial.print(pinkySplayAngle);
-    // finger   min  rest  max
-    // pinky    -40    25   -2
-  //   if (pinkySplayAngle <= 10)
-  //     pinky_splay_axis = (int)(512+512*(pinkySplayAngle+25)/15.);
-  //   else
-  //     pinky_splay_axis = (int)(512+512*(pinkySplayAngle+25)/23.);
-  //   if (pinky_splay_axis < 0)
-  //     pinky_splay_axis = 0;
-  //   else if (pinky_splay_axis > 1023)
-  //     pinky_splay_axis = 1023;
+    // scale the splay inversely by how much curl there is -> high curl, low splay
+    pinky_splay_axis -= 512;
+    pinky_splay_axis = pinky_splay_axis * (1023 - pinky_axis)/1023.;
+    pinky_splay_axis += 512;
+    controller_data.pinky_splay = pinky_splay_axis;
   }
-  
+
   // Serial.print(controller_data.thumb_curl);
   // Serial.print("\t");
+  // Serial.print(controller_data.index_curl);
+  // Serial.print("\t");
+  // Serial.print(controller_data.middle_curl);
+  // Serial.print("\t");
+  // Serial.print(controller_data.ring_curl);
+  // Serial.print("\t");
+  // Serial.print(controller_data.pinky_curl);
+  // Serial.print("\t");
   // Serial.print(controller_data.thumb_splay);
+  // Serial.print("\t");
+  // Serial.print(controller_data.index_splay);
+  // Serial.print("\t");
+  // Serial.print(controller_data.middle_splay);
+  // Serial.print("\t");
+  // Serial.print(controller_data.ring_splay);
+  // Serial.print("\t");
+  // Serial.print(controller_data.pinky_splay);
+  // Serial.print("\t");
+  // Serial.print(controller_data.thumbstick_x);
+  // Serial.print("\t");
+  // Serial.print(controller_data.thumbstick_y);
   // Serial.print("\t");
   // Serial.print(controller_data.thumbstick_click);
   // Serial.print("\t");
@@ -424,48 +433,21 @@ void loop() {
   // Serial.print("\t");
   // Serial.print(controller_data.b);
   // Serial.print("\t");
-  // Serial.print(controller_data.system);
-  // Serial.print("\t");
+  // Serial.println(controller_data.system);
 
-  // // Serial.print(thumb_axis);
-  // // Serial.print("\t");
-  // // Serial.print(thumb_splay_axis);
-  // // Serial.print("\t");
-  // // Serial.print(index_axis);
-  // // Serial.print("\t");
-  // Serial.print(index_splay_axis);
-  // Serial.print("\t");
-  // // Serial.print(middle_axis);
-  // // Serial.print("\t");
-  // Serial.print(middle_splay_axis);
-  // Serial.print("\t");
-  // // Serial.print(ring_axis);
-  // // Serial.print("\t");
-  // Serial.print(ring_splay_axis);
-  // Serial.print("\t");
-  // // Serial.print(pinky_axis);
-  // // Serial.print("\t");
-  // Serial.print(pinky_splay_axis);
-  // Serial.println("");
+  // Flag will be true when the library is ready for new data
+  if ( tundra_tracker.data_ready() )
+  {
+    // Copy our controller struct to the data packet
+    tundra_tracker.send_data( &controller_data, sizeof(controller_data) );
 
-  // // Serial.print(thumbAngle);
-  // // Serial.print("\t");
-  // // Serial.print(thumbSplayAngle);
-  // // Serial.print("\t");
-  // // Serial.print(indexAngle);
-  // // Serial.print("\t");
-  // Serial.print(indexSplayAngle);
-  // Serial.print("\t");
-  // // Serial.print(middleAngle);
-  // // Serial.print("\t");
-  // Serial.print(middleSplayAngle);
-  // Serial.print("\t");
-  // // Serial.print(ringAngle);
-  // // Serial.print("\t");
-  // Serial.print(ringSplayAngle);
-  // Serial.print("\t");
-  // // Serial.print(pinkyAngle);
-  // // Serial.print("\t");
-  // Serial.print(pinkySplayAngle);
-  Serial.println("");
+    // House keeping function for the library that should be ran right after data is ready
+    tundra_tracker.handle_rx_data( );
+  }
+}
+
+// Callback for SPI Chipselect, just connect in the tmi irq function
+void csn_irq( uint gpio, uint32_t event_mask )
+{
+  tundra_tracker.csn_irq( gpio, event_mask );
 }
