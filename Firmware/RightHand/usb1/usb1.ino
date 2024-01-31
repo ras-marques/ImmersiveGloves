@@ -138,6 +138,14 @@ void on_uart_rx() {
   }
 }
 
+int computeSplayAxis(float angleDegrees, float angleDegreesMin, float angleDegreesMiddle, float angleDegreesMax){
+  int splayAxis = 512;
+  if(angleDegrees <= angleDegreesMiddle) splayAxis = 512+512.*(angleDegrees-angleDegreesMiddle)/(angleDegreesMiddle-angleDegreesMin);
+  else splayAxis = 512+512.*(angleDegrees-angleDegreesMiddle)/(angleDegreesMax-angleDegreesMiddle);
+  if(splayAxis > 1023) splayAxis = 1023;
+  else if(splayAxis < 0) splayAxis = 0;
+}
+
 // the setup function runs once when you press reset or power the board
 void setup() {
 
@@ -203,7 +211,8 @@ void setup() {
 }
 
 int thumbAngle, indexAngle, middleAngle, ringAngle, pinkyAngle;
-int thumbSplayAngle, indexSplayAngle, middleSplayAngle, ringSplayAngle, pinkySplayAngle;
+// int thumbSplayAngle, indexSplayAngle, middleSplayAngle, ringSplayAngle, pinkySplayAngle;
+int thumbSplay_angleDegrees, indexSplay_angleDegrees, middleSplay_angleDegrees, ringSplay_angleDegrees, pinkySplay_angleDegrees;
 
 bool joystickIsEnabled = false;
 int joystick_x = 512;
@@ -271,15 +280,10 @@ void loop() {
     Quaternion indexCurlQuaternion = quaternionFromAngle(indexCurlAmount, 0);                                                      // create a quaternion that represents just the amount of curl in the x axis
     Quaternion indexDecurledQuaternion = quaternion_multiply(indexCurlQuaternion, indexQuaternion);                                // rotate the indexQuaternion by the curl angle in the x axis
     Quaternion indexDecurledToHandQuaternion = quaternion_multiply(handQuaternion, quaternion_conjugate(indexDecurledQuaternion)); // get the relative quaternion between the reference IMU quaternion and the quaternion representing the index IMU rotated back by the curl angle
-    float indexSplayAmount = getSplay(indexDecurledToHandQuaternion);                                                              // get the splay angle in radians from the quaternion calculated above
-    indexSplayAngle = (int)(indexSplayAmount*180/3.14);                                                                        // convert the splay angle to degrees
-
-    if(indexSplayAngle > 0) indexSplayAngle = 180 - indexSplayAngle;
-    else indexSplayAngle = - 180 - indexSplayAngle;
-    indexSplayAngle += 35;
-    index_splay_axis = indexSplayAngle*1023/60.;
-    if(index_splay_axis > 1023) index_splay_axis = 1023;
-    else if(index_splay_axis < 0) index_splay_axis = 0;
+    float indexSplay_angleRadians = getSplay(indexDecurledToHandQuaternion);                                                              // get the splay angle in radians from the quaternion calculated above
+    indexSplay_angleDegrees = indexSplay_angleRadians*180/3.14;                                                                        // convert the splay angle to degrees
+    // computeSplayAxis(float angleDegrees, float angleDegreesMin, float angleDegreesMiddle, float angleDegreesMax)
+    index_splay_axis = computeSplayAxis(indexSplay_angleDegrees, -22, 18, 35);
     
     // scale the splay inversely by how much curl there is -> high curl, low splay
     index_splay_axis -= 512;
@@ -309,16 +313,10 @@ void loop() {
     Quaternion middleCurlQuaternion = quaternionFromAngle(middleCurlAmount, 0);                                                      // create a quaternion that represents just the amount of curl in the x axis
     Quaternion middleDecurledQuaternion = quaternion_multiply(middleCurlQuaternion, middleQuaternion);                                // rotate the middleQuaternion by the curl angle in the x axis
     Quaternion middleDecurledToHandQuaternion = quaternion_multiply(handQuaternion, quaternion_conjugate(middleDecurledQuaternion)); // get the relative quaternion between the reference IMU quaternion and the quaternion representing the middle IMU rotated back by the curl angle
-    float middleSplayAmount = getSplay(middleDecurledToHandQuaternion);                                                              // get the splay angle in radians from the quaternion calculated above
-    middleSplayAngle = (int)(middleSplayAmount*180/3.14);                                                                        // convert the splay angle to degrees
-
-    if(middleSplayAngle > 0) middleSplayAngle = 180 - middleSplayAngle;
-    else middleSplayAngle = - 180 - middleSplayAngle;
-    Serial.println(middleSplayAngle);
-    middleSplayAngle += 20;
-    middle_splay_axis = middleSplayAngle*1023/20.;
-    if(middle_splay_axis > 1023) middle_splay_axis = 1023;
-    else if(middle_splay_axis < 0) middle_splay_axis = 0;
+    float middleSplay_angleRadians = getSplay(middleDecurledToHandQuaternion);                                                              // get the splay angle in radians from the quaternion calculated above
+    middleSplay_angleDegrees = middleSplay_angleRadians*180/3.14;                                                                        // convert the splay angle to degrees
+    // computeSplayAxis(float angleDegrees, float angleDegreesMin, float angleDegreesMiddle, float angleDegreesMax)
+    middle_splay_axis = computeSplayAxis(middleSplay_angleDegrees, -22, 18, 35);
     
     // scale the splay inversely by how much curl there is -> high curl, low splay
     middle_splay_axis -= 512;
@@ -348,15 +346,10 @@ void loop() {
     Quaternion ringCurlQuaternion = quaternionFromAngle(ringCurlAmount, 0);                                                      // create a quaternion that represents just the amount of curl in the x axis
     Quaternion ringDecurledQuaternion = quaternion_multiply(ringCurlQuaternion, ringQuaternion);                                // rotate the ringQuaternion by the curl angle in the x axis
     Quaternion ringDecurledToHandQuaternion = quaternion_multiply(handQuaternion, quaternion_conjugate(ringDecurledQuaternion)); // get the relative quaternion between the reference IMU quaternion and the quaternion representing the ring IMU rotated back by the curl angle
-    float ringSplayAmount = getSplay(ringDecurledToHandQuaternion);                                                              // get the splay angle in radians from the quaternion calculated above
-    ringSplayAngle = (int)(ringSplayAmount*180/3.14);                                                                        // convert the splay angle to degrees
-
-    if(ringSplayAngle > 0) ringSplayAngle = 180 - ringSplayAngle;
-    else ringSplayAngle = - 180 - ringSplayAngle;
-    ringSplayAngle += 45;
-    ring_splay_axis = ringSplayAngle*1023/65.;
-    if(ring_splay_axis > 1023) ring_splay_axis = 1023;
-    else if(ring_splay_axis < 0) ring_splay_axis = 0;
+    float ringSplay_angleRadians = getSplay(ringDecurledToHandQuaternion);                                                              // get the splay angle in radians from the quaternion calculated above
+    ringSplay_angleDegrees = ringSplay_angleRadians*180/3.14;                                                                        // convert the splay angle to degrees
+    // computeSplayAxis(float angleDegrees, float angleDegreesMin, float angleDegreesMiddle, float angleDegreesMax)
+    ring_splay_axis = computeSplayAxis(ringSplay_angleDegrees, -22, 18, 35);
     
     // scale the splay inversely by how much curl there is -> high curl, low splay
     ring_splay_axis -= 512;
@@ -386,15 +379,10 @@ void loop() {
     Quaternion pinkyCurlQuaternion = quaternionFromAngle(pinkyCurlAmount, 0);                                                      // create a quaternion that represents just the amount of curl in the x axis
     Quaternion pinkyDecurledQuaternion = quaternion_multiply(pinkyCurlQuaternion, pinkyQuaternion);                                // rotate the pinkyQuaternion by the curl angle in the x axis
     Quaternion pinkyDecurledToHandQuaternion = quaternion_multiply(handQuaternion, quaternion_conjugate(pinkyDecurledQuaternion)); // get the relative quaternion between the reference IMU quaternion and the quaternion representing the pinky IMU rotated back by the curl angle
-    float pinkySplayAmount = getSplay(pinkyDecurledToHandQuaternion);                                                              // get the splay angle in radians from the quaternion calculated above
-    pinkySplayAngle = (int)(pinkySplayAmount*180/3.14);                                                                        // convert the splay angle to degrees
-
-    if(pinkySplayAngle > 0) pinkySplayAngle = 180 - pinkySplayAngle;
-    else pinkySplayAngle = - 180 - pinkySplayAngle;
-    pinkySplayAngle += 45;
-    pinky_splay_axis = pinkySplayAngle*1023/65.;
-    if(pinky_splay_axis > 1023) pinky_splay_axis = 1023;
-    else if(pinky_splay_axis < 0) pinky_splay_axis = 0;
+    float pinkySplay_angleRadians = getSplay(pinkyDecurledToHandQuaternion);                                                              // get the splay angle in radians from the quaternion calculated above
+    pinkySplay_angleDegrees = pinkySplay_angleRadians*180/3.14;                                                                        // convert the splay angle to degrees
+    // computeSplayAxis(float angleDegrees, float angleDegreesMin, float angleDegreesMiddle, float angleDegreesMax)
+    pinky_splay_axis = computeSplayAxis(pinkySplay_angleDegrees, -22, 18, 35);
 
     // scale the splay inversely by how much curl there is -> high curl, low splay
     pinky_splay_axis -= 512;
