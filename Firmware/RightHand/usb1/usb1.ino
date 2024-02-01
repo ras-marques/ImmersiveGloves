@@ -138,6 +138,10 @@ void on_uart_rx() {
   }
 }
 
+float toDegrees(float angleRadians){
+  return angleRadians*180/3.14;
+}
+
 int computeSplayAxis(float angleDegrees, float angleDegreesMin, float angleDegreesMiddle, float angleDegreesMax){
   int splayAxis = 512;
   if(angleDegrees <= angleDegreesMiddle) splayAxis = 512+512.*(angleDegrees-angleDegreesMiddle)/(angleDegreesMiddle-angleDegreesMin);
@@ -269,15 +273,15 @@ void loop() {
     Quaternion indexToHandQuaternion = quaternion_multiply(handQuaternion, quaternion_conjugate(indexQuaternion));                 // get the relative quaternion between the reference IMU quaternion and the index IMU quaternion
     // indexToHandQuaternion.printMe();
 
-    float indexCurlAmount = getCurl(indexToHandQuaternion);                                                                        // get the curl angle in radians from the quaternion calculated above
+    float indexCurlRadians = getCurl(indexToHandQuaternion);                                                                        // get the curl angle in radians from the quaternion calculated above
     // Serial.println(indexCurlAmount);
-    indexAngle = (int)(indexCurlAmount*180/3.14);                                                                              // convert the curl angle to degrees
+    indexAngle = toDegrees(indexCurlRadians);                                                                              // convert the curl angle to degrees
     if(60 < indexAngle && indexAngle < 180) indexAngle = -180;
     else if(0 < indexAngle && indexAngle <= 60) indexAngle = 0;
     index_axis = 1023. * (indexAngle + 180)/180;
     controller_data.index_curl = index_axis;
 
-    Quaternion indexCurlQuaternion = quaternionFromAngle(indexCurlAmount, 0);                                                      // create a quaternion that represents just the amount of curl in the x axis
+    Quaternion indexCurlQuaternion = quaternionFromAngle(indexCurlRadians, 0);                                                      // create a quaternion that represents just the amount of curl in the x axis
     Quaternion indexDecurledQuaternion = quaternion_multiply(indexCurlQuaternion, indexQuaternion);                                // rotate the indexQuaternion by the curl angle in the x axis
     Quaternion indexDecurledToHandQuaternion = quaternion_multiply(handQuaternion, quaternion_conjugate(indexDecurledQuaternion)); // get the relative quaternion between the reference IMU quaternion and the quaternion representing the index IMU rotated back by the curl angle
     float indexSplay_angleRadians = getSplay(indexDecurledToHandQuaternion);                                                              // get the splay angle in radians from the quaternion calculated above
