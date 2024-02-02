@@ -103,6 +103,8 @@ typedef struct __attribute__( ( packed, aligned( 1 ) ) )
 } serial_data_t;
 serial_data_t serial_data;
 
+long microsOfTheLastMessageSent = 0;
+
 // the setup function runs once when you press reset or power the board
 void setup() {
 
@@ -361,18 +363,17 @@ void loop() {
   // Serial.print("\t");
   // Serial.println(serial_data.refQuaternion_z);
 
-  uint8_t *data_ptr = (uint8_t *)&serial_data;
-  size_t data_size = sizeof(serial_data_t);
-  uart_putc_raw(uart1, 170); // Print initiator
-  uart_putc_raw(uart1, 170); // Print initiator
-  // Serial.print(170);
-  // Serial.print("\t");
-  // Serial.print(170);
-  // Serial.print("\t");
-  for (size_t i = 0; i < data_size; i++) {
-    uart_putc_raw(uart1, data_ptr[i]); // Print each byte as a two-digit hexadecimal number
-    // Serial.print(data_ptr[i]);
-    // Serial.print("\t");
+  if(micros() - microsOfTheLastMessageSent > 9000){
+    microsOfTheLastMessageSent = micros();
+    uint8_t *data_ptr = (uint8_t *)&serial_data;
+    size_t data_size = sizeof(serial_data_t);
+    uart_putc_raw(uart1, 170); // Print initiator
+    uart_putc_raw(uart1, 170); // Print initiator
+    for (size_t i = 0; i < data_size; i++) {
+      uart_putc_raw(uart1, data_ptr[i]); // Print each byte as a two-digit hexadecimal number
+      // Serial.print(data_ptr[i]);
+      // Serial.print("\t");
+    }
+    // Serial.println("");
   }
-  // Serial.println("");
 }
