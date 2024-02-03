@@ -1,5 +1,6 @@
 #include "tundra_mapped_input.h"
 #include "BNO085.h"
+#include "Finger.h"
 #include "Quaternion.h"
 #include <cmath>
 
@@ -11,6 +12,11 @@ BNO085 bnoIndex;
 BNO085 bnoMiddle;
 BNO085 bnoRing;
 BNO085 bnoPinky;
+
+Finger fingerIndex;
+Finger fingerMiddle;
+Finger fingerRing;
+Finger fingerPinky;
 
 Quaternion handQuaternion;
 Quaternion relativeQuaternion;
@@ -30,34 +36,6 @@ float getSplay(Quaternion q){
 
 float getRoll(Quaternion q){
   return atan2(2 * (q.y * q.z + q.w * q.x), 1 - 2 * (q.x * q.x + q.y * q.y));
-}
-
-Quaternion quaternionFromAngle(float angle, int axis){
-  // angle is in radians, x axis is 0, y axis is 1, z axis is 2
-  if (axis == 0){
-    Quaternion q;
-    q.w = cos(angle/2);
-    q.x = sin(angle/2);
-    q.y = 0;
-    q.z = 0;
-    return q;
-  }
-  if (axis == 1){
-    Quaternion q;
-    q.w = cos(angle/2);
-    q.x = 0;
-    q.y = sin(angle/2);
-    q.z = 0;
-    return q;
-  }
-  if (axis == 2){
-    Quaternion q;
-    q.w = cos(angle/2);
-    q.x = 0;
-    q.y = 0;
-    q.z = sin(angle/2);
-    return q;
-  }
 }
 
 // this will be sent by serial to the main MCU - 14 bytes are enough for 112 bits, this struct has 108
@@ -192,19 +170,6 @@ void interpret_serial_data(){
   relativeQuaternion.z = serial_data.rxed_data.refQuaternion_z / 32767.;
 }
 
-float toDegrees(float angleRadians){
-  return angleRadians*180/3.14;
-}
-
-int computeSplayAxis(float angleDegrees, float angleDegreesMin, float angleDegreesMiddle, float angleDegreesMax){
-  int splayAxis = 512;
-  if(angleDegrees <= angleDegreesMiddle) splayAxis = 512+512.*(angleDegrees-angleDegreesMiddle)/(angleDegreesMiddle-angleDegreesMin);
-  else splayAxis = 512+512.*(angleDegrees-angleDegreesMiddle)/(angleDegreesMax-angleDegreesMiddle);
-  if(splayAxis > 1023) splayAxis = 1023;
-  else if(splayAxis < 0) splayAxis = 0;
-  return splayAxis;
-}
-
 // the setup function runs once when you press reset or power the board
 void setup() {
 
@@ -245,10 +210,12 @@ void setup() {
   Serial.println("Initializing Pinky IMU");
   bnoPinky.begin(i2c0, 0x4B);
 
-  handQuaternion.w = sqrt(2)/2;
-  handQuaternion.x = 0;
-  handQuaternion.y = 0;
-  handQuaternion.z = -sqrt(2)/2;
+  // sets initial calibration of splay angles for each finger during initialization
+  // begin(float degreesMin, float degreesMid, float degreesMax)
+  fingerIndex.begin(-30, 5, 25);
+  fingerMiddle.begin(5, 19, 30);
+  fingerRing.begin(-25, -9, 0);
+  fingerPinky.begin(-53, -27, -5);
 
   // Set up our UART with the required speed.
   uart_init(uart1, 115200);
@@ -329,41 +296,6 @@ bool ledState = true;
 
 // the loop function runs over and over again forever
 void loop() {
-  if(interpretErrorType != 0){
-    Serial.print(interpretErrorType);
-    Serial.print(" ");
-    Serial.println(interpretSum);
-    interpretErrorType = 0;
-  }
-  // if(interpretSum != 0){
-  //   // Serial.println(interpretSum);
-  //   printSerialData();
-  //   interpretSum = 0;
-  // }
-
-
-
-  // if(millis() - millisLast > 10){
-  //   ledState = !ledState;
-  //   // Serial.println(ledState);
-  //   // gpio_put(25, ledState);
-  //   digitalWrite(LED_BUILTIN, ledState);  // turn the LED on (HIGH is the voltage level)
-  //   millisLast = millis();
-  //   // for(int i = 0; i < 14; i++){
-  //   //   Serial.print(serial_data.chars_rxed_array[i]);
-  //   //   Serial.print("\t");
-  //   // }
-  //   // Serial.println("");
-
-  //   // Serial.print(controller_data.thumb_curl);
-  //   // Serial.print(",");
-  //   // Serial.println(controller_data.thumb_splay);
-  //   // relativeQuaternion.printMe();
-  // }
-
-  // Serial.println(millis() - millisLast);
-  // millisLast = millis();
-
   bnoIndex.getReadings();
   bnoMiddle.getReadings();
   bnoRing.getReadings();
@@ -371,161 +303,57 @@ void loop() {
 
   if(bnoIndex.hasNewQuaternion){
     // Serial.println("index");
+    Quaternion sensorQuaternion;
     float radAccuracy;
     uint8_t accuracy;
-    bnoIndex.getQuat(indexQuaternion.x, indexQuaternion.y, indexQuaternion.z, indexQuaternion.w, radAccuracy, accuracy);                    // get the index IMU quaternion
-    // indexQuaternion.printMe();
-    indexQuaternion = quaternion_multiply(relativeQuaternion, indexQuaternion);                                                    // rotate the indexQuaternion to be in the coordinate frame where my calculations work
-    Quaternion indexToHandQuaternion = quaternion_multiply(handQuaternion, quaternion_conjugate(indexQuaternion));                 // get the relative quaternion between the reference IMU quaternion and the index IMU quaternion
-    // indexToHandQuaternion.printMe();
+    bnoIndex.getQuat(sensorQuaternion.x, sensorQuaternion.y, sensorQuaternion.z, sensorQuaternion.w, radAccuracy, accuracy);  // get the index IMU quaternion
 
-    float indexCurl_angleRadians = getCurl(indexToHandQuaternion);                                                                        // get the curl angle in radians from the quaternion calculated above
-    indexCurl_angleDegrees = toDegrees(indexCurl_angleRadians);                                                                              // convert the curl angle to degrees
-    if(60 < indexCurl_angleDegrees && indexCurl_angleDegrees < 180) indexCurl_angleDegrees = -180;
-    else if(0 < indexCurl_angleDegrees && indexCurl_angleDegrees <= 60) indexCurl_angleDegrees = 0;
-    index_axis = 1023. * (indexCurl_angleDegrees + 180)/180;
+    fingerIndex.computeAxesValues(relativeQuaternion, sensorQuaternion);  // compute curl and splay axis from reference quaternion and finger quaternion
 
-    Quaternion indexCurlQuaternion = quaternionFromAngle(indexCurl_angleRadians, 0);                                                      // create a quaternion that represents just the amount of curl in the x axis
-    Quaternion indexDecurledQuaternion = quaternion_multiply(indexCurlQuaternion, indexQuaternion);                                // rotate the indexQuaternion by the curl angle in the x axis
-    Quaternion indexDecurledToHandQuaternion = quaternion_multiply(handQuaternion, quaternion_conjugate(indexDecurledQuaternion)); // get the relative quaternion between the reference IMU quaternion and the quaternion representing the index IMU rotated back by the curl angle
-    float indexSplay_angleRadians = getSplay(indexDecurledToHandQuaternion);                                                              // get the splay angle in radians from the quaternion calculated above
-    indexSplay_angleDegrees = toDegrees(indexSplay_angleRadians);                                                                        // convert the splay angle to degrees
-    // rotate everything 180 degrees
-    if(indexSplay_angleDegrees > 0) indexSplay_angleDegrees = 180 - indexSplay_angleDegrees;
-    else indexSplay_angleDegrees = - 180 - indexSplay_angleDegrees;
-    // computeSplayAxis(float angleDegrees, float angleDegreesMin, float angleDegreesMiddle, float angleDegreesMax)
-    index_splay_axis = computeSplayAxis(indexSplay_angleDegrees, -30, 5, 25);
-    // Serial.print(indexSplay_angleDegrees);
-    // Serial.print(" ");
-    // Serial.println(index_splay_axis);
-
-    // scale the splay inversely by how much curl there is -> high curl, low splay
-    index_splay_axis -= 512;
-    index_splay_axis = index_splay_axis * (1023 - index_axis)/1023.;
-    index_splay_axis += 512;
-
-    controller_data.index_curl = index_axis;
-    controller_data.index_splay = index_splay_axis;
+    controller_data.index_curl = fingerIndex.curlAxis;
+    controller_data.index_splay = fingerIndex.splayAxis;
   }
 
   if(bnoMiddle.hasNewQuaternion){
     // Serial.println("middle");
+    Quaternion sensorQuaternion;
     float radAccuracy;
     uint8_t accuracy;
-    bnoMiddle.getQuat(middleQuaternion.x, middleQuaternion.y, middleQuaternion.z, middleQuaternion.w, radAccuracy, accuracy);                    // get the middle IMU quaternion
-    //middleQuaternion.printMe();
-    middleQuaternion = quaternion_multiply(relativeQuaternion, middleQuaternion);                                                    // rotate the middleQuaternion to be in the coordinate frame where my calculations work
-    Quaternion middleToHandQuaternion = quaternion_multiply(handQuaternion, quaternion_conjugate(middleQuaternion));                 // get the relative quaternion between the reference IMU quaternion and the middle IMU quaternion
-    // middleToHandQuaternion.printMe();
+    bnoMiddle.getQuat(sensorQuaternion.x, sensorQuaternion.y, sensorQuaternion.z, sensorQuaternion.w, radAccuracy, accuracy);  // get the middle IMU quaternion
+    
+    fingerMiddle.computeAxesValues(relativeQuaternion, sensorQuaternion);  // compute curl and splay axis from reference quaternion and finger quaternion
 
-    float middleCurl_angleRadians = getCurl(middleToHandQuaternion);                                                                        // get the curl angle in radians from the quaternion calculated above
-    middleCurl_angleDegrees = toDegrees(middleCurl_angleRadians);                                                                              // convert the curl angle to degrees
-    if(60 < middleCurl_angleDegrees && middleCurl_angleDegrees < 180) middleCurl_angleDegrees = -180;
-    else if(0 < middleCurl_angleDegrees && middleCurl_angleDegrees <= 60) middleCurl_angleDegrees = 0;
-    middle_axis = 1023. * (middleCurl_angleDegrees + 180)/180;
-
-    Quaternion middleCurlQuaternion = quaternionFromAngle(middleCurl_angleRadians, 0);                                                      // create a quaternion that represents just the amount of curl in the x axis
-    Quaternion middleDecurledQuaternion = quaternion_multiply(middleCurlQuaternion, middleQuaternion);                                // rotate the middleQuaternion by the curl angle in the x axis
-    Quaternion middleDecurledToHandQuaternion = quaternion_multiply(handQuaternion, quaternion_conjugate(middleDecurledQuaternion)); // get the relative quaternion between the reference IMU quaternion and the quaternion representing the middle IMU rotated back by the curl angle
-    float middleSplay_angleRadians = getSplay(middleDecurledToHandQuaternion);                                                              // get the splay angle in radians from the quaternion calculated above
-    middleSplay_angleDegrees = toDegrees(middleSplay_angleRadians);                                                                        // convert the splay angle to degrees
-    // rotate everything 180 degrees
-    if(middleSplay_angleDegrees > 0) middleSplay_angleDegrees = 180 - middleSplay_angleDegrees;
-    else middleSplay_angleDegrees = - 180 - middleSplay_angleDegrees;
-    // computeSplayAxis(float angleDegrees, float angleDegreesMin, float angleDegreesMiddle, float angleDegreesMax)
-    middle_splay_axis = computeSplayAxis(middleSplay_angleDegrees, 5, 19, 30);
-    // Serial.print(middleSplay_angleDegrees);
-    // Serial.print(" ");
-    // Serial.println(middle_splay_axis);    
-
-    // scale the splay inversely by how much curl there is -> high curl, low splay
-    middle_splay_axis -= 512;
-    middle_splay_axis = middle_splay_axis * (1023 - middle_axis)/1023.;
-    middle_splay_axis += 512;
-
-    controller_data.middle_curl = middle_axis;
-    controller_data.middle_splay = middle_splay_axis;
+    controller_data.middle_curl = fingerMiddle.curlAxis;
+    controller_data.middle_splay = fingerMiddle.splayAxis;
   }
 
   if(bnoRing.hasNewQuaternion){
     // Serial.println("ring");
+    Quaternion sensorQuaternion;
     float radAccuracy;
     uint8_t accuracy;
-    bnoRing.getQuat(ringQuaternion.x, ringQuaternion.y, ringQuaternion.z, ringQuaternion.w, radAccuracy, accuracy);                    // get the ring IMU quaternion
-    //ringQuaternion.printMe();
-    ringQuaternion = quaternion_multiply(relativeQuaternion, ringQuaternion);                                                    // rotate the ringQuaternion to be in the coordinate frame where my calculations work
-    Quaternion ringToHandQuaternion = quaternion_multiply(handQuaternion, quaternion_conjugate(ringQuaternion));                 // get the relative quaternion between the reference IMU quaternion and the ring IMU quaternion
-    // ringToHandQuaternion.printMe();
+    bnoRing.getQuat(sensorQuaternion.x, sensorQuaternion.y, sensorQuaternion.z, sensorQuaternion.w, radAccuracy, accuracy);                    // get the ring IMU quaternion
+    
+    fingerRing.computeAxesValues(relativeQuaternion, sensorQuaternion);  // compute curl and splay axis from reference quaternion and finger quaternion
 
-    float ringCurl_angleRadians = getCurl(ringToHandQuaternion);                                                                        // get the curl angle in radians from the quaternion calculated above
-    ringCurl_angleDegrees = toDegrees(ringCurl_angleRadians);                                                                              // convert the curl angle to degrees
-    if(60 < ringCurl_angleDegrees && ringCurl_angleDegrees < 180) ringCurl_angleDegrees = -180;
-    else if(0 < ringCurl_angleDegrees && ringCurl_angleDegrees <= 60) ringCurl_angleDegrees = 0;
-    ring_axis = 1023. * (ringCurl_angleDegrees + 180)/180;
-
-    Quaternion ringCurlQuaternion = quaternionFromAngle(ringCurl_angleRadians, 0);                                                      // create a quaternion that represents just the amount of curl in the x axis
-    Quaternion ringDecurledQuaternion = quaternion_multiply(ringCurlQuaternion, ringQuaternion);                                // rotate the ringQuaternion by the curl angle in the x axis
-    Quaternion ringDecurledToHandQuaternion = quaternion_multiply(handQuaternion, quaternion_conjugate(ringDecurledQuaternion)); // get the relative quaternion between the reference IMU quaternion and the quaternion representing the ring IMU rotated back by the curl angle
-    float ringSplay_angleRadians = getSplay(ringDecurledToHandQuaternion);                                                              // get the splay angle in radians from the quaternion calculated above
-    ringSplay_angleDegrees = toDegrees(ringSplay_angleRadians);                                                                        // convert the splay angle to degrees
-    // rotate everything 180 degrees
-    if(ringSplay_angleDegrees > 0) ringSplay_angleDegrees = 180 - ringSplay_angleDegrees;
-    else ringSplay_angleDegrees = - 180 - ringSplay_angleDegrees;
-    // computeSplayAxis(float angleDegrees, float angleDegreesMin, float angleDegreesMiddle, float angleDegreesMax)
-    ring_splay_axis = computeSplayAxis(ringSplay_angleDegrees, -25, -9, 0);
-    // Serial.print(ringSplay_angleDegrees);
-    // Serial.print(" ");
-    // Serial.println(ring_splay_axis); 
-
-    // scale the splay inversely by how much curl there is -> high curl, low splay
-    ring_splay_axis -= 512;
-    ring_splay_axis = ring_splay_axis * (1023 - ring_axis)/1023.;
-    ring_splay_axis += 512;
-
-    controller_data.ring_curl = ring_axis;
-    controller_data.ring_splay = ring_splay_axis;
+    controller_data.ring_curl = fingerRing.curlAxis;
+    controller_data.ring_splay = fingerRing.splayAxis;
   }
 
   if(bnoPinky.hasNewQuaternion){
     // Serial.println("pinky");
+    Quaternion sensorQuaternion;
     float radAccuracy;
     uint8_t accuracy;
-    bnoPinky.getQuat(pinkyQuaternion.x, pinkyQuaternion.y, pinkyQuaternion.z, pinkyQuaternion.w, radAccuracy, accuracy);                    // get the pinky IMU quaternion
-    // pinkyQuaternion.printMe();
-    pinkyQuaternion = quaternion_multiply(relativeQuaternion, pinkyQuaternion);                                                    // rotate the pinkyQuaternion to be in the coordinate frame where my calculations work
-    Quaternion pinkyToHandQuaternion = quaternion_multiply(handQuaternion, quaternion_conjugate(pinkyQuaternion));                 // get the relative quaternion between the reference IMU quaternion and the pinky IMU quaternion
-    // pinkyToHandQuaternion.printMe();
+    bnoPinky.getQuat(sensorQuaternion.x, sensorQuaternion.y, sensorQuaternion.z, sensorQuaternion.w, radAccuracy, accuracy);                    // get the pinky IMU quaternion
 
-    float pinkyCurl_angleRadians = getCurl(pinkyToHandQuaternion);                                                                        // get the curl angle in radians from the quaternion calculated above
-    pinkyCurl_angleDegrees = toDegrees(pinkyCurl_angleRadians);                                                                              // convert the curl angle to degrees
-    if(60 < pinkyCurl_angleDegrees && pinkyCurl_angleDegrees < 180) pinkyCurl_angleDegrees = -180;
-    else if(0 < pinkyCurl_angleDegrees && pinkyCurl_angleDegrees <= 60) pinkyCurl_angleDegrees = 0;
-    pinky_axis = 1023. * (pinkyCurl_angleDegrees + 180)/180;
+    fingerPinky.computeAxesValues(relativeQuaternion, sensorQuaternion);  // compute curl and splay axis from reference quaternion and finger quaternion
 
-    Quaternion pinkyCurlQuaternion = quaternionFromAngle(pinkyCurl_angleRadians, 0);                                                      // create a quaternion that represents just the amount of curl in the x axis
-    Quaternion pinkyDecurledQuaternion = quaternion_multiply(pinkyCurlQuaternion, pinkyQuaternion);                                // rotate the pinkyQuaternion by the curl angle in the x axis
-    Quaternion pinkyDecurledToHandQuaternion = quaternion_multiply(handQuaternion, quaternion_conjugate(pinkyDecurledQuaternion)); // get the relative quaternion between the reference IMU quaternion and the quaternion representing the pinky IMU rotated back by the curl angle
-    float pinkySplay_angleRadians = getSplay(pinkyDecurledToHandQuaternion);                                                              // get the splay angle in radians from the quaternion calculated above
-    pinkySplay_angleDegrees = toDegrees(pinkySplay_angleRadians);                                                                        // convert the splay angle to degrees
-    // rotate everything 180 degrees
-    if(pinkySplay_angleDegrees > 0) pinkySplay_angleDegrees = 180 - pinkySplay_angleDegrees;
-    else pinkySplay_angleDegrees = - 180 - pinkySplay_angleDegrees;
-    // computeSplayAxis(float angleDegrees, float angleDegreesMin, float angleDegreesMiddle, float angleDegreesMax)
-    pinky_splay_axis = computeSplayAxis(pinkySplay_angleDegrees, -53, -27, -5);
-    // Serial.print(pinkySplay_angleDegrees);
-    // Serial.print(" ");
-    // Serial.println(pinky_splay_axis); 
-
-    // scale the splay inversely by how much curl there is -> high curl, low splay
-    pinky_splay_axis -= 512;
-    pinky_splay_axis = pinky_splay_axis * (1023 - pinky_axis)/1023.;
-    pinky_splay_axis += 512;
-    
-    controller_data.pinky_curl = pinky_axis;
-    controller_data.pinky_splay = pinky_splay_axis;
+    controller_data.pinky_curl = fingerPinky.curlAxis;
+    controller_data.pinky_splay = fingerPinky.splayAxis;
   }
 
-  // printControllerData();
+  printControllerData();
 
   // Flag will be true when the library is ready for new data
   if ( tundra_tracker.data_ready() )
