@@ -24,11 +24,11 @@ boolean BNO085::sendPacket(uint8_t channelNumber, uint8_t dataLength)
     sprintf(debug, "%s,%d", debug, packet[i]);
   }
   uint8_t write_check = i2c_write_blocking(deviceInterface, deviceAddress, packet, packetLength, false);
-  Serial.print("write_check: ");
-  Serial.println(write_check);
+  // Serial.print("write_check: ");
+  // Serial.println(write_check);
   if(write_check == PICO_ERROR_GENERIC) return false;
 
-  Serial.println(debug);
+  // Serial.println(debug);
   return true;
 }
 
@@ -296,13 +296,13 @@ bool BNO085::begin(i2c_inst_t* i2cInterface, uint8_t address){
 
 	//Transmit packet on interface i2c0, address BNO_ADDRESS, channel CHANNEL_CONTROL, 2 bytes
   Serial.println("");
-  Serial.println("Getting Product ID");
+  // Serial.println("Getting Product ID");
 	sendPacket(CHANNEL_CONTROL, 2);
 
   uint32_t tInitialResetTimeMS = millis();
 	bool tBoardInfoReceived = false;
 
-  Serial.println("Getting ID...");
+  // Serial.println("Getting ID...");
 
 	// Wait max 2.5s for the product_id_response and ignore other packets received during that time.
 	while (millis() - tInitialResetTimeMS < 10000 && (!tBoardInfoReceived)) {

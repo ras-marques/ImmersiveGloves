@@ -367,13 +367,20 @@ void loop() {
     microsOfTheLastMessageSent = micros();
     uint8_t *data_ptr = (uint8_t *)&serial_data;
     size_t data_size = sizeof(serial_data_t);
-    uart_putc_raw(uart1, 170); // Print initiator
-    uart_putc_raw(uart1, 170); // Print initiator
+    uint8_t sum = 0;
+    uart_putc_raw(uart1, 0x55); // Print initiator
+    sum += 0x55;
+    uart_putc_raw(uart1, 0x55); // Print initiator
+    sum += 0x55;
     for (size_t i = 0; i < data_size; i++) {
       uart_putc_raw(uart1, data_ptr[i]); // Print each byte as a two-digit hexadecimal number
+      sum += data_ptr[i];
       // Serial.print(data_ptr[i]);
       // Serial.print("\t");
     }
+    uart_putc_raw(uart1, sum); // Print each byte as a two-digit hexadecimal number
+    // Serial.println(sum);
     // Serial.println("");
+    // Serial.println(millis());
   }
 }
