@@ -294,6 +294,50 @@ int pinky_splay_axis = 0;
 int millisLast = 0;
 bool ledState = true;
 
+int millisCallibrationStart = 0;
+bool preparingCalibration = false;
+bool runningCalibration = false;
+void runSplayCalibration(){
+  static bool calibrating = false;
+  static float minIndexSplay = 360., maxIndexSplay = -360.;
+  static float minMiddleSplay = 360., maxMiddleSplay = -360.;
+  static float minRingSplay = 360., maxRingSplay = -360.;
+  static float minPinkySplay = 360., maxPinkySplay = -360.;
+  
+  if(!calibrating){
+    Serial.println("calibration started!");
+    millisCallibrationStart = millis();
+    calibrating = true;
+  }
+  
+  if(fingerIndex.splayDegrees < minIndexSplay) minIndexSplay = fingerIndex.splayDegrees;
+  if(fingerIndex.splayDegrees > maxIndexSplay) maxIndexSplay = fingerIndex.splayDegrees;
+  if(fingerMiddle.splayDegrees < minMiddleSplay) minMiddleSplay = fingerMiddle.splayDegrees;
+  if(fingerMiddle.splayDegrees > maxMiddleSplay) maxMiddleSplay = fingerMiddle.splayDegrees;
+  if(fingerRing.splayDegrees < minRingSplay) minRingSplay = fingerRing.splayDegrees;
+  if(fingerRing.splayDegrees > maxRingSplay) maxRingSplay = fingerRing.splayDegrees;
+  if(fingerPinky.splayDegrees < minPinkySplay) minPinkySplay = fingerPinky.splayDegrees;
+  if(fingerPinky.splayDegrees > maxPinkySplay) maxPinkySplay = fingerPinky.splayDegrees;
+
+  if(millis() - millisCallibrationStart > 30000) {
+    fingerIndex.calibrateSplayDegrees(minIndexSplay, fingerIndex.splayDegrees, maxIndexSplay);
+    fingerMiddle.calibrateSplayDegrees(minMiddleSplay, fingerMiddle.splayDegrees, maxMiddleSplay);
+    fingerRing.calibrateSplayDegrees(minRingSplay, fingerRing.splayDegrees, maxRingSplay);
+    fingerPinky.calibrateSplayDegrees(minPinkySplay, fingerPinky.splayDegrees, maxPinkySplay);
+
+    minIndexSplay = -360.; maxIndexSplay = 360.;
+    minMiddleSplay = -360.; maxMiddleSplay = 360.;
+    minRingSplay = -360.; maxRingSplay = 360.;
+    minPinkySplay = -360.; maxPinkySplay = 360.;
+
+    calibrating = false;
+    runningCalibration = false;
+    Serial.println("calibration ended!");
+  }
+}
+
+int millisWhenAllFingersAreTogether = 0;
+bool allFingersWereTouchingBefore = false;
 // the loop function runs over and over again forever
 void loop() {
   bnoIndex.getReadings();
@@ -353,7 +397,38 @@ void loop() {
     controller_data.pinky_splay = fingerPinky.splayAxis;
   }
 
-  printControllerData();
+  // printControllerData();
+
+  if(!runningCalibration){
+    if(serial_data.rxed_data.index && serial_data.rxed_data.middle && serial_data.rxed_data.ring && serial_data.rxed_data.pinky){
+      if(!allFingersWereTouchingBefore){
+        millisWhenAllFingersAreTogether = millis();
+        allFingersWereTouchingBefore = true;
+        preparingCalibration = true;
+        Serial.println("Preparing calibration");
+      }
+    } else {
+      allFingersWereTouchingBefore = false;
+      preparingCalibration = false;
+    }
+
+    if(preparingCalibration && millis() - millisWhenAllFingersAreTogether > 5000){
+      Serial.println("run calibration");
+      runningCalibration = true;
+      preparingCalibration = false;
+    }
+  } else {
+    runSplayCalibration();
+
+    controller_data.index_curl = 0;
+    controller_data.index_splay = 512;
+    controller_data.middle_curl = 0;
+    controller_data.middle_splay = 512;
+    controller_data.ring_curl = 0;
+    controller_data.ring_splay = 512;
+    controller_data.pinky_curl = 0;
+    controller_data.pinky_splay = 512;
+  }
 
   // Flag will be true when the library is ready for new data
   if ( tundra_tracker.data_ready() )

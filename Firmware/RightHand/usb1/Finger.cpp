@@ -88,9 +88,15 @@ void Finger::computeSplayAxis(){
     else if(splayAxis < 0) splayAxis = 0;
 
     // scale the splay inversely by how much curl there is -> high curl, low splay
-    splayAxis -= 512;
-    splayAxis = splayAxis * (1023 - curlAxis)/1023.;
-    splayAxis += 512;
+    // splayAxis -= 512;
+    // splayAxis = splayAxis * (1023 - curlAxis)/1023.;
+    // splayAxis += 512;
+
+    if(curlAxis > 512){
+      splayAxis -= 512;
+      splayAxis = splayAxis * (1023 - curlAxis)/512.;
+      splayAxis += 512;
+    }
 }
 
 void Finger::computeAxesValues(Quaternion relativeQuaternion, Quaternion sensorQuaternion){
