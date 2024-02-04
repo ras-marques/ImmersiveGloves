@@ -88,10 +88,22 @@ vr::EVRInitError DeviceProvider::Init(vr::IVRDriverContext* pDriverContext) {
                 my_left_device_->data.splay[4] = (float)(2 * (data - 0.5));
             }
             else if (inputName == "/input/thumbstickx/value") {
-                my_left_device_->data.joyX = (float)(2 * (data - 0.5));;
+                my_left_device_->data.joyX = (float)(2 * (data - 0.5));
             }
             else if (inputName == "/input/thumbsticky/value") {
-                my_left_device_->data.joyY = (float)(2 * (data - 0.5));;
+                my_left_device_->data.joyY = (float)(2 * (data - 0.5));
+            }
+            else if (inputName == "/input/thumbstick/click") {
+                my_left_device_->data.joyButton = (bool)(data);
+            }
+            else if (inputName == "/input/a/click") {
+                my_left_device_->data.aButton = (bool)(data);
+            }
+            else if (inputName == "/input/b/click") {
+                my_left_device_->data.bButton = (bool)(data);
+            }
+            else if (inputName == "/input/system/click") {
+                my_left_device_->data.menu = (bool)(data);
             }
             my_left_device_->WritePipe();
         }
@@ -146,6 +158,18 @@ vr::EVRInitError DeviceProvider::Init(vr::IVRDriverContext* pDriverContext) {
             }
             else if (inputName == "/input/thumbsticky/value") {
                 my_right_device_->data.joyY = (float)(2 * (data - 0.5));
+            }
+            else if (inputName == "/input/thumbstick/click") {
+                my_right_device_->data.joyButton = (bool)(data);
+            }
+            else if (inputName == "/input/a/click") {
+                my_right_device_->data.aButton = (bool)(data);
+            }
+            else if (inputName == "/input/b/click") {
+                my_right_device_->data.bButton = (bool)(data);
+            }
+            else if (inputName == "/input/system/click") {
+                my_right_device_->data.menu = (bool)(data);
             }
             my_right_device_->WritePipe();
         }

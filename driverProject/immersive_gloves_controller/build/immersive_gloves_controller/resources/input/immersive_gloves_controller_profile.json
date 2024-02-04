@@ -94,6 +94,34 @@
           "binding_image_point" : [ 56, 86 ],
           "order" : 111
         },
+		"/input/thumbstick" : {
+          "type" : "button",
+          "click" : true,
+          "touch" : false,
+          "binding_image_point" : [ 34,45 ],
+          "order" : 112
+        },
+        "/input/a" : {
+          "type" : "button",
+          "click" : true,
+          "touch" : false,
+          "binding_image_point" : [ 26, 42 ],
+          "order" : 113
+        },
+        "/input/b" : {
+          "type" : "button",
+          "click" : true,
+          "touch" : false,
+          "binding_image_point" : [ 18, 37  ],
+          "order" : 114
+        },
+		"/input/system" : {
+          "type" : "button",
+          "click" : true,
+          "touch" : false,
+          "binding_image_point" : [ 34,45 ],
+          "order" : 115
+        },
         "/pose/raw": {
             "type": "pose",
             "binding_image_point": [
@@ -198,6 +226,22 @@
             "min": 0,
             "max": 1023,
             "unit": "onesided"
-        }
+        },
+		"/input/thumbstick/click": {
+            "bit_offset": 120,
+            "type": "bool"
+        },
+        "/input/a/click": {
+            "bit_offset": 121,
+            "type": "bool"
+        },
+        "/input/b/click": {
+            "bit_offset": 122,
+            "type": "bool"
+        },
+		"/input/system/click": {
+            "bit_offset": 123,
+            "type": "bool"
+        },
     }
 }

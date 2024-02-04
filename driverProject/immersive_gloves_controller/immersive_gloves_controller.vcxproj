@@ -132,7 +132,8 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)lib/openvr/headers;C:\Users\Ruben\Desktop\repositories\ImmersiveGloves\driverProject\immersive_gloves_controller\lib\minhook\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)lib/openvr/headers;C:\Users\Administrator\Desktop\repositories\ImmersiveGloves\driverProject\immersive_gloves_controller\lib\minhook\include</AdditionalIncludeDirectories>
+      <ScanSourceForModuleDependencies>true</ScanSourceForModuleDependencies>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
