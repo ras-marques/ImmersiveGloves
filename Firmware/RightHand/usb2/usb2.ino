@@ -285,14 +285,15 @@ void loop() {
     
     // inverted logic, this is when the joystick is enabled
     if (!digitalRead(INDEX_CONTACT_PIN)){
+        // Serial.println(thumbSplay_angleDegrees);
         Quaternion relativeJoystickQuaternion = relativeThumbQuaternion.getRelativeTo(thumbNeutralJoystickToHandQuaternion);
         float joystick_x_angleRadians = getRoll_pry(relativeJoystickQuaternion);
         float joystick_x_angleDegrees = joystick_x_angleRadians*180/3.14;
         // Serial.print("x: ");
-        // Serial.print(joystick_x_angleDegrees); // -20 to 20
+        // Serial.println(joystick_x_angleDegrees); // -20 to 20
         joystick_x_angleDegrees += 20;
         // Serial.println(joystick_x_angleDegrees);
-        joystick_x = joystick_x_angleDegrees*1023/40.;
+        joystick_x = 1023 - joystick_x_angleDegrees*1023/40.;
         if (joystick_x < 0)
             joystick_x = 0;
         else if (joystick_x > 1023)

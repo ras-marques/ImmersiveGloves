@@ -4,6 +4,11 @@
 #include "Quaternion.h"
 #include <cmath>
 
+// Any button interaction in the glove is done by touching the thumb to one of the fingers.
+// This makes accidental button presses very frequent. To avoid this, a double click on the A button (ring finger) must be executed.
+// This action will toggle inputs on and off, while never disabling hand tracking.
+bool disableInputs = true;
+
 // Create TMI object to communicate with Tundra Tracker
 TMI tundra_tracker;
 void csn_irq( uint gpio, uint32_t event_mask );  // Chip select IRQ must be top level so let's make one and connect it later in setup
@@ -105,6 +110,8 @@ typedef struct __attribute__( ( packed, aligned( 1 ) ) )
   uint8_t       a                 : 1;   //121
   uint8_t       b                 : 1;   //122
   uint8_t       system            : 1;   //123
+  uint16_t      trigger           : 10;  //124
+  uint8_t       triggerbtn        : 1;   //134
 } controller_data_t;
 controller_data_t controller_data;
 
@@ -130,8 +137,34 @@ void on_uart_rx() {
   }
 }
 
+int debugTransitions = 0;
+bool checkDoubleClick(uint64_t button_history){
+  if(button_history & 0x1){
+    debugTransitions = -1;
+    return false; // button still pressed, can't be a double click
+  } else{
+    // check how many transitions from 0 to 1 and 1 to 0 happened. On a double click, there should be exactly 4
+    bool lastState = false;
+    int numberOfTransitions = 0;
+    for(int i = 0; i < 63; i++){
+      bool currentState = button_history & (((uint64_t)1) << i);
+      if(lastState != currentState) numberOfTransitions++;
+      lastState = currentState;
+    }
+    debugTransitions = numberOfTransitions;
+    if(numberOfTransitions == 4) return true; // double click detected
+  }
+
+  return false; // catch all default returning false - no double click detected
+}
+
 int interpretErrorType = 0;
 int interpretSum = 0;
+// comms happen at around 100Hz between USB2 and USB1 and we want to look at the last 500ms or so for double clicks, so we store the last 64 entries of each button in a 64bit int for the last 640ms.
+uint64_t thumbstick_btn = 0;
+uint64_t a_btn = 0;
+uint64_t b_btn = 0;
+uint64_t system_btn = 0;
 void interpret_serial_data(){
   if((received_characters[0] != 0x55) || (received_characters[1] != 0x55)){
     interpretErrorType = 1;
@@ -158,12 +191,47 @@ void interpret_serial_data(){
   // finally parse the union serial_data into controller_data that will be sent to the tracker
   controller_data.thumb_curl = serial_data.rxed_data.thumbCurl;
   controller_data.thumb_splay = serial_data.rxed_data.thumbSplay;
-  controller_data.thumbstick_x = serial_data.rxed_data.thumbstick_x;
-  controller_data.thumbstick_y = serial_data.rxed_data.thumbstick_y;
-  controller_data.thumbstick_click = serial_data.rxed_data.index;
-  controller_data.a = serial_data.rxed_data.middle;
-  controller_data.b = serial_data.rxed_data.ring;
-  controller_data.system = serial_data.rxed_data.pinky;
+
+  // left shift all FIFOs
+  thumbstick_btn = thumbstick_btn << 1;
+  a_btn = a_btn << 1;
+  b_btn = b_btn << 1;
+  system_btn = system_btn << 1;
+
+  thumbstick_btn |= serial_data.rxed_data.index;
+  b_btn |= serial_data.rxed_data.middle;
+  a_btn |= serial_data.rxed_data.ring;
+  system_btn |= serial_data.rxed_data.pinky;
+
+  if(checkDoubleClick(a_btn)) {
+    disableInputs = !disableInputs;
+    a_btn = 0; // we must reset a_btn here to 0, otherwise there will be multiple double clicks detected until the FIFO is emptied naturally in ~640ms
+  }
+
+  if(!disableInputs){
+    controller_data.thumbstick_x = serial_data.rxed_data.thumbstick_x;
+    controller_data.thumbstick_y = serial_data.rxed_data.thumbstick_y;
+    
+    controller_data.thumbstick_click = serial_data.rxed_data.index;
+    controller_data.b = serial_data.rxed_data.middle;
+    controller_data.a = serial_data.rxed_data.ring;
+    controller_data.system = serial_data.rxed_data.pinky;
+
+    controller_data.trigger = controller_data.index_curl * 2;
+    if(controller_data.trigger > 1023) controller_data.trigger = 1023;
+    if(controller_data.index_curl > 900) controller_data.triggerbtn = true;
+    else controller_data.triggerbtn = false;
+  } else {
+    controller_data.thumbstick_x = 512;
+    controller_data.thumbstick_y = 512;
+    controller_data.thumbstick_click = false;
+    controller_data.a = false;
+    controller_data.b = false;
+    controller_data.system = false;
+    controller_data.trigger = 0;
+    controller_data.triggerbtn = false;
+  }
+
   relativeQuaternion.w = serial_data.rxed_data.refQuaternion_w / 32767.;
   relativeQuaternion.x = serial_data.rxed_data.refQuaternion_x / 32767.;
   relativeQuaternion.y = serial_data.rxed_data.refQuaternion_y / 32767.;
@@ -305,7 +373,7 @@ void runSplayCalibration(){
   static float minPinkySplay = 360., maxPinkySplay = -360.;
   
   if(!calibrating){
-    Serial.println("calibration started!");
+    // Serial.println("calibration started!");
     millisCallibrationStart = millis();
     calibrating = true;
   }
@@ -332,7 +400,7 @@ void runSplayCalibration(){
 
     calibrating = false;
     runningCalibration = false;
-    Serial.println("calibration ended!");
+    // Serial.println("calibration ended!");
   }
 }
 
@@ -397,7 +465,8 @@ void loop() {
     controller_data.pinky_splay = fingerPinky.splayAxis;
   }
 
-  // printControllerData();
+  printControllerData();
+  // printSerialData();
 
   if(!runningCalibration){
     if(serial_data.rxed_data.index && serial_data.rxed_data.middle && serial_data.rxed_data.ring && serial_data.rxed_data.pinky){
@@ -405,7 +474,7 @@ void loop() {
         millisWhenAllFingersAreTogether = millis();
         allFingersWereTouchingBefore = true;
         preparingCalibration = true;
-        Serial.println("Preparing calibration");
+        // Serial.println("Preparing calibration");
       }
     } else {
       allFingersWereTouchingBefore = false;
@@ -413,7 +482,7 @@ void loop() {
     }
 
     if(preparingCalibration && millis() - millisWhenAllFingersAreTogether > 5000){
-      Serial.println("run calibration");
+      // Serial.println("run calibration");
       runningCalibration = true;
       preparingCalibration = false;
     }
@@ -429,6 +498,12 @@ void loop() {
     controller_data.pinky_curl = 0;
     controller_data.pinky_splay = 512;
   }
+
+  // Serial.println(debugTransitions);
+  // Serial.println(a_btn);
+  // Serial.println(serial_data.rxed_data.ring);
+  // Serial.println(" ");
+  // if(disableInputs) Serial.println("Inputs disabled");
 
   // Flag will be true when the library is ready for new data
   if ( tundra_tracker.data_ready() )
