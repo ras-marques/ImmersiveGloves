@@ -29,11 +29,12 @@ static inline void spi_slave_init(PIO pio, uint sm, uint offset, uint outpin, ui
 	// Set the pin direction to input at the PIO
 	pio_sm_set_consecutive_pindirs(pio, sm, inpin, numberOfInPins, false);
 
+	sm_config_set_out_shift(&c, false, false, 0);
+	sm_config_set_in_shift(&c, true, false, 0);
+
     // Load our configuration, and jump to the start of the program
     pio_sm_init(pio, sm, offset, &c);
     // Set the state machine running
     pio_sm_set_enabled(pio, sm, true);
-	
-	sm_config_set_out_shift(&c, true, false, 0);
 }
 %}
