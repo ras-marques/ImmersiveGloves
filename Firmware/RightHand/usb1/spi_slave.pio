@@ -1,0 +1,39 @@
+.program spi_slave
+.wrap_target
+    set x, 31
+    pull
+loop:
+    wait 0 pin 1
+    wait 0 pin 2
+    out pins 1
+    wait 1 pin 2
+    jmp x-- loop
+.wrap
+
+% c-sdk {
+static inline void spi_slave_init(PIO pio, uint sm, uint offset, uint outpin, uint numberOfOutPins, uint inpin, uint numberOfInPins) {
+    pio_sm_config c = spi_slave_program_get_default_config(offset);
+
+    // Map the state machine's OUT pin group to one pin, namely the `outpin`
+    // parameter to this function.
+    sm_config_set_out_pins(&c, outpin, numberOfOutPins);
+	// Map the state machine's IN pin group to one pin, namely the `inpin`
+    // parameter to this function.
+    sm_config_set_in_pins(&c, inpin);
+	
+    // Set this pin's GPIO function (connect PIO to the pad)
+    pio_gpio_init(pio, outpin);
+	
+    // Set the pin direction to output at the PIO
+    pio_sm_set_consecutive_pindirs(pio, sm, outpin, numberOfOutPins, true);
+	// Set the pin direction to input at the PIO
+	pio_sm_set_consecutive_pindirs(pio, sm, inpin, numberOfInPins, false);
+
+    // Load our configuration, and jump to the start of the program
+    pio_sm_init(pio, sm, offset, &c);
+    // Set the state machine running
+    pio_sm_set_enabled(pio, sm, true);
+	
+	sm_config_set_out_shift(&c, true, false, 0);
+}
+%}
