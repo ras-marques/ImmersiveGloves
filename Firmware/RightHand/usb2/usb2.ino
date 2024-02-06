@@ -234,6 +234,7 @@ void loop() {
     // relativeQuaternion = quaternion_multiply(handQuaternionThatWorks, quaternion_conjugate(handQuaternion)); // get the relative quaternion between the reference IMU quaternion and the coordinate frame where my calculations work
     relativeQuaternion = handQuaternion.getRelativeTo(handQuaternionThatWorks);
     relativeQuaternionForMainMCU = handQuaternion.getRelativeTo(handQuaternionThatWorksForMainMCU);
+    // relativeQuaternionForMainMCU = handQuaternion.getRelativeTo(handQuaternionThatWorks);
     // relativeQuaternion.printMe();
     handQuaternion = handQuaternion.rotateBy(relativeQuaternion);                                // rotate the handQuaternion to be in the coordinate frame where my calculations work
     // handQuaternion.printMe();                                                                                // from here on, handQuaternion is the same as handQuaternionThatWorks
@@ -368,7 +369,7 @@ void loop() {
     microsOfTheLastMessageSent = micros();
     uint8_t *data_ptr = (uint8_t *)&serial_data;
     size_t data_size = sizeof(serial_data_t);
-    uint8_t sum = 0;
+    uint16_t sum = 0;
     uart_putc_raw(uart1, 0x55); // Print initiator
     sum += 0x55;
     uart_putc_raw(uart1, 0x55); // Print initiator
@@ -379,7 +380,8 @@ void loop() {
       // Serial.print(data_ptr[i]);
       // Serial.print("\t");
     }
-    uart_putc_raw(uart1, sum); // Print each byte as a two-digit hexadecimal number
+    uart_putc_raw(uart1, (sum & 0xFF)); // Print each byte as a two-digit hexadecimal number
+    uart_putc_raw(uart1, (sum >> 8) & 0xFF); // Print each byte as a two-digit hexadecimal number
     // Serial.println(sum);
     // Serial.println("");
     // Serial.println(millis());

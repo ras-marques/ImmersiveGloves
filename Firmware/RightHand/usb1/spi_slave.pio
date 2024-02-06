@@ -1,36 +1,44 @@
 .program spi_slave
 .wrap_target
-    set x, 31
-    pull
+	wait 0 pin 1  ; wait for logic LOW in input pin 1, in this case CS
+    set x, 31     ; put a value of 31 in the x register
+	pull          ; 
 loop:
-    wait 0 pin 1
-    wait 0 pin 2
-    out pins 1
-    wait 1 pin 2
-    jmp x-- loop
+    wait 0 pin 2  ; wait for logic LOW in input pin 2, in this case SCLK
+    out pins 1    ; shift 1 bit of the FIFO into the OUT pin, in this case MISO 
+    wait 1 pin 2  ; wait for logic HIGH in input pin 2, in this case SCLK, completing the cycle
+    jmp x-- loop  ; if x!=0 jump to loop and decrement the x register by 1, this means loop runs 32 times before wrapping
 .wrap
 
 % c-sdk {
-static inline void spi_slave_init(PIO pio, uint sm, uint offset, uint outpin, uint numberOfOutPins, uint inpin, uint numberOfInPins) {
+static inline void spi_slave_init(PIO pio, uint sm, uint offset, uint mosi, uint cs, uint sclk, uint miso) {
     pio_sm_config c = spi_slave_program_get_default_config(offset);
 
-    // Map the state machine's OUT pin group to one pin, namely the `outpin`
-    // parameter to this function.
-    sm_config_set_out_pins(&c, outpin, numberOfOutPins);
-	// Map the state machine's IN pin group to one pin, namely the `inpin`
-    // parameter to this function.
-    sm_config_set_in_pins(&c, inpin);
+	sm_config_set_fifo_join(&c, PIO_FIFO_JOIN_TX);
 	
-    // Set this pin's GPIO function (connect PIO to the pad)
-    pio_gpio_init(pio, outpin);
+	sm_config_set_in_pins(&c, mosi);
+	sm_config_set_out_pins(&c, miso, 1);
+
+	// pio_sm_config * c, bool shift_right, bool autopull, uint pull_threshold
+	sm_config_set_out_shift(&c, false, false, 0);
+	// sm_config_set_out_shift(&c, true, false, 0);
+	
+	// pio_sm_config * c, bool shift_right, bool autopush, uint push_threshold
+	sm_config_set_in_shift(&c, true, false, 0);
 	
     // Set the pin direction to output at the PIO
-    pio_sm_set_consecutive_pindirs(pio, sm, outpin, numberOfOutPins, true);
+    pio_sm_set_consecutive_pindirs(pio, sm, miso, 1, true);
 	// Set the pin direction to input at the PIO
-	pio_sm_set_consecutive_pindirs(pio, sm, inpin, numberOfInPins, false);
+	pio_sm_set_consecutive_pindirs(pio, sm, mosi, 3, false);
 
-	sm_config_set_out_shift(&c, false, false, 0);
-	sm_config_set_in_shift(&c, true, false, 0);
+	// Set this pin's GPIO function (connect PIO to the pad)
+    pio_gpio_init(pio, mosi);
+	pio_gpio_init(pio, cs);
+	pio_gpio_init(pio, sclk);
+	pio_gpio_init(pio, miso);
+
+	// SPI is synchronous, so bypass input synchroniser to reduce input delay.
+    // hw_set_bits(&pio->input_sync_bypass, 1u << sclk);
 
     // Load our configuration, and jump to the start of the program
     pio_sm_init(pio, sm, offset, &c);

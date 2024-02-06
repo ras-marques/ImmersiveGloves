@@ -15,19 +15,22 @@ static const std::string indexSplayValueInputName = "/input/indexsplay/value";
 static const std::string middleSplayValueInputName = "/input/middlesplay/value";
 static const std::string ringSplayValueInputName = "/input/ringsplay/value";
 static const std::string pinkySplayValueInputName = "/input/pinkysplay/value";
+static const std::string triggerValueInputName = "/input/trigger/value";
 static const std::string thumbstickXInputName = "/input/thumbstickx/value";
 static const std::string thumbstickYValueInputName = "/input/thumbsticky/value";
 static const std::string thumbstickButtonClickInputName = "/input/thumbstick/click";
+static const std::string triggerButtonClickInputName = "/input/triggerbtn/click";
 static const std::string aButtonClickInputName = "/input/a/click";
 static const std::string bButtonClickInputName = "/input/b/click";
 static const std::string menuButtonClickInputName = "/input/system/click";
 
 std::string tundraTrackerLeftSerNum, tundraTrackerRightSerNum;
 
-static std::array<std::string, 16> expectedInputNames = {
+static std::array<std::string, 18> expectedInputNames = {
     thumbValueInputName, indexValueInputName, middleValueInputName, ringValueInputName, pinkyValueInputName,
     thumbSplayValueInputName, indexSplayValueInputName, middleSplayValueInputName, ringSplayValueInputName, pinkySplayValueInputName,
-    thumbstickXInputName, thumbstickYValueInputName, thumbstickButtonClickInputName, aButtonClickInputName, bButtonClickInputName, menuButtonClickInputName
+    triggerValueInputName, thumbstickXInputName, thumbstickYValueInputName, thumbstickButtonClickInputName, triggerButtonClickInputName,
+    aButtonClickInputName, bButtonClickInputName, menuButtonClickInputName
 };
 
 int TrackerDiscovery::FindTrackerDeviceIdByContainer(vr::PropertyContainerHandle_t ulContainer) {
@@ -100,7 +103,7 @@ void TrackerDiscovery::UpdateHandSerialNumber(bool isRight, std::string serialNu
 void TrackerDiscovery::UpdateBooleanComponent(vr::VRInputComponentHandle_t ulComponent, bool bNewValue, double fTimeOffset) {
   if (m_inputComponentDeviceIdMap.count(ulComponent) > 0) {
     InputComponentInfo& inputInfo = m_inputComponentDeviceIdMap.at(ulComponent);
-    vr::VRDriverLog()->Log(inputInfo.name.c_str()); //this prints /input/aButton/click, /input/bButton/click, etc
+    // vr::VRDriverLog()->Log(inputInfo.name.c_str()); //this prints /input/aButton/click, /input/bButton/click, etc
 
     // Check the device serial number
     vr::PropertyContainerHandle_t container = vr::VRProperties()->TrackedDeviceToPropertyContainer(inputInfo.deviceId);
@@ -160,7 +163,7 @@ void TrackerDiscovery::UpdateBooleanComponent(vr::VRInputComponentHandle_t ulCom
 void TrackerDiscovery::UpdateScalarComponent(vr::VRInputComponentHandle_t ulComponent, float fNewValue, double fTimeOffset) {
     if (m_inputComponentDeviceIdMap.count(ulComponent) > 0) {
         InputComponentInfo& inputInfo = m_inputComponentDeviceIdMap.at(ulComponent);
-        vr::VRDriverLog()->Log(inputInfo.name.c_str()); //this prints /input/index/value, /input/middle/value, etc
+        // vr::VRDriverLog()->Log(inputInfo.name.c_str()); //this prints /input/index/value, /input/middle/value, etc
 
         // Check the device serial number
         vr::PropertyContainerHandle_t container = vr::VRProperties()->TrackedDeviceToPropertyContainer(inputInfo.deviceId);

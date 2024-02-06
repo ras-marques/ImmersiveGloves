@@ -15,6 +15,8 @@ class Finger {
     float curlRadians, splayRadians;
     float curlDegrees, splayDegrees;
     float curlAxis, splayAxis;
+    
+    Quaternion toHandQuaternion;
 
   private:
     float toDegrees(float angleRadians);
@@ -31,7 +33,6 @@ class Finger {
 
     Quaternion handQuaternion;
     Quaternion fingerQuaternion;
-    Quaternion toHandQuaternion;
     float curlDegreesMin, curlDegreesMid, curlDegreesMax;
     float splayDegreesMin, splayDegreesMid, splayDegreesMax;
 };

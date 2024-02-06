@@ -172,12 +172,12 @@ bnoMiddle = 0
 bnoRing = 0
 bnoPinky = 0
 
-i2c_0 = busio.I2C(board.GP5, board.GP4, frequency = 400000, timeout = 8000)
+#i2c_0 = busio.I2C(board.GP5, board.GP4, frequency = 400000, timeout = 8000)
 #i2c_1 = busio.I2C(board.GP7, board.GP6, frequency = 400000, timeout = 8000)
 
-bnoRef = BNO08X_I2C(i2c_0, None, 0x4A, False)
-bnoRef.enable_feature(BNO_REPORT_ROTATION_VECTOR)
-bnoRef.enable_feature(BNO_REPORT_LINEAR_ACCELERATION)
+# bnoRef = BNO08X_I2C(i2c_0, None, 0x4A, False)
+# bnoRef.enable_feature(BNO_REPORT_ROTATION_VECTOR)
+# bnoRef.enable_feature(BNO_REPORT_LINEAR_ACCELERATION)
 
 #bnoRef.enable_feature(BNO_REPORT_ACCELEROMETER)
 #bnoRef.enable_feature(BNO_REPORT_GYROSCOPE)
@@ -212,8 +212,8 @@ event_data_length = 0   # only for RX, probably for haptics that I am not using 
 reserved = 0
 
 thumb_axis = 0             # 10  0
-index_axis = 0             # 10  10
-middle_axis = 0            # 10  20
+index_axis = 512             # 10  10
+middle_axis = 512            # 10  20
 ring_axis = 0              # 10  30
 pinky_axis = 0             # 10  40
 thumb_splay_axis = 0       # 10  50
@@ -584,15 +584,27 @@ timer = time.monotonic_ns()/1000000
 # SENSOR FUSION BENCHMARK END #
 ###############################
 
-while True:
-    handQuaternion = Quaternion(bnoRef.quaternion[3],bnoRef.quaternion[0],bnoRef.quaternion[1],bnoRef.quaternion[2])                    # get the reference IMU quaternion
-    handQuaternion.printMe()
+# while True:
+#     handQuaternion = Quaternion(bnoRef.quaternion[3],bnoRef.quaternion[0],bnoRef.quaternion[1],bnoRef.quaternion[2])                    # get the reference IMU quaternion
+#     handQuaternion.printMe()
+
+thumbCurlUp = True
+indexCurlUp = True
+middleCurlUp = True
+ringCurlUp = True
+pinkyCurlUp = True
+
+thumbSplayUp = True
+indexSplayUp = True
+middleSplayUp = True
+ringSplayUp = True
+pinkySplayUp = True
 
 while True:
-    handQuaternion = Quaternion(bnoRef.quaternion[3],bnoRef.quaternion[0],bnoRef.quaternion[1],bnoRef.quaternion[2])                    # get the reference IMU quaternion
-    handQuaternion.printMe()
-    relativeQuaternion = quaternion_multiply(handQuaternionThatWorks, quaternion_conjugate(handQuaternion))                             # get the relative quaternion between the reference IMU quaternion and the coordinate frame where my calculations work
-    handQuaternion = quaternion_multiply(relativeQuaternion, handQuaternion)                                                            # rotate the handQuaternion to be in the coordinate frame where my calculations work
+    # handQuaternion = Quaternion(bnoRef.quaternion[3],bnoRef.quaternion[0],bnoRef.quaternion[1],bnoRef.quaternion[2])                    # get the reference IMU quaternion
+    # handQuaternion.printMe()
+    # relativeQuaternion = quaternion_multiply(handQuaternionThatWorks, quaternion_conjugate(handQuaternion))                             # get the relative quaternion between the reference IMU quaternion and the coordinate frame where my calculations work
+    # handQuaternion = quaternion_multiply(relativeQuaternion, handQuaternion)                                                            # rotate the handQuaternion to be in the coordinate frame where my calculations work
     #handQuaternion.printMe()
 
     if thumbActive:
@@ -776,6 +788,90 @@ while True:
     #print(str(indexSplayAngle) + " " + str(middleSplayAngle) + " " + str(ringSplayAngle) + " " + str(pinkySplayAngle))
     #print(str(index_splay_axis) + " " + str(middle_splay_axis) + " " + str(ring_splay_axis) + " " + str(pinky_splay_axis))
     
+    if thumb_axis == 700:
+        thumbCurlUp = False
+    elif thumb_axis == 520:
+        thumbCurlUp = True
+    if index_axis == 700:
+        indexCurlUp = False
+    elif index_axis == 520:
+        indexCurlUp = True
+    if middle_axis == 700:
+        middleCurlUp = False
+    elif middle_axis == 520:
+        middleCurlUp = True
+    if ring_axis == 700:
+        ringCurlUp = False
+    elif ring_axis == 520:
+        ringCurlUp = True
+    if pinky_axis == 700:
+        pinkyCurlUp = False
+    elif pinky_axis == 520:
+        pinkyCurlUp = True
+
+    if thumbCurlUp:
+        thumb_axis = thumb_axis + 1
+    else:
+        thumb_axis = thumb_axis - 1
+    if indexCurlUp:
+        index_axis = index_axis + 1
+    else:
+        index_axis = index_axis - 1
+    if middleCurlUp:
+        middle_axis = middle_axis + 1
+    else:
+        middle_axis = middle_axis - 1
+    if ringCurlUp:
+        ring_axis = ring_axis + 1
+    else:
+        ring_axis = ring_axis - 1
+    if pinkyCurlUp:
+        pinky_axis = pinky_axis + 1
+    else:
+        pinky_axis = pinky_axis - 1
+
+    if thumb_splay_axis == 700:
+        thumbSplayUp = False
+    elif thumb_splay_axis == 520:
+        thumbSplayUp = True
+    if index_splay_axis == 700:
+        indexSplayUp = False
+    elif index_splay_axis == 520:
+        indexSplayUp = True
+    if middle_splay_axis == 700:
+        middleSplayUp = False
+    elif middle_splay_axis == 520:
+        middleSplayUp = True
+    if ring_splay_axis == 700:
+        ringSplayUp = False
+    elif ring_splay_axis == 520:
+        ringSplayUp = True
+    if pinky_splay_axis == 700:
+        pinkySplayUp = False
+    elif pinky_splay_axis == 520:
+        pinkySplayUp = True
+
+    if thumbSplayUp:
+        thumb_splay_axis = thumb_splay_axis + 1
+    else:
+        thumb_splay_axis = thumb_splay_axis - 1
+    if indexSplayUp:
+        index_splay_axis = index_splay_axis + 1
+    else:
+        index_splay_axis = index_splay_axis - 1
+    if middleSplayUp:
+        middle_splay_axis = middle_splay_axis + 1
+    else:
+        middle_splay_axis = middle_splay_axis - 1
+    if ringSplayUp:
+        ring_splay_axis = ring_splay_axis + 1
+    else:
+        ring_splay_axis = ring_splay_axis - 1
+    if pinkySplayUp:
+        pinky_splay_axis = pinky_splay_axis + 1
+    else:
+        pinky_splay_axis = pinky_splay_axis - 1
+    
     # I did a lot of tweaking without knowing exactly what was going on, but I compared the original signals from the development board with the ones I generated using the rp2040 PIO, and figured I needed to invert the bit order for the tundra tracker to receive the SPI communication correctly
     # the next few lines take of this inversion and the header construction
     thumb_axis_inverted = 0
@@ -902,7 +998,7 @@ while True:
     forth_data_32_bits = (byte1Inverted << 24) + (byte2Inverted << 16) + (byte3Inverted << 8) + (byte4Inverted << 0)
     
     fullframe = array.array('L',[first_header_32bits, second_header_32bits, first_data_32_bits, second_data_32_bits, third_data_32_bits, forth_data_32_bits])
-#     print(fullframe)
+    print(fullframe)
     
     sm.write(fullframe)      # write the fullframe to the PIO
     frame_id = frame_id + 1  # increment the frame_id

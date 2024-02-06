@@ -1,5 +1,36 @@
 #include "Quaternion.h"
 
+
+float getPitch_pry(Quaternion q){
+  return asin(2 * (q.x * q.z - q.w * q.y));
+}
+float getRoll_pry(Quaternion q){
+  return atan2(2 * (q.y * q.z + q.w * q.x), (q.w * q.w - q.x * q.x - q.y * q.y + q.z * q.z));
+}
+float getYaw_pry(Quaternion q){
+  return atan2(2 * (q.x * q.y + q.w * q.z), (q.w * q.w + q.x * q.x - q.y * q.y - q.z * q.z));
+}
+
+float getPitch_ypr(Quaternion q){
+  return asin(-2 * (q.x * q.z - q.w * q.y));
+}
+float getRoll_ypr(Quaternion q){
+  return atan2(2 * (q.w * q.z + q.x * q.y), (q.w * q.w + q.x * q.x - q.y * q.y - q.z * q.z));
+}
+float getYaw_ypr(Quaternion q){
+  return atan2(2 * (q.w * q.x + q.y * q.z), (q.w * q.w - q.x * q.x - q.y * q.y + q.z * q.z));
+}
+
+float getRoll_ryp(Quaternion q){
+  return asin(-2 * (q.x * q.y - q.w * q.z));
+}
+float getYaw_ryp(Quaternion q){
+  return atan2(2 * (q.w * q.y + q.x * q.z), (q.w * q.w + q.x * q.x - q.y * q.y - q.z * q.z));
+}
+float getPitch_ryp(Quaternion q){
+  return atan2(2 * (q.w * q.x + q.y * q.z), (q.w * q.w - q.x * q.x + q.y * q.y - q.z * q.z));
+}
+
 Quaternion quaternion_conjugate(Quaternion q){
   Quaternion output;
   output.w = q.w;

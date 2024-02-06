@@ -43,6 +43,7 @@ Quaternion Finger::quaternionFromAngle(float angle, int axis){
 }
 
 float Finger::getPitch(Quaternion q){
+  // if(1 - 2 * (q.x * q.x + q.y * q.y) < 0.001 && 1 - 2 * (q.x * q.x + q.y * q.y) > -0.001) return 3.1415;
   return atan2(2 * (q.x * q.w - q.y * q.z), 1 - 2 * (q.x * q.x + q.y * q.y));
 }
 
@@ -62,10 +63,11 @@ void Finger::computeToHandQuaternion(Quaternion relativeQuaternion, Quaternion s
 void Finger::computeCurlDegrees(){
     curlRadians = getPitch(toHandQuaternion);  // get the curl angle in radians from the quaternion calculated above
     curlDegrees = toDegrees(curlRadians);          // convert the curl angle to degrees
+    // if(curlDegrees < -179) curlDegrees = -179;
 }
 
 void Finger::computeCurlAxis(){
-    if(60 < curlDegrees && curlDegrees < 180) curlDegrees = -180;
+    if(60 < curlDegrees && curlDegrees < 181) curlDegrees = -180; // never trust floats... lost 2 or 3 days on this, implemented a PIO slave on the way and in the end it was just bad logic on my part, curl degrees arrived here lots of times as 180.x and it wasn't catched by the condition, a < 181 fixes this.
     else if(0 < curlDegrees && curlDegrees <= 60) curlDegrees = 0;
     curlAxis = 1023. * (curlDegrees + 180)/180;
 }

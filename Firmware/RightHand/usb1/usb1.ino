@@ -1,4 +1,4 @@
-#include "tundra_mapped_input.h"
+// #include "tundra_mapped_input.h"
 #include "BNO085.h"
 #include "Finger.h"
 #include "Quaternion.h"
@@ -15,8 +15,8 @@
 bool disableInputs = true;
 
 // Create TMI object to communicate with Tundra Tracker
-TMI tundra_tracker;
-void csn_irq( uint gpio, uint32_t event_mask );  // Chip select IRQ must be top level so let's make one and connect it later in setup
+// TMI tundra_tracker;
+// void csn_irq( uint gpio, uint32_t event_mask );  // Chip select IRQ must be top level so let's make one and connect it later in setup
 
 BNO085 bnoIndex;
 BNO085 bnoMiddle;
@@ -119,6 +119,7 @@ typedef struct __attribute__( ( packed, aligned( 1 ) ) )
   uint8_t       system            : 1;   //134
 } controller_data_t;
 controller_data_t controller_data;
+// 5 32-bit integers can represent  160 bits. This struct has 135.
 
 uint8_t received_characters[32] = {};
 
@@ -260,11 +261,15 @@ void setup() {
 
   offset = pio_add_program(pio, &spi_slave_program);
   sm = pio_claim_unused_sm(pio, true);
-  spi_slave_init(pio, sm, offset, 15, 1, 12, 3);
+  int mosi = 12;
+  int cs = 13;
+  int sclk = 14;
+  int miso = 15;
+  spi_slave_init(pio, sm, offset, mosi, cs, sclk, miso);
 
   // init the communication to Tundra Tracker, setup the CS irq callback (this has to be at Top level in arduino it seems)
-  tundra_tracker.init( );
-  gpio_set_irq_enabled_with_callback( tundra_tracker.get_cs_pin(), GPIO_IRQ_EDGE_RISE | GPIO_IRQ_EDGE_FALL, true, &csn_irq );
+  // tundra_tracker.init( );
+  // gpio_set_irq_enabled_with_callback( tundra_tracker.get_cs_pin(), GPIO_IRQ_EDGE_RISE | GPIO_IRQ_EDGE_FALL, true, &csn_irq );
 
   // Initialize I2C
   _i2c_init(i2c0, 400000);             // Init I2C0 peripheral at 400kHz
@@ -442,13 +447,23 @@ int bbtnCounter = 0;
 int thumbstickbtnCounter = 0;
 int systembtnCounter = 0;
 
+void test(Quaternion q){
+  Serial.print(atan2(2 * (q.x * q.w - q.y * q.z), 1 - 2 * (q.x * q.x + q.y * q.y))*180/3.14);
+  Serial.print(" ");
+  Serial.print(2 * (q.x * q.w - q.y * q.z));
+  Serial.print(" ");
+  Serial.println(1 - 2 * (q.x * q.x + q.y * q.y));
+}
+
 int millisWhenAllFingersAreTogether = 0;
 bool allFingersWereTouchingBefore = false;
+bool hasNewData = false;
 // the loop function runs over and over again forever
 void loop() {
   if(hasSerialData){
-    // interpret_serial_data();
+    interpret_serial_data();
     hasSerialData = false;
+    hasNewData = true;
   } 
   bnoIndex.getReadings();
   bnoMiddle.getReadings();
@@ -464,8 +479,8 @@ void loop() {
 
     fingerIndex.computeAxesValues(relativeQuaternion, sensorQuaternion);  // compute curl and splay axis from reference quaternion and finger quaternion
 
-    // controller_data.index_curl = fingerIndex.curlAxis;
-    // controller_data.index_splay = fingerIndex.splayAxis;
+    controller_data.index_curl = fingerIndex.curlAxis;
+    controller_data.index_splay = fingerIndex.splayAxis;
   }
 
   if(bnoMiddle.hasNewQuaternion){
@@ -477,8 +492,8 @@ void loop() {
     
     fingerMiddle.computeAxesValues(relativeQuaternion, sensorQuaternion);  // compute curl and splay axis from reference quaternion and finger quaternion
 
-    // controller_data.middle_curl = fingerMiddle.curlAxis;
-    // controller_data.middle_splay = fingerMiddle.splayAxis;
+    controller_data.middle_curl = fingerMiddle.curlAxis;
+    controller_data.middle_splay = fingerMiddle.splayAxis;
   }
 
   if(bnoRing.hasNewQuaternion){
@@ -490,8 +505,8 @@ void loop() {
     
     fingerRing.computeAxesValues(relativeQuaternion, sensorQuaternion);  // compute curl and splay axis from reference quaternion and finger quaternion
 
-    // controller_data.ring_curl = fingerRing.curlAxis;
-    // controller_data.ring_splay = fingerRing.splayAxis;
+    controller_data.ring_curl = fingerRing.curlAxis;
+    controller_data.ring_splay = fingerRing.splayAxis;
   }
 
   if(bnoPinky.hasNewQuaternion){
@@ -506,8 +521,8 @@ void loop() {
 
     fingerPinky.computeAxesValues(relativeQuaternion, sensorQuaternion);  // compute curl and splay axis from reference quaternion and finger quaternion
 
-    // controller_data.pinky_curl = fingerPinky.curlAxis;
-    // controller_data.pinky_splay = fingerPinky.splayAxis;
+    controller_data.pinky_curl = fingerPinky.curlAxis;
+    controller_data.pinky_splay = fingerPinky.splayAxis;
   }
 
   // printControllerData();
@@ -551,51 +566,51 @@ void loop() {
   // if(disableInputs) Serial.println("Inputs disabled");
 
 
-  if(controller_data.thumb_curl == 700) thumbCurlUp = false;
-  else if(controller_data.thumb_curl == 520) thumbCurlUp = true;
-  if(controller_data.index_curl == 700) indexCurlUp = false;
-  else if(controller_data.index_curl == 520) indexCurlUp = true;
-  if(controller_data.middle_curl == 700) middleCurlUp = false;
-  else if(controller_data.middle_curl == 520) middleCurlUp = true;
-  if(controller_data.ring_curl == 700) ringCurlUp = false;
-  else if(controller_data.ring_curl == 520) ringCurlUp = true;
-  if(controller_data.pinky_curl == 700) pinkyCurlUp = false;
-  else if(controller_data.pinky_curl == 520) pinkyCurlUp = true;
+  // if(controller_data.thumb_curl == 700) thumbCurlUp = false;
+  // else if(controller_data.thumb_curl == 520) thumbCurlUp = true;
+  // if(controller_data.index_curl == 700) indexCurlUp = false;
+  // else if(controller_data.index_curl == 520) indexCurlUp = true;
+  // if(controller_data.middle_curl == 700) middleCurlUp = false;
+  // else if(controller_data.middle_curl == 520) middleCurlUp = true;
+  // if(controller_data.ring_curl == 700) ringCurlUp = false;
+  // else if(controller_data.ring_curl == 520) ringCurlUp = true;
+  // if(controller_data.pinky_curl == 700) pinkyCurlUp = false;
+  // else if(controller_data.pinky_curl == 520) pinkyCurlUp = true;
 
-  if(thumbCurlUp) controller_data.thumb_curl++; 
-  else controller_data.thumb_curl--;
-  if(indexCurlUp) controller_data.index_curl++; 
-  else controller_data.index_curl--;
-  if(middleCurlUp) controller_data.middle_curl++; 
-  else controller_data.middle_curl--;
-  if(ringCurlUp) controller_data.ring_curl++; 
-  else controller_data.ring_curl--;
-  if(pinkyCurlUp) controller_data.pinky_curl++; 
-  else controller_data.pinky_curl--;
+  // if(thumbCurlUp) controller_data.thumb_curl++; 
+  // else controller_data.thumb_curl--;
+  // if(indexCurlUp) controller_data.index_curl++; 
+  // else controller_data.index_curl--;
+  // if(middleCurlUp) controller_data.middle_curl++; 
+  // else controller_data.middle_curl--;
+  // if(ringCurlUp) controller_data.ring_curl++; 
+  // else controller_data.ring_curl--;
+  // if(pinkyCurlUp) controller_data.pinky_curl++; 
+  // else controller_data.pinky_curl--;
 
-  if(controller_data.thumb_splay == 700) thumbSplayUp = false;
-  else if(controller_data.thumb_splay == 520) thumbSplayUp = true;
-  if(controller_data.index_splay == 700) indexSplayUp = false;
-  else if(controller_data.index_splay == 520) indexSplayUp = true;
-  if(controller_data.middle_splay == 700) middleSplayUp = false;
-  else if(controller_data.middle_splay == 520) middleSplayUp = true;
-  if(controller_data.ring_splay == 700) ringSplayUp = false;
-  else if(controller_data.ring_splay == 520) ringSplayUp = true;
-  if(controller_data.pinky_splay == 700) pinkySplayUp = false;
-  else if(controller_data.pinky_splay == 520) pinkySplayUp = true;
+  // if(controller_data.thumb_splay == 700) thumbSplayUp = false;
+  // else if(controller_data.thumb_splay == 520) thumbSplayUp = true;
+  // if(controller_data.index_splay == 700) indexSplayUp = false;
+  // else if(controller_data.index_splay == 520) indexSplayUp = true;
+  // if(controller_data.middle_splay == 700) middleSplayUp = false;
+  // else if(controller_data.middle_splay == 520) middleSplayUp = true;
+  // if(controller_data.ring_splay == 700) ringSplayUp = false;
+  // else if(controller_data.ring_splay == 520) ringSplayUp = true;
+  // if(controller_data.pinky_splay == 700) pinkySplayUp = false;
+  // else if(controller_data.pinky_splay == 520) pinkySplayUp = true;
 
-  if(thumbSplayUp) controller_data.thumb_splay++; 
-  else controller_data.thumb_splay--;
-  if(indexSplayUp) controller_data.index_splay++; 
-  else controller_data.index_splay--;
-  if(middleSplayUp) controller_data.middle_splay++; 
-  else controller_data.middle_splay--;
-  if(ringSplayUp) controller_data.ring_splay++; 
-  else controller_data.ring_splay--;
-  if(pinkySplayUp) controller_data.pinky_splay++; 
-  else controller_data.pinky_splay--;
+  // if(thumbSplayUp) controller_data.thumb_splay++; 
+  // else controller_data.thumb_splay--;
+  // if(indexSplayUp) controller_data.index_splay++; 
+  // else controller_data.index_splay--;
+  // if(middleSplayUp) controller_data.middle_splay++; 
+  // else controller_data.middle_splay--;
+  // if(ringSplayUp) controller_data.ring_splay++; 
+  // else controller_data.ring_splay--;
+  // if(pinkySplayUp) controller_data.pinky_splay++; 
+  // else controller_data.pinky_splay--;
 
-  printControllerData();
+  // printControllerData();
 
   // if(controller_data.a) {
   //   abtnCounter++;
@@ -630,19 +645,276 @@ void loop() {
   // if(controller_data.ring_curl == 0) controller_data.ring_curl = 100;
   // if(controller_data.pinky_curl == 0) controller_data.pinky_curl = 100;
 
-  // Flag will be true when the library is ready for new data
-  if ( tundra_tracker.data_ready() )
-  {
-    // Copy our controller struct to the data packet
-    tundra_tracker.send_data( &controller_data, sizeof(controller_data) );
+  // I did a lot of tweaking without knowing exactly what was going on, but I compared the original signals from the development board with the ones I generated using the rp2040 PIO, and figured I needed to invert the bit order for the tundra tracker to receive the SPI communication correctly
+  // the next few lines take of this inversion and the header construction
+  int thumb_axis = controller_data.thumb_curl;
+  int index_axis = controller_data.index_curl;
+  int middle_axis = controller_data.middle_curl;
+  int ring_axis = controller_data.ring_curl;
+  int pinky_axis = controller_data.pinky_curl;
+  int thumb_splay_axis = controller_data.thumb_splay;
+  int index_splay_axis = controller_data.index_splay;
+  int middle_splay_axis = controller_data.middle_splay;
+  int ring_splay_axis = controller_data.ring_splay;
+  int pinky_splay_axis = controller_data.pinky_splay;
+  int trigger = controller_data.trigger;
+  int joystick_x = controller_data.thumbstick_x;
+  int joystick_y = controller_data.thumbstick_y;
+  int thumbstick_click = controller_data.thumbstick_click;
+  int triggerbtn = controller_data.triggerbtn;
+  int a = controller_data.a;
+  int b = controller_data.b;
+  int system = controller_data.system;
 
-    // House keeping function for the library that should be ran right after data is ready
-    tundra_tracker.handle_rx_data( );
+  int thumb_axis_inverted = 0;
+  int index_axis_inverted = 0;
+  int middle_axis_inverted = 0;
+  int ring_axis_inverted = 0;
+  int pinky_axis_inverted = 0;
+  int thumb_splay_axis_inverted = 0;
+  int index_splay_axis_inverted = 0;
+  int middle_splay_axis_inverted = 0;
+  int ring_splay_axis_inverted = 0;
+  int pinky_splay_axis_inverted = 0;
+  int trigger_inverted = 0;
+  int joystick_x_inverted = 0;
+  int joystick_y_inverted = 0;
+  bool bit = 0;
+  for(int i = 0; i < 10; i++){
+    bit = (thumb_axis >> i) & 1;  // Get the ith bit from the original_value
+    thumb_axis_inverted |= (bit << (9 - i));  // Set the bit in the reversed_value
+    bit = (index_axis >> i) & 1;  // Get the ith bit from the original_value
+    index_axis_inverted |= (bit << (9 - i));  // Set the bit in the reversed_value
+    bit = (middle_axis >> i) & 1;  // Get the ith bit from the original_value
+    middle_axis_inverted |= (bit << (9 - i));  // Set the bit in the reversed_value
+    bit = (ring_axis >> i) & 1;  // Get the ith bit from the original_value
+    ring_axis_inverted |= (bit << (9 - i));  // Set the bit in the reversed_value
+    bit = (pinky_axis >> i) & 1;  // Get the ith bit from the original_value
+    pinky_axis_inverted |= (bit << (9 - i));  // Set the bit in the reversed_value
+    bit = (thumb_splay_axis >> i) & 1;  // Get the ith bit from the original_value
+
+
+    thumb_splay_axis_inverted |= (bit << (9 - i));  // Set the bit in the reversed_value
+    bit = (index_splay_axis >> i) & 1;  // Get the ith bit from the original_value
+
+    index_splay_axis_inverted |= (bit << (9 - i));  // Set the bit in the reversed_value
+    bit = (middle_splay_axis >> i) & 1;  // Get the ith bit from the original_value
+    middle_splay_axis_inverted |= (bit << (9 - i));  // Set the bit in the reversed_value
+    bit = (ring_splay_axis >> i) & 1;  // Get the ith bit from the original_value
+    ring_splay_axis_inverted |= (bit << (9 - i));  // Set the bit in the reversed_value
+    bit = (pinky_splay_axis >> i) & 1;  // Get the ith bit from the original_value
+    pinky_splay_axis_inverted |= (bit << (9 - i));  // Set the bit in the reversed_value
+    bit = (trigger >> i) & 1;  // Get the ith bit from the original_value
+
+    trigger_inverted |= (bit << (9 - i));  // Set the bit in the reversed_value
+    bit = (joystick_x >> i) & 1;  // Get the ith bit from the original_value
+    joystick_x_inverted |= (bit << (9 - i));  // Set the bit in the reversed_value
+    bit = (joystick_y >> i) & 1;  // Get the ith bit from the original_value
+    joystick_y_inverted |= (bit << (9 - i));  // Set the bit in the reversed_value
   }
+
+  int spi_protocol_rev = 1;
+  static int frame_id = 0;
+  int report_mode = 3;         // MI_PROTOCOL_REVISION_GENERIC
+  int status = 0;              // 0 normal, 1 bootloader
+  // int input_data_length = 17;  // 17 bytes, 136 bits
+  int input_data_length = 40;  // 16 bytes, 128 bits
+  // int input_data_length = 15;  // 17 bytes, 136 bits
+  int backchannel_length = 0;  // only for RX, probably for haptics that I am not using yet (YET!)
+  int event_data_length = 0;   // only for RX, probably for haptics that I am not using yet (YET!)
+  int reserved = 0;
+
+  int header1 = (spi_protocol_rev << 24) + (frame_id << 16) + (report_mode << 8) + (status << 0);
+  int header2 = (input_data_length << 24) + (backchannel_length << 16) + (event_data_length << 8) + (reserved << 0);
+  int data1 = (thumb_axis_inverted << 22) + (index_axis_inverted << 12) + (middle_axis_inverted << 2) + (ring_axis_inverted >> 8);
+  int data2 = (ring_axis_inverted << 24) + (pinky_axis_inverted << 14) + (thumb_splay_axis_inverted << 4) + (index_splay_axis_inverted >> 6);
+  int data3 = (index_splay_axis_inverted << 26) + (middle_splay_axis_inverted << 16) + (ring_splay_axis_inverted << 6) + (pinky_splay_axis_inverted >> 4);
+  int data4 = (pinky_splay_axis_inverted << 28) + (trigger_inverted << 18) + (joystick_x_inverted << 8) + (joystick_y_inverted >> 2);
+  int data5 = (joystick_y_inverted << 30) + (thumbstick_click << 29) + (triggerbtn << 28) + (a << 27) + (b << 26) + (system << 25);
+
+  byte byte1 = 0;
+  byte byte2 = 0;
+  byte byte3 = 0;
+  byte byte4 = 0;
+  byte byte1Inverted = 0;
+  byte byte2Inverted = 0;
+  byte byte3Inverted = 0;
+  byte byte4Inverted = 0;
+
+  // byte1 = ((header1 >> 24) & 0xFF);
+  // byte2 = ((header1 >> 16) & 0xFF);
+  // byte3 = ((header1 >> 8) & 0xFF);
+  // byte4 = ((header1 >> 0) & 0xFF);
+  // byte1Inverted = 0;
+  // byte2Inverted = 0;
+  // byte3Inverted = 0;
+  // byte4Inverted = 0;
+
+  // for(int i = 0; i < 8; i++){
+  //   bit = (byte1 >> i) & 1;  // Get the ith bit from the original_value
+  //   byte1Inverted |= (bit << (7 - i));  // Set the bit in the reversed_value
+  //   bit = (byte2 >> i) & 1;  // Get the ith bit from the original_value
+  //   byte2Inverted |= (bit << (7 - i));  // Set the bit in the reversed_value
+  //   bit = (byte3 >> i) & 1;  // Get the ith bit from the original_value
+  //   byte3Inverted |= (bit << (7 - i));  // Set the bit in the reversed_value
+  //   bit = (byte4 >> i) & 1;  // Get the ith bit from the original_value
+  //   byte4Inverted |= (bit << (7 - i));  // Set the bit in the reversed_value
+  // }
+  // header1 = (byte1Inverted << 24) + (byte2Inverted << 16) + (byte3Inverted << 8) + (byte4Inverted << 0);
+  
+  // byte1 = ((header2 >> 24) & 0xFF);
+  // byte2 = ((header2 >> 16) & 0xFF);
+  // byte3 = ((header2 >> 8) & 0xFF);
+  // byte4 = ((header2 >> 0) & 0xFF);
+  // byte1Inverted = 0;
+  // byte2Inverted = 0;
+  // byte3Inverted = 0;
+  // byte4Inverted = 0;
+
+  // for(int i = 0; i < 8; i++){
+  //   bit = (byte1 >> i) & 1;  // Get the ith bit from the original_value
+  //   byte1Inverted |= (bit << (7 - i));  // Set the bit in the reversed_value
+  //   bit = (byte2 >> i) & 1;  // Get the ith bit from the original_value
+  //   byte2Inverted |= (bit << (7 - i));  // Set the bit in the reversed_value
+  //   bit = (byte3 >> i) & 1;  // Get the ith bit from the original_value
+  //   byte3Inverted |= (bit << (7 - i));  // Set the bit in the reversed_value
+  //   bit = (byte4 >> i) & 1;  // Get the ith bit from the original_value
+  //   byte4Inverted |= (bit << (7 - i));  // Set the bit in the reversed_value
+  // }
+  // header2 = (byte1Inverted << 24) + (byte2Inverted << 16) + (byte3Inverted << 8) + (byte4Inverted << 0);
+
+  byte1 = ((data1 >> 24) & 0xFF);
+  byte2 = ((data1 >> 16) & 0xFF);
+  byte3 = ((data1 >> 8) & 0xFF);
+  byte4 = ((data1 >> 0) & 0xFF);
+  byte1Inverted = 0;
+  byte2Inverted = 0;
+  byte3Inverted = 0;
+  byte4Inverted = 0;
+
+  for(int i = 0; i < 8; i++){
+    bit = (byte1 >> i) & 1;  // Get the ith bit from the original_value
+    byte1Inverted |= (bit << (7 - i));  // Set the bit in the reversed_value
+    bit = (byte2 >> i) & 1;  // Get the ith bit from the original_value
+    byte2Inverted |= (bit << (7 - i));  // Set the bit in the reversed_value
+    bit = (byte3 >> i) & 1;  // Get the ith bit from the original_value
+    byte3Inverted |= (bit << (7 - i));  // Set the bit in the reversed_value
+    bit = (byte4 >> i) & 1;  // Get the ith bit from the original_value
+    byte4Inverted |= (bit << (7 - i));  // Set the bit in the reversed_value
+  }
+  data1 = (byte1Inverted << 24) + (byte2Inverted << 16) + (byte3Inverted << 8) + (byte4Inverted << 0);
+  
+  byte1 = ((data2 >> 24) & 0xFF);
+  byte2 = ((data2 >> 16) & 0xFF);
+  byte3 = ((data2 >> 8) & 0xFF);
+  byte4 = ((data2 >> 0) & 0xFF);
+  byte1Inverted = 0;
+  byte2Inverted = 0;
+  byte3Inverted = 0;
+  byte4Inverted = 0;
+  
+  for(int i = 0; i < 8; i++){
+    bit = (byte1 >> i) & 1;  // Get the ith bit from the original_value
+    byte1Inverted |= (bit << (7 - i));  // Set the bit in the reversed_value
+    bit = (byte2 >> i) & 1;  // Get the ith bit from the original_value
+    byte2Inverted |= (bit << (7 - i));  // Set the bit in the reversed_value
+    bit = (byte3 >> i) & 1;  // Get the ith bit from the original_value
+    byte3Inverted |= (bit << (7 - i));  // Set the bit in the reversed_value
+    bit = (byte4 >> i) & 1;  // Get the ith bit from the original_value
+    byte4Inverted |= (bit << (7 - i));  // Set the bit in the reversed_value
+  }
+  data2 = (byte1Inverted << 24) + (byte2Inverted << 16) + (byte3Inverted << 8) + (byte4Inverted << 0);
+
+  byte1 = ((data3 >> 24) & 0xFF);
+  byte2 = ((data3 >> 16) & 0xFF);
+  byte3 = ((data3 >> 8) & 0xFF);
+  byte4 = ((data3 >> 0) & 0xFF);
+  byte1Inverted = 0;
+  byte2Inverted = 0;
+  byte3Inverted = 0;
+  byte4Inverted = 0;
+  
+  for(int i = 0; i < 8; i++){
+    bit = (byte1 >> i) & 1;  // Get the ith bit from the original_value
+    byte1Inverted |= (bit << (7 - i));  // Set the bit in the reversed_value
+    bit = (byte2 >> i) & 1;  // Get the ith bit from the original_value
+    byte2Inverted |= (bit << (7 - i));  // Set the bit in the reversed_value
+    bit = (byte3 >> i) & 1;  // Get the ith bit from the original_value
+    byte3Inverted |= (bit << (7 - i));  // Set the bit in the reversed_value
+    bit = (byte4 >> i) & 1;  // Get the ith bit from the original_value
+    byte4Inverted |= (bit << (7 - i));  // Set the bit in the reversed_value
+  }
+  data3 = (byte1Inverted << 24) + (byte2Inverted << 16) + (byte3Inverted << 8) + (byte4Inverted << 0);
+
+  byte1 = ((data4 >> 24) & 0xFF);
+  byte2 = ((data4 >> 16) & 0xFF);
+  byte3 = ((data4 >> 8) & 0xFF);
+  byte4 = ((data4 >> 0) & 0xFF);
+  byte1Inverted = 0;
+  byte2Inverted = 0;
+  byte3Inverted = 0;
+  byte4Inverted = 0;
+  
+  for(int i = 0; i < 8; i++){
+    bit = (byte1 >> i) & 1;  // Get the ith bit from the original_value
+    byte1Inverted |= (bit << (7 - i));  // Set the bit in the reversed_value
+    bit = (byte2 >> i) & 1;  // Get the ith bit from the original_value
+    byte2Inverted |= (bit << (7 - i));  // Set the bit in the reversed_value
+    bit = (byte3 >> i) & 1;  // Get the ith bit from the original_value
+    byte3Inverted |= (bit << (7 - i));  // Set the bit in the reversed_value
+    bit = (byte4 >> i) & 1;  // Get the ith bit from the original_value
+    byte4Inverted |= (bit << (7 - i));  // Set the bit in the reversed_value
+  }
+  data4 = (byte1Inverted << 24) + (byte2Inverted << 16) + (byte3Inverted << 8) + (byte4Inverted << 0);
+
+  byte1 = ((data5 >> 24) & 0xFF);
+  byte2 = ((data5 >> 16) & 0xFF);
+  byte3 = ((data5 >> 8) & 0xFF);
+  byte4 = ((data5 >> 0) & 0xFF);
+  byte1Inverted = 0;
+  byte2Inverted = 0;
+  byte3Inverted = 0;
+  byte4Inverted = 0;
+  
+  for(int i = 0; i < 8; i++){
+    bit = (byte1 >> i) & 1;  // Get the ith bit from the original_value
+    byte1Inverted |= (bit << (7 - i));  // Set the bit in the reversed_value
+    bit = (byte2 >> i) & 1;  // Get the ith bit from the original_value
+    byte2Inverted |= (bit << (7 - i));  // Set the bit in the reversed_value
+    bit = (byte3 >> i) & 1;  // Get the ith bit from the original_value
+    byte3Inverted |= (bit << (7 - i));  // Set the bit in the reversed_value
+    bit = (byte4 >> i) & 1;  // Get the ith bit from the original_value
+    byte4Inverted |= (bit << (7 - i));  // Set the bit in the reversed_value
+  }
+  data5 = (byte1Inverted << 24) + (byte2Inverted << 16) + (byte3Inverted << 8) + (byte4Inverted << 0);
+
+  // Serial.println(frame_id);
+  pio_sm_put_blocking(pio, sm, header1);
+  pio_sm_put_blocking(pio, sm, header2);
+  pio_sm_put_blocking(pio, sm, data1);
+  pio_sm_put_blocking(pio, sm, data2);
+  pio_sm_put_blocking(pio, sm, data3);
+  pio_sm_put_blocking(pio, sm, data4);
+  pio_sm_put_blocking(pio, sm, data5);
+
+  frame_id++;
+  if(frame_id > 255){
+    frame_id = 0;
+  }
+
+  // Flag will be true when the library is ready for new data
+  // if ( tundra_tracker.data_ready() )
+  // {
+  //   // Copy our controller struct to the data packet
+  //   tundra_tracker.send_data( &controller_data, sizeof(controller_data) );
+
+  //   // House keeping function for the library that should be ran right after data is ready
+  //   tundra_tracker.handle_rx_data( );
+  // }
 }
 
 // Callback for SPI Chipselect, just connect in the tmi irq function
-void csn_irq( uint gpio, uint32_t event_mask )
-{
-  tundra_tracker.csn_irq( gpio, event_mask );
-}
+// void csn_irq( uint gpio, uint32_t event_mask )
+// {
+//   tundra_tracker.csn_irq( gpio, event_mask );
+// }

@@ -122,6 +122,20 @@
           "binding_image_point" : [ 34,45 ],
           "order" : 115
         },
+		"/input/trigger" : {
+		  "type" : "trigger",
+		  "touch" : false,
+		  "value" : true,
+		  "binding_image_point" : [ 56, 86 ],
+		  "order" : 116
+		},
+		"/input/triggerbtn" : {
+		  "type" : "button",
+		  "click" : true,
+          "touch" : false,
+		  "binding_image_point" : [ 56, 86 ],
+		  "order" : 117
+		},
         "/pose/raw": {
             "type": "pose",
             "binding_image_point": [
@@ -211,7 +225,7 @@
             "max": 1023,
             "unit": "onesided"
         },
-		"/input/thumbstickx/value": {
+		"/input/trigger/value": {
             "bit_offset": 100,
             "bit_width": 10,
             "type": "scalar",
@@ -219,7 +233,7 @@
             "max": 1023,
             "unit": "onesided"
         },
-        "/input/thumbsticky/value": {
+		"/input/thumbstickx/value": {
             "bit_offset": 110,
             "bit_width": 10,
             "type": "scalar",
@@ -227,21 +241,33 @@
             "max": 1023,
             "unit": "onesided"
         },
-		"/input/thumbstick/click": {
+        "/input/thumbsticky/value": {
             "bit_offset": 120,
+            "bit_width": 10,
+            "type": "scalar",
+            "min": 0,
+            "max": 1023,
+            "unit": "onesided"
+        },
+		"/input/thumbstick/click": {
+            "bit_offset": 130,
+            "type": "bool"
+        },
+		"/input/triggerbtn/click": {
+            "bit_offset": 131,
             "type": "bool"
         },
         "/input/a/click": {
-            "bit_offset": 121,
+            "bit_offset": 132,
             "type": "bool"
         },
         "/input/b/click": {
-            "bit_offset": 122,
+            "bit_offset": 133,
             "type": "bool"
         },
 		"/input/system/click": {
-            "bit_offset": 123,
+            "bit_offset": 134,
             "type": "bool"
-        },
+        }
     }
 }

@@ -87,6 +87,9 @@ vr::EVRInitError DeviceProvider::Init(vr::IVRDriverContext* pDriverContext) {
             else if (inputName == "/input/pinkysplay/value") {
                 my_left_device_->data.splay[4] = (float)(2 * (data - 0.5));
             }
+            else if (inputName == "/input/trigger/value") {
+                my_left_device_->data.trgValue = (float)(data);
+            }
             else if (inputName == "/input/thumbstickx/value") {
                 my_left_device_->data.joyX = (float)(2 * (data - 0.5));
             }
@@ -95,6 +98,9 @@ vr::EVRInitError DeviceProvider::Init(vr::IVRDriverContext* pDriverContext) {
             }
             else if (inputName == "/input/thumbstick/click") {
                 my_left_device_->data.joyButton = (bool)(data);
+            }
+            else if (inputName == "/input/triggerbtn/click") {
+                my_left_device_->data.trgButton = (bool)(data);
             }
             else if (inputName == "/input/a/click") {
                 my_left_device_->data.aButton = (bool)(data);
@@ -109,18 +115,27 @@ vr::EVRInitError DeviceProvider::Init(vr::IVRDriverContext* pDriverContext) {
         }
         else if (role == 2) {
             if (inputName == "/input/thumb/value") {
+                /*char logstring[50] = {};
+                sprintf_s(logstring, "thumbvalue: %f", data);
+                vr::VRDriverLog()->Log(logstring);*/
                 my_right_device_->data.flexion[0][0] = data;
                 my_right_device_->data.flexion[0][1] = data;
                 my_right_device_->data.flexion[0][2] = data;
                 my_right_device_->data.flexion[0][3] = data;
             }
             else if (inputName == "/input/index/value") {
+                /*char logstring[50] = {};
+                sprintf_s(logstring, "indexvalue: %f", data);
+                vr::VRDriverLog()->Log(logstring);*/
                 my_right_device_->data.flexion[1][0] = data;
                 my_right_device_->data.flexion[1][1] = data;
                 my_right_device_->data.flexion[1][2] = data;
                 my_right_device_->data.flexion[1][3] = data;
             }
             else if (inputName == "/input/middle/value") {
+                /*char logstring[50] = {};
+                sprintf_s(logstring, "middlevalue: %f", data);
+                vr::VRDriverLog()->Log(logstring);*/
                 my_right_device_->data.flexion[2][0] = data;
                 my_right_device_->data.flexion[2][1] = data;
                 my_right_device_->data.flexion[2][2] = data;
@@ -151,7 +166,13 @@ vr::EVRInitError DeviceProvider::Init(vr::IVRDriverContext* pDriverContext) {
                 my_right_device_->data.splay[3] = (float)(2 * (data - 0.5));
             }
             else if (inputName == "/input/pinkysplay/value") {
+                /*char logstring[50] = {};
+                sprintf_s(logstring, "pinkysplayvalue: %f", (float)(2 * (data - 0.5)));
+                vr::VRDriverLog()->Log(logstring);*/
                 my_right_device_->data.splay[4] = (float)(2 * (data - 0.5));
+            }
+            else if (inputName == "/input/trigger/value") {
+                my_right_device_->data.trgValue = (float)(data);
             }
             else if (inputName == "/input/thumbstickx/value") {
                 my_right_device_->data.joyX = (float)(2 * (data - 0.5));
@@ -161,6 +182,9 @@ vr::EVRInitError DeviceProvider::Init(vr::IVRDriverContext* pDriverContext) {
             }
             else if (inputName == "/input/thumbstick/click") {
                 my_right_device_->data.joyButton = (bool)(data);
+            }
+            else if (inputName == "/input/triggerbtn/click") {
+                my_right_device_->data.trgButton = (bool)(data);
             }
             else if (inputName == "/input/a/click") {
                 my_right_device_->data.aButton = (bool)(data);
