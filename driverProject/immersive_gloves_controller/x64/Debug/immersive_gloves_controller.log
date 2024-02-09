@@ -1,5 +1,18 @@
 ﻿C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Microsoft\VC\v170\Microsoft.CppBuild.targets(517,5): warning MSB8004: Output Directory does not end with a trailing slash.  This build instance will add the slash as it is required to allow proper evaluation of the Output Directory.
   device_provider.cpp
+C:\Users\Administrator\Desktop\repositories\ImmersiveGloves\driverProject\immersive_gloves_controller\src\device_provider.cpp(121,40): warning C4305: 'initializing': truncation from 'double' to 'float'
+C:\Users\Administrator\Desktop\repositories\ImmersiveGloves\driverProject\immersive_gloves_controller\src\device_provider.cpp(144,87): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\Administrator\Desktop\repositories\ImmersiveGloves\driverProject\immersive_gloves_controller\src\device_provider.cpp(145,87): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\Administrator\Desktop\repositories\ImmersiveGloves\driverProject\immersive_gloves_controller\src\device_provider.cpp(146,87): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\Administrator\Desktop\repositories\ImmersiveGloves\driverProject\immersive_gloves_controller\src\device_provider.cpp(160,87): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\Administrator\Desktop\repositories\ImmersiveGloves\driverProject\immersive_gloves_controller\src\device_provider.cpp(161,87): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\Administrator\Desktop\repositories\ImmersiveGloves\driverProject\immersive_gloves_controller\src\device_provider.cpp(162,87): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\Administrator\Desktop\repositories\ImmersiveGloves\driverProject\immersive_gloves_controller\src\device_provider.cpp(173,87): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\Administrator\Desktop\repositories\ImmersiveGloves\driverProject\immersive_gloves_controller\src\device_provider.cpp(174,87): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\Administrator\Desktop\repositories\ImmersiveGloves\driverProject\immersive_gloves_controller\src\device_provider.cpp(175,87): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\Administrator\Desktop\repositories\ImmersiveGloves\driverProject\immersive_gloves_controller\src\device_provider.cpp(186,87): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\Administrator\Desktop\repositories\ImmersiveGloves\driverProject\immersive_gloves_controller\src\device_provider.cpp(187,87): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
+C:\Users\Administrator\Desktop\repositories\ImmersiveGloves\driverProject\immersive_gloves_controller\src\device_provider.cpp(188,87): warning C4244: '=': conversion from 'double' to 'float', possible loss of data
   immersive_gloves_controller.vcxproj -> C:\Users\Administrator\Desktop\repositories\ImmersiveGloves\driverProject\immersive_gloves_controller\build\immersive_gloves_controller\bin\win64\driver_immersive_gloves_controller.dll
   C:\Users\Administrator\Desktop\repositories\ImmersiveGloves\driverProject\immersive_gloves_controller\immersive_gloves_controller\driver.vrdrivermanifest
   1 File(s) copied

@@ -114,6 +114,13 @@ vr::EVRInitError DeviceProvider::Init(vr::IVRDriverContext* pDriverContext) {
             my_left_device_->WritePipe();
         }
         else if (role == 2) {
+            float flexion11_firstRatio = 3. / 4;
+            float flexion11_secondRatio = 2 - flexion11_firstRatio;
+            float flexion12_firstRatio = 6. / 12;
+            float flexion12_secondRatio = 2 - flexion12_firstRatio;
+            float flexion13_firstRatio = 2.5 / 4.5;
+            float flexion13_secondRatio = 2 - flexion13_firstRatio;
+
             if (inputName == "/input/thumb/value") {
                 /*char logstring[50] = {};
                 sprintf_s(logstring, "thumbvalue: %f", data);
@@ -124,34 +131,62 @@ vr::EVRInitError DeviceProvider::Init(vr::IVRDriverContext* pDriverContext) {
                 my_right_device_->data.flexion[0][3] = data;
             }
             else if (inputName == "/input/index/value") {
-                /*char logstring[50] = {};
+                char logstring[50] = {};
                 sprintf_s(logstring, "indexvalue: %f", data);
-                vr::VRDriverLog()->Log(logstring);*/
-                my_right_device_->data.flexion[1][0] = data;
-                my_right_device_->data.flexion[1][1] = data;
-                my_right_device_->data.flexion[1][2] = data;
-                my_right_device_->data.flexion[1][3] = data;
+                vr::VRDriverLog()->Log(logstring);
+
+                if (data < 0.5) {
+                    my_right_device_->data.flexion[1][1] = data * flexion11_firstRatio;
+                    my_right_device_->data.flexion[1][2] = data * flexion12_firstRatio;
+                    my_right_device_->data.flexion[1][3] = data * flexion13_firstRatio;
+                }
+                else {
+                    my_right_device_->data.flexion[1][1] = 0.5 * flexion11_firstRatio + (data - 0.5) * flexion11_secondRatio;
+                    my_right_device_->data.flexion[1][2] = 0.5 * flexion12_firstRatio + (data - 0.5) * flexion12_secondRatio;
+                    my_right_device_->data.flexion[1][3] = 0.5 * flexion13_firstRatio + (data - 0.5) * flexion13_secondRatio;
+                }
             }
             else if (inputName == "/input/middle/value") {
                 /*char logstring[50] = {};
                 sprintf_s(logstring, "middlevalue: %f", data);
                 vr::VRDriverLog()->Log(logstring);*/
-                my_right_device_->data.flexion[2][0] = data;
-                my_right_device_->data.flexion[2][1] = data;
-                my_right_device_->data.flexion[2][2] = data;
-                my_right_device_->data.flexion[2][3] = data;
+                my_right_device_->data.flexion[2][0] = 0;
+                if (data < 0.5) {
+                    my_right_device_->data.flexion[2][1] = data * flexion11_firstRatio;
+                    my_right_device_->data.flexion[2][2] = data * flexion12_firstRatio;
+                    my_right_device_->data.flexion[2][3] = data * flexion13_firstRatio;
+                }
+                else {
+                    my_right_device_->data.flexion[2][1] = 0.5 * flexion11_firstRatio + (data - 0.5) * flexion11_secondRatio;
+                    my_right_device_->data.flexion[2][2] = 0.5 * flexion12_firstRatio + (data - 0.5) * flexion12_secondRatio;
+                    my_right_device_->data.flexion[2][3] = 0.5 * flexion13_firstRatio + (data - 0.5) * flexion13_secondRatio;
+                }
             }
             else if (inputName == "/input/ring/value") {
-                my_right_device_->data.flexion[3][0] = data;
-                my_right_device_->data.flexion[3][1] = data;
-                my_right_device_->data.flexion[3][2] = data;
-                my_right_device_->data.flexion[3][3] = data;
+                my_right_device_->data.flexion[3][0] = 0;
+                if (data < 0.5) {
+                    my_right_device_->data.flexion[3][1] = data * flexion11_firstRatio;
+                    my_right_device_->data.flexion[3][2] = data * flexion12_firstRatio;
+                    my_right_device_->data.flexion[3][3] = data * flexion13_firstRatio;
+                }
+                else {
+                    my_right_device_->data.flexion[3][1] = 0.5 * flexion11_firstRatio + (data - 0.5) * flexion11_secondRatio;
+                    my_right_device_->data.flexion[3][2] = 0.5 * flexion12_firstRatio + (data - 0.5) * flexion12_secondRatio;
+                    my_right_device_->data.flexion[3][3] = 0.5 * flexion13_firstRatio + (data - 0.5) * flexion13_secondRatio;
+                }
             }
             else if (inputName == "/input/pinky/value") {
-                my_right_device_->data.flexion[4][0] = data;
-                my_right_device_->data.flexion[4][1] = data;
-                my_right_device_->data.flexion[4][2] = data;
-                my_right_device_->data.flexion[4][3] = data;
+                my_right_device_->data.flexion[4][0] = 0;
+                if (data < 0.5) {
+                    my_right_device_->data.flexion[4][1] = data * flexion11_firstRatio;
+                    my_right_device_->data.flexion[4][2] = data * flexion12_firstRatio;
+                    my_right_device_->data.flexion[4][3] = data * flexion13_firstRatio;
+                }
+                else {
+                    my_right_device_->data.flexion[4][1] = 0.5 * flexion11_firstRatio + (data - 0.5) * flexion11_secondRatio;
+                    my_right_device_->data.flexion[4][2] = 0.5 * flexion12_firstRatio + (data - 0.5) * flexion12_secondRatio;
+                    my_right_device_->data.flexion[4][3] = 0.5 * flexion13_firstRatio + (data - 0.5) * flexion13_secondRatio;
+                }
             }
             else if (inputName == "/input/thumbsplay/value") {
                 my_right_device_->data.splay[0] = (float)(2 * (data - 0.5));

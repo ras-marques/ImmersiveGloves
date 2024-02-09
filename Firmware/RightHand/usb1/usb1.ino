@@ -121,6 +121,44 @@ typedef struct __attribute__( ( packed, aligned( 1 ) ) )
 controller_data_t controller_data;
 // 5 32-bit integers can represent  160 bits. This struct has 135.
 
+void printControllerData(){
+  Serial.print(controller_data.thumb_curl);
+  Serial.print("\t");
+  Serial.print(controller_data.index_curl);
+  Serial.print("\t");
+  Serial.print(controller_data.middle_curl);
+  Serial.print("\t");
+  Serial.print(controller_data.ring_curl);
+  Serial.print("\t");
+  Serial.print(controller_data.pinky_curl);
+  Serial.print("\t");
+  Serial.print(controller_data.thumb_splay);
+  Serial.print("\t");
+  Serial.print(controller_data.index_splay);
+  Serial.print("\t");
+  Serial.print(controller_data.middle_splay);
+  Serial.print("\t");
+  Serial.print(controller_data.ring_splay);
+  Serial.print("\t");
+  Serial.print(controller_data.pinky_splay);
+  Serial.print("\t");
+  Serial.print(controller_data.thumbstick_x);
+  Serial.print("\t");
+  Serial.print(controller_data.thumbstick_y);
+  Serial.print("\t");
+  Serial.print(controller_data.thumbstick_click);
+  Serial.print("\t");
+  Serial.print(controller_data.a);
+  Serial.print("\t");
+  Serial.print(controller_data.b);
+  Serial.print("\t");
+  Serial.print(controller_data.system);
+  Serial.print("\t");
+  Serial.print(controller_data.trigger);
+  Serial.print("\t");
+  Serial.println(controller_data.triggerbtn);
+}
+
 uint8_t received_characters[32] = {};
 
 int chars_rxed = 0;
@@ -246,19 +284,20 @@ void interpret_serial_data(){
   relativeQuaternion.z = serial_data.rxed_data.refQuaternion_z / 32767.;
 }
 
-PIO pio = pio0;
-uint offset;
-uint sm;
-// the setup function runs once when you press reset or power the board
-void setup() {
-
+void initialize_serial(){
   Serial.begin(115200);
   // while(!Serial) // can't use this here, otherwise it only works with usb connected!
 
   delay(2000);
   Serial.println("ImmersiveGloves starting...");
   delay(1000); // wait 1 seconds, USB2 waits 3 seconds, so that we are sure USB2 has UART aligned for now - probably will make this better later
+}
 
+PIO pio = pio0;
+uint offset;
+uint sm;
+
+void initialize_pio_for_spi_comms_with_tracker(){
   offset = pio_add_program(pio, &spi_slave_program);
   sm = pio_claim_unused_sm(pio, true);
   int mosi = 12;
@@ -266,11 +305,9 @@ void setup() {
   int sclk = 14;
   int miso = 15;
   spi_slave_init(pio, sm, offset, mosi, cs, sclk, miso);
+}
 
-  // init the communication to Tundra Tracker, setup the CS irq callback (this has to be at Top level in arduino it seems)
-  // tundra_tracker.init( );
-  // gpio_set_irq_enabled_with_callback( tundra_tracker.get_cs_pin(), GPIO_IRQ_EDGE_RISE | GPIO_IRQ_EDGE_FALL, true, &csn_irq );
-
+void initialize_imus(){
   // Initialize I2C
   _i2c_init(i2c0, 400000);             // Init I2C0 peripheral at 400kHz
   gpio_set_function(0, GPIO_FUNC_I2C); // set pin 0 as an I2C pin (SDA in this case)
@@ -296,14 +333,18 @@ void setup() {
   bnoRing.begin(i2c0, 0x4A);
   Serial.println("Initializing Pinky IMU");
   bnoPinky.begin(i2c0, 0x4B);
+}
 
+void initialize_fingers(){
   // sets initial calibration of splay angles for each finger during initialization
   // begin(float degreesMin, float degreesMid, float degreesMax)
-  fingerIndex.begin(-30, 5, 25);
-  fingerMiddle.begin(5, 19, 30);
-  fingerRing.begin(-25, -9, 0);
-  fingerPinky.begin(-53, -27, -5);
+  fingerIndex.begin(-13.06, 16.94, 46.94);
+  fingerMiddle.begin(-34.77, -4.77, 25.23);
+  fingerRing.begin(-43.70, -13.70, 16.30);
+  fingerPinky.begin(-61.91, -31.91, -1.91);
+}
 
+void initialize_uart(){
   // Set up our UART with the required speed.
   uart_init(uart1, 115200);
   // Set the TX and RX pins by using the function select on the GPIO
@@ -325,6 +366,22 @@ void setup() {
   // uart_putc_raw(uart1, 'A');           // Send out a character without any conversions
   // uart_putc(uart1, 'B');               // Send out a character but do CR/LF conversions
   // uart_puts(uart1, " Hello, UART!\n"); // Send out a string, with CR/LF conversions
+}
+
+// the setup function runs once when you press reset or power the board
+void setup() {
+
+  initialize_serial();
+
+  initialize_pio_for_spi_comms_with_tracker();
+
+  // init I2C and setup sensors
+  initialize_imus();
+
+  // configure finger angles
+  initialize_fingers();
+
+  initialize_uart();
 
   controller_data.thumb_curl = 530;
   controller_data.index_curl = 550;
@@ -336,44 +393,6 @@ void setup() {
   controller_data.middle_splay = 600;
   controller_data.ring_splay = 620;
   controller_data.pinky_splay = 640;
-}
-
-void printControllerData(){
-  Serial.print(controller_data.thumb_curl);
-  Serial.print("\t");
-  Serial.print(controller_data.index_curl);
-  Serial.print("\t");
-  Serial.print(controller_data.middle_curl);
-  Serial.print("\t");
-  Serial.print(controller_data.ring_curl);
-  Serial.print("\t");
-  Serial.print(controller_data.pinky_curl);
-  Serial.print("\t");
-  Serial.print(controller_data.thumb_splay);
-  Serial.print("\t");
-  Serial.print(controller_data.index_splay);
-  Serial.print("\t");
-  Serial.print(controller_data.middle_splay);
-  Serial.print("\t");
-  Serial.print(controller_data.ring_splay);
-  Serial.print("\t");
-  Serial.print(controller_data.pinky_splay);
-  Serial.print("\t");
-  Serial.print(controller_data.thumbstick_x);
-  Serial.print("\t");
-  Serial.print(controller_data.thumbstick_y);
-  Serial.print("\t");
-  Serial.print(controller_data.thumbstick_click);
-  Serial.print("\t");
-  Serial.print(controller_data.a);
-  Serial.print("\t");
-  Serial.print(controller_data.b);
-  Serial.print("\t");
-  Serial.print(controller_data.system);
-  Serial.print("\t");
-  Serial.print(controller_data.trigger);
-  Serial.print("\t");
-  Serial.println(controller_data.triggerbtn);
 }
 
 int indexCurl_angleDegrees, middleCurl_angleDegrees, ringCurl_angleDegrees, pinkyCurl_angleDegrees;
@@ -401,10 +420,10 @@ bool preparingCalibration = false;
 bool runningCalibration = false;
 void runSplayCalibration(){
   static bool calibrating = false;
-  static float minIndexSplay = 360., maxIndexSplay = -360.;
-  static float minMiddleSplay = 360., maxMiddleSplay = -360.;
-  static float minRingSplay = 360., maxRingSplay = -360.;
-  static float minPinkySplay = 360., maxPinkySplay = -360.;
+  // static float minIndexSplay = 360., maxIndexSplay = -360.;
+  // static float minMiddleSplay = 360., maxMiddleSplay = -360.;
+  // static float minRingSplay = 360., maxRingSplay = -360.;
+  // static float minPinkySplay = 360., maxPinkySplay = -360.;
   
   if(!calibrating){
     // Serial.println("calibration started!");
@@ -412,29 +431,35 @@ void runSplayCalibration(){
     calibrating = true;
   }
   
-  if(fingerIndex.splayDegrees < minIndexSplay) minIndexSplay = fingerIndex.splayDegrees;
-  if(fingerIndex.splayDegrees > maxIndexSplay) maxIndexSplay = fingerIndex.splayDegrees;
-  if(fingerMiddle.splayDegrees < minMiddleSplay) minMiddleSplay = fingerMiddle.splayDegrees;
-  if(fingerMiddle.splayDegrees > maxMiddleSplay) maxMiddleSplay = fingerMiddle.splayDegrees;
-  if(fingerRing.splayDegrees < minRingSplay) minRingSplay = fingerRing.splayDegrees;
-  if(fingerRing.splayDegrees > maxRingSplay) maxRingSplay = fingerRing.splayDegrees;
-  if(fingerPinky.splayDegrees < minPinkySplay) minPinkySplay = fingerPinky.splayDegrees;
-  if(fingerPinky.splayDegrees > maxPinkySplay) maxPinkySplay = fingerPinky.splayDegrees;
+  // if(millis() - millisCallibrationStart > 5000) {
+  //   if(fingerIndex.splayDegrees < minIndexSplay) minIndexSplay = fingerIndex.splayDegrees;
+  //   if(fingerIndex.splayDegrees > maxIndexSplay) maxIndexSplay = fingerIndex.splayDegrees;
+  //   if(fingerMiddle.splayDegrees < minMiddleSplay) minMiddleSplay = fingerMiddle.splayDegrees;
+  //   if(fingerMiddle.splayDegrees > maxMiddleSplay) maxMiddleSplay = fingerMiddle.splayDegrees;
+  //   if(fingerRing.splayDegrees < minRingSplay) minRingSplay = fingerRing.splayDegrees;
+  //   if(fingerRing.splayDegrees > maxRingSplay) maxRingSplay = fingerRing.splayDegrees;
+  //   if(fingerPinky.splayDegrees < minPinkySplay) minPinkySplay = fingerPinky.splayDegrees;
+  //   if(fingerPinky.splayDegrees > maxPinkySplay) maxPinkySplay = fingerPinky.splayDegrees;
+  // }
 
-  if(millis() - millisCallibrationStart > 30000) {
-    fingerIndex.calibrateSplayDegrees(minIndexSplay, fingerIndex.splayDegrees, maxIndexSplay);
-    fingerMiddle.calibrateSplayDegrees(minMiddleSplay, fingerMiddle.splayDegrees, maxMiddleSplay);
-    fingerRing.calibrateSplayDegrees(minRingSplay, fingerRing.splayDegrees, maxRingSplay);
-    fingerPinky.calibrateSplayDegrees(minPinkySplay, fingerPinky.splayDegrees, maxPinkySplay);
+  if(millis() - millisCallibrationStart > 5000) {
+    fingerIndex.calibrateSplayDegrees(fingerIndex.splayDegrees-30, fingerIndex.splayDegrees, fingerIndex.splayDegrees+30);
+    fingerMiddle.calibrateSplayDegrees(fingerMiddle.splayDegrees-30, fingerMiddle.splayDegrees, fingerMiddle.splayDegrees+30);
+    fingerRing.calibrateSplayDegrees(fingerRing.splayDegrees-30, fingerRing.splayDegrees, fingerRing.splayDegrees+30);
+    fingerPinky.calibrateSplayDegrees(fingerPinky.splayDegrees-30, fingerPinky.splayDegrees, fingerPinky.splayDegrees+30);
 
-    minIndexSplay = -360.; maxIndexSplay = 360.;
-    minMiddleSplay = -360.; maxMiddleSplay = 360.;
-    minRingSplay = -360.; maxRingSplay = 360.;
-    minPinkySplay = -360.; maxPinkySplay = 360.;
+    Serial.println("Results:");
+    Serial.print(fingerIndex.splayDegrees);Serial.print(" ");Serial.print(fingerMiddle.splayDegrees);Serial.print(" ");Serial.print(fingerRing.splayDegrees);Serial.print(" ");Serial.println(fingerPinky.splayDegrees);
+
+    // minIndexSplay = -360.; maxIndexSplay = 360.;
+    // minMiddleSplay = -360.; maxMiddleSplay = 360.;
+    // minRingSplay = -360.; maxRingSplay = 360.;
+    // minPinkySplay = -360.; maxPinkySplay = 360.;
 
     calibrating = false;
     runningCalibration = false;
-    // Serial.println("calibration ended!");
+
+    Serial.println("calibration ended!");
   }
 }
 
@@ -455,217 +480,9 @@ void test(Quaternion q){
   Serial.println(1 - 2 * (q.x * q.x + q.y * q.y));
 }
 
-int millisWhenAllFingersAreTogether = 0;
-bool allFingersWereTouchingBefore = false;
-bool hasNewData = false;
-// the loop function runs over and over again forever
-void loop() {
-  if(hasSerialData){
-    interpret_serial_data();
-    hasSerialData = false;
-    hasNewData = true;
-  } 
-  bnoIndex.getReadings();
-  bnoMiddle.getReadings();
-  bnoRing.getReadings();
-  bnoPinky.getReadings();
-
-  if(bnoIndex.hasNewQuaternion){
-    // Serial.println("index");
-    Quaternion sensorQuaternion;
-    float radAccuracy;
-    uint8_t accuracy;
-    bnoIndex.getQuat(sensorQuaternion.x, sensorQuaternion.y, sensorQuaternion.z, sensorQuaternion.w, radAccuracy, accuracy);  // get the index IMU quaternion
-
-    fingerIndex.computeAxesValues(relativeQuaternion, sensorQuaternion);  // compute curl and splay axis from reference quaternion and finger quaternion
-
-    controller_data.index_curl = fingerIndex.curlAxis;
-    controller_data.index_splay = fingerIndex.splayAxis;
-  }
-
-  if(bnoMiddle.hasNewQuaternion){
-    // Serial.println("middle");
-    Quaternion sensorQuaternion;
-    float radAccuracy;
-    uint8_t accuracy;
-    bnoMiddle.getQuat(sensorQuaternion.x, sensorQuaternion.y, sensorQuaternion.z, sensorQuaternion.w, radAccuracy, accuracy);  // get the middle IMU quaternion
-    
-    fingerMiddle.computeAxesValues(relativeQuaternion, sensorQuaternion);  // compute curl and splay axis from reference quaternion and finger quaternion
-
-    controller_data.middle_curl = fingerMiddle.curlAxis;
-    controller_data.middle_splay = fingerMiddle.splayAxis;
-  }
-
-  if(bnoRing.hasNewQuaternion){
-    // Serial.println("ring");
-    Quaternion sensorQuaternion;
-    float radAccuracy;
-    uint8_t accuracy;
-    bnoRing.getQuat(sensorQuaternion.x, sensorQuaternion.y, sensorQuaternion.z, sensorQuaternion.w, radAccuracy, accuracy);                    // get the ring IMU quaternion
-    
-    fingerRing.computeAxesValues(relativeQuaternion, sensorQuaternion);  // compute curl and splay axis from reference quaternion and finger quaternion
-
-    controller_data.ring_curl = fingerRing.curlAxis;
-    controller_data.ring_splay = fingerRing.splayAxis;
-  }
-
-  if(bnoPinky.hasNewQuaternion){
-    // Serial.println("pinky");
-    Quaternion sensorQuaternion;
-    float radAccuracy;
-    uint8_t accuracy;
-    bnoPinky.getQuat(sensorQuaternion.x, sensorQuaternion.y, sensorQuaternion.z, sensorQuaternion.w, radAccuracy, accuracy);                    // get the pinky IMU quaternion
-    // Serial.print(radAccuracy);
-    // Serial.print(" ");
-    // Serial.println(accuracy);
-
-    fingerPinky.computeAxesValues(relativeQuaternion, sensorQuaternion);  // compute curl and splay axis from reference quaternion and finger quaternion
-
-    controller_data.pinky_curl = fingerPinky.curlAxis;
-    controller_data.pinky_splay = fingerPinky.splayAxis;
-  }
-
-  // printControllerData();
-  // printSerialData();
-
-  if(!runningCalibration){
-    if(serial_data.rxed_data.index && serial_data.rxed_data.middle && serial_data.rxed_data.ring && serial_data.rxed_data.pinky){
-      if(!allFingersWereTouchingBefore){
-        millisWhenAllFingersAreTogether = millis();
-        allFingersWereTouchingBefore = true;
-        preparingCalibration = true;
-        // Serial.println("Preparing calibration");
-      }
-    } else {
-      allFingersWereTouchingBefore = false;
-      preparingCalibration = false;
-    }
-
-    if(preparingCalibration && millis() - millisWhenAllFingersAreTogether > 5000){
-      // Serial.println("run calibration");
-      runningCalibration = true;
-      preparingCalibration = false;
-    }
-  } else {
-    runSplayCalibration();
-
-    controller_data.index_curl = 0;
-    controller_data.index_splay = 512;
-    controller_data.middle_curl = 0;
-    controller_data.middle_splay = 512;
-    controller_data.ring_curl = 0;
-    controller_data.ring_splay = 512;
-    controller_data.pinky_curl = 0;
-    controller_data.pinky_splay = 512;
-  }
-
-  // Serial.println(debugTransitions);
-  // Serial.println(a_btn);
-  // Serial.println(serial_data.rxed_data.ring);
-  // Serial.println(" ");
-  // if(disableInputs) Serial.println("Inputs disabled");
-
-
-  // if(controller_data.thumb_curl == 700) thumbCurlUp = false;
-  // else if(controller_data.thumb_curl == 520) thumbCurlUp = true;
-  // if(controller_data.index_curl == 700) indexCurlUp = false;
-  // else if(controller_data.index_curl == 520) indexCurlUp = true;
-  // if(controller_data.middle_curl == 700) middleCurlUp = false;
-  // else if(controller_data.middle_curl == 520) middleCurlUp = true;
-  // if(controller_data.ring_curl == 700) ringCurlUp = false;
-  // else if(controller_data.ring_curl == 520) ringCurlUp = true;
-  // if(controller_data.pinky_curl == 700) pinkyCurlUp = false;
-  // else if(controller_data.pinky_curl == 520) pinkyCurlUp = true;
-
-  // if(thumbCurlUp) controller_data.thumb_curl++; 
-  // else controller_data.thumb_curl--;
-  // if(indexCurlUp) controller_data.index_curl++; 
-  // else controller_data.index_curl--;
-  // if(middleCurlUp) controller_data.middle_curl++; 
-  // else controller_data.middle_curl--;
-  // if(ringCurlUp) controller_data.ring_curl++; 
-  // else controller_data.ring_curl--;
-  // if(pinkyCurlUp) controller_data.pinky_curl++; 
-  // else controller_data.pinky_curl--;
-
-  // if(controller_data.thumb_splay == 700) thumbSplayUp = false;
-  // else if(controller_data.thumb_splay == 520) thumbSplayUp = true;
-  // if(controller_data.index_splay == 700) indexSplayUp = false;
-  // else if(controller_data.index_splay == 520) indexSplayUp = true;
-  // if(controller_data.middle_splay == 700) middleSplayUp = false;
-  // else if(controller_data.middle_splay == 520) middleSplayUp = true;
-  // if(controller_data.ring_splay == 700) ringSplayUp = false;
-  // else if(controller_data.ring_splay == 520) ringSplayUp = true;
-  // if(controller_data.pinky_splay == 700) pinkySplayUp = false;
-  // else if(controller_data.pinky_splay == 520) pinkySplayUp = true;
-
-  // if(thumbSplayUp) controller_data.thumb_splay++; 
-  // else controller_data.thumb_splay--;
-  // if(indexSplayUp) controller_data.index_splay++; 
-  // else controller_data.index_splay--;
-  // if(middleSplayUp) controller_data.middle_splay++; 
-  // else controller_data.middle_splay--;
-  // if(ringSplayUp) controller_data.ring_splay++; 
-  // else controller_data.ring_splay--;
-  // if(pinkySplayUp) controller_data.pinky_splay++; 
-  // else controller_data.pinky_splay--;
-
-  // printControllerData();
-
-  // if(controller_data.a) {
-  //   abtnCounter++;
-  //   Serial.print(abtnCounter);
-  //   Serial.print(" ");
-  //   Serial.println("a");
-  // } if(controller_data.b) {
-  //   bbtnCounter++;
-  //   Serial.print(bbtnCounter);
-  //   Serial.print(" ");
-  //   Serial.println("b");
-  // } if(controller_data.system) {
-  //   systembtnCounter++;
-  //   Serial.print(systembtnCounter);
-  //   Serial.print(" ");
-  //   Serial.println("system");
-  // } if(controller_data.triggerbtn) {
-  //   triggerbtnCounter++;
-  //   Serial.print(triggerbtnCounter);
-  //   Serial.print(" ");
-  //   Serial.println("trigger");
-  // } if(controller_data.thumbstick_click) {
-  //   thumbstickbtnCounter++;
-  //   Serial.print(thumbstickbtnCounter);
-  //   Serial.print(" ");
-  //   Serial.println("thumbstick");
-  // } 
-
-  // if(controller_data.thumb_curl == 0) controller_data.thumb_curl = 100;
-  // if(controller_data.index_curl == 0) controller_data.index_curl = 100;
-  // if(controller_data.middle_curl == 0) controller_data.middle_curl = 100;
-  // if(controller_data.ring_curl == 0) controller_data.ring_curl = 100;
-  // if(controller_data.pinky_curl == 0) controller_data.pinky_curl = 100;
-
+void send_data_to_the_tracker(){
   // I did a lot of tweaking without knowing exactly what was going on, but I compared the original signals from the development board with the ones I generated using the rp2040 PIO, and figured I needed to invert the bit order for the tundra tracker to receive the SPI communication correctly
   // the next few lines take of this inversion and the header construction
-  int thumb_axis = controller_data.thumb_curl;
-  int index_axis = controller_data.index_curl;
-  int middle_axis = controller_data.middle_curl;
-  int ring_axis = controller_data.ring_curl;
-  int pinky_axis = controller_data.pinky_curl;
-  int thumb_splay_axis = controller_data.thumb_splay;
-  int index_splay_axis = controller_data.index_splay;
-  int middle_splay_axis = controller_data.middle_splay;
-  int ring_splay_axis = controller_data.ring_splay;
-  int pinky_splay_axis = controller_data.pinky_splay;
-  int trigger = controller_data.trigger;
-  int joystick_x = controller_data.thumbstick_x;
-  int joystick_y = controller_data.thumbstick_y;
-  int thumbstick_click = controller_data.thumbstick_click;
-  int triggerbtn = controller_data.triggerbtn;
-  int a = controller_data.a;
-  int b = controller_data.b;
-  int system = controller_data.system;
-
   int thumb_axis_inverted = 0;
   int index_axis_inverted = 0;
   int middle_axis_inverted = 0;
@@ -681,35 +498,33 @@ void loop() {
   int joystick_y_inverted = 0;
   bool bit = 0;
   for(int i = 0; i < 10; i++){
-    bit = (thumb_axis >> i) & 1;  // Get the ith bit from the original_value
+    bit = (controller_data.thumb_curl >> i) & 1;  // Get the ith bit from the original_value
     thumb_axis_inverted |= (bit << (9 - i));  // Set the bit in the reversed_value
-    bit = (index_axis >> i) & 1;  // Get the ith bit from the original_value
+    bit = (controller_data.index_curl >> i) & 1;  // Get the ith bit from the original_value
     index_axis_inverted |= (bit << (9 - i));  // Set the bit in the reversed_value
-    bit = (middle_axis >> i) & 1;  // Get the ith bit from the original_value
+    bit = (controller_data.middle_curl >> i) & 1;  // Get the ith bit from the original_value
     middle_axis_inverted |= (bit << (9 - i));  // Set the bit in the reversed_value
-    bit = (ring_axis >> i) & 1;  // Get the ith bit from the original_value
+    bit = (controller_data.ring_curl >> i) & 1;  // Get the ith bit from the original_value
     ring_axis_inverted |= (bit << (9 - i));  // Set the bit in the reversed_value
-    bit = (pinky_axis >> i) & 1;  // Get the ith bit from the original_value
+    bit = (controller_data.pinky_curl >> i) & 1;  // Get the ith bit from the original_value
     pinky_axis_inverted |= (bit << (9 - i));  // Set the bit in the reversed_value
-    bit = (thumb_splay_axis >> i) & 1;  // Get the ith bit from the original_value
 
-
+    bit = (controller_data.thumb_splay >> i) & 1;  // Get the ith bit from the original_value
     thumb_splay_axis_inverted |= (bit << (9 - i));  // Set the bit in the reversed_value
-    bit = (index_splay_axis >> i) & 1;  // Get the ith bit from the original_value
-
+    bit = (controller_data.index_splay >> i) & 1;  // Get the ith bit from the original_value
     index_splay_axis_inverted |= (bit << (9 - i));  // Set the bit in the reversed_value
-    bit = (middle_splay_axis >> i) & 1;  // Get the ith bit from the original_value
+    bit = (controller_data.middle_splay >> i) & 1;  // Get the ith bit from the original_value
     middle_splay_axis_inverted |= (bit << (9 - i));  // Set the bit in the reversed_value
-    bit = (ring_splay_axis >> i) & 1;  // Get the ith bit from the original_value
+    bit = (controller_data.ring_splay >> i) & 1;  // Get the ith bit from the original_value
     ring_splay_axis_inverted |= (bit << (9 - i));  // Set the bit in the reversed_value
-    bit = (pinky_splay_axis >> i) & 1;  // Get the ith bit from the original_value
+    bit = (controller_data.pinky_splay >> i) & 1;  // Get the ith bit from the original_value
     pinky_splay_axis_inverted |= (bit << (9 - i));  // Set the bit in the reversed_value
-    bit = (trigger >> i) & 1;  // Get the ith bit from the original_value
 
+    bit = (controller_data.trigger >> i) & 1;  // Get the ith bit from the original_value
     trigger_inverted |= (bit << (9 - i));  // Set the bit in the reversed_value
-    bit = (joystick_x >> i) & 1;  // Get the ith bit from the original_value
+    bit = (controller_data.thumbstick_x >> i) & 1;  // Get the ith bit from the original_value
     joystick_x_inverted |= (bit << (9 - i));  // Set the bit in the reversed_value
-    bit = (joystick_y >> i) & 1;  // Get the ith bit from the original_value
+    bit = (controller_data.thumbstick_y >> i) & 1;  // Get the ith bit from the original_value
     joystick_y_inverted |= (bit << (9 - i));  // Set the bit in the reversed_value
   }
 
@@ -730,7 +545,7 @@ void loop() {
   int data2 = (ring_axis_inverted << 24) + (pinky_axis_inverted << 14) + (thumb_splay_axis_inverted << 4) + (index_splay_axis_inverted >> 6);
   int data3 = (index_splay_axis_inverted << 26) + (middle_splay_axis_inverted << 16) + (ring_splay_axis_inverted << 6) + (pinky_splay_axis_inverted >> 4);
   int data4 = (pinky_splay_axis_inverted << 28) + (trigger_inverted << 18) + (joystick_x_inverted << 8) + (joystick_y_inverted >> 2);
-  int data5 = (joystick_y_inverted << 30) + (thumbstick_click << 29) + (triggerbtn << 28) + (a << 27) + (b << 26) + (system << 25);
+  int data5 = (joystick_y_inverted << 30) + (controller_data.thumbstick_click << 29) + (controller_data.triggerbtn << 28) + (controller_data.a << 27) + (controller_data.b << 26) + (controller_data.system << 25);
 
   byte byte1 = 0;
   byte byte2 = 0;
@@ -740,48 +555,6 @@ void loop() {
   byte byte2Inverted = 0;
   byte byte3Inverted = 0;
   byte byte4Inverted = 0;
-
-  // byte1 = ((header1 >> 24) & 0xFF);
-  // byte2 = ((header1 >> 16) & 0xFF);
-  // byte3 = ((header1 >> 8) & 0xFF);
-  // byte4 = ((header1 >> 0) & 0xFF);
-  // byte1Inverted = 0;
-  // byte2Inverted = 0;
-  // byte3Inverted = 0;
-  // byte4Inverted = 0;
-
-  // for(int i = 0; i < 8; i++){
-  //   bit = (byte1 >> i) & 1;  // Get the ith bit from the original_value
-  //   byte1Inverted |= (bit << (7 - i));  // Set the bit in the reversed_value
-  //   bit = (byte2 >> i) & 1;  // Get the ith bit from the original_value
-  //   byte2Inverted |= (bit << (7 - i));  // Set the bit in the reversed_value
-  //   bit = (byte3 >> i) & 1;  // Get the ith bit from the original_value
-  //   byte3Inverted |= (bit << (7 - i));  // Set the bit in the reversed_value
-  //   bit = (byte4 >> i) & 1;  // Get the ith bit from the original_value
-  //   byte4Inverted |= (bit << (7 - i));  // Set the bit in the reversed_value
-  // }
-  // header1 = (byte1Inverted << 24) + (byte2Inverted << 16) + (byte3Inverted << 8) + (byte4Inverted << 0);
-  
-  // byte1 = ((header2 >> 24) & 0xFF);
-  // byte2 = ((header2 >> 16) & 0xFF);
-  // byte3 = ((header2 >> 8) & 0xFF);
-  // byte4 = ((header2 >> 0) & 0xFF);
-  // byte1Inverted = 0;
-  // byte2Inverted = 0;
-  // byte3Inverted = 0;
-  // byte4Inverted = 0;
-
-  // for(int i = 0; i < 8; i++){
-  //   bit = (byte1 >> i) & 1;  // Get the ith bit from the original_value
-  //   byte1Inverted |= (bit << (7 - i));  // Set the bit in the reversed_value
-  //   bit = (byte2 >> i) & 1;  // Get the ith bit from the original_value
-  //   byte2Inverted |= (bit << (7 - i));  // Set the bit in the reversed_value
-  //   bit = (byte3 >> i) & 1;  // Get the ith bit from the original_value
-  //   byte3Inverted |= (bit << (7 - i));  // Set the bit in the reversed_value
-  //   bit = (byte4 >> i) & 1;  // Get the ith bit from the original_value
-  //   byte4Inverted |= (bit << (7 - i));  // Set the bit in the reversed_value
-  // }
-  // header2 = (byte1Inverted << 24) + (byte2Inverted << 16) + (byte3Inverted << 8) + (byte4Inverted << 0);
 
   byte1 = ((data1 >> 24) & 0xFF);
   byte2 = ((data1 >> 16) & 0xFF);
@@ -888,7 +661,6 @@ void loop() {
   }
   data5 = (byte1Inverted << 24) + (byte2Inverted << 16) + (byte3Inverted << 8) + (byte4Inverted << 0);
 
-  // Serial.println(frame_id);
   pio_sm_put_blocking(pio, sm, header1);
   pio_sm_put_blocking(pio, sm, header2);
   pio_sm_put_blocking(pio, sm, data1);
@@ -901,20 +673,256 @@ void loop() {
   if(frame_id > 255){
     frame_id = 0;
   }
-
-  // Flag will be true when the library is ready for new data
-  // if ( tundra_tracker.data_ready() )
-  // {
-  //   // Copy our controller struct to the data packet
-  //   tundra_tracker.send_data( &controller_data, sizeof(controller_data) );
-
-  //   // House keeping function for the library that should be ran right after data is ready
-  //   tundra_tracker.handle_rx_data( );
-  // }
 }
 
-// Callback for SPI Chipselect, just connect in the tmi irq function
-// void csn_irq( uint gpio, uint32_t event_mask )
-// {
-//   tundra_tracker.csn_irq( gpio, event_mask );
-// }
+int millisWhenAllFingersAreTogether = 0;
+bool allFingersWereTouchingBefore = false;
+// the loop function runs over and over again forever
+void loop() {
+  // Take measurements synchronously with thumb and reference data received through serial
+  if(hasSerialData){
+    interpret_serial_data();
+    hasSerialData = false;
+
+    bnoIndex.getReadings();
+    bnoMiddle.getReadings();
+    bnoRing.getReadings();
+    bnoPinky.getReadings();
+
+    if(bnoIndex.hasNewQuaternion){
+      // Serial.println("index");
+      Quaternion sensorQuaternion;
+      float radAccuracy;
+      uint8_t accuracy;
+      bnoIndex.getQuat(sensorQuaternion.x, sensorQuaternion.y, sensorQuaternion.z, sensorQuaternion.w, radAccuracy, accuracy);  // get the index IMU quaternion
+
+      fingerIndex.computeAxesValues(relativeQuaternion, sensorQuaternion);  // compute curl and splay axis from reference quaternion and finger quaternion
+
+      controller_data.index_curl = fingerIndex.curlAxis;
+      controller_data.index_splay = fingerIndex.splayAxis;
+      // controller_data.index_splay = (fingerIndex.splayAxis * 0.8) + 200;
+    }
+
+    if(bnoMiddle.hasNewQuaternion){
+      // Serial.println("middle");
+      Quaternion sensorQuaternion;
+      float radAccuracy;
+      uint8_t accuracy;
+      bnoMiddle.getQuat(sensorQuaternion.x, sensorQuaternion.y, sensorQuaternion.z, sensorQuaternion.w, radAccuracy, accuracy);  // get the middle IMU quaternion
+      
+      fingerMiddle.computeAxesValues(relativeQuaternion, sensorQuaternion);  // compute curl and splay axis from reference quaternion and finger quaternion
+
+      controller_data.middle_curl = fingerMiddle.curlAxis;
+      controller_data.middle_splay = fingerMiddle.splayAxis;
+      // controller_data.middle_splay = (fingerMiddle.splayAxis * 0.6) + 400;
+    }
+
+    if(bnoRing.hasNewQuaternion){
+      // Serial.println("ring");
+      Quaternion sensorQuaternion;
+      float radAccuracy;
+      uint8_t accuracy;
+      bnoRing.getQuat(sensorQuaternion.x, sensorQuaternion.y, sensorQuaternion.z, sensorQuaternion.w, radAccuracy, accuracy);                    // get the ring IMU quaternion
+      
+      fingerRing.computeAxesValues(relativeQuaternion, sensorQuaternion);  // compute curl and splay axis from reference quaternion and finger quaternion
+
+      controller_data.ring_curl = fingerRing.curlAxis;
+      controller_data.ring_splay = fingerRing.splayAxis;
+      // controller_data.ring_splay = (fingerRing.splayAxis * 0.85) + 150;
+    }
+
+    if(bnoPinky.hasNewQuaternion){
+      // Serial.println("pinky");
+      Quaternion sensorQuaternion;
+      float radAccuracy;
+      uint8_t accuracy;
+      bnoPinky.getQuat(sensorQuaternion.x, sensorQuaternion.y, sensorQuaternion.z, sensorQuaternion.w, radAccuracy, accuracy);                    // get the pinky IMU quaternion
+      // Serial.print(radAccuracy);
+      // Serial.print(" ");
+      // Serial.println(accuracy);
+
+      fingerPinky.computeAxesValues(relativeQuaternion, sensorQuaternion);  // compute curl and splay axis from reference quaternion and finger quaternion
+
+      controller_data.pinky_curl = fingerPinky.curlAxis;
+      controller_data.pinky_splay = fingerPinky.splayAxis;
+    }
+
+    // printControllerData();
+    // printSerialData();
+
+    if(!runningCalibration){
+      if(serial_data.rxed_data.index && serial_data.rxed_data.middle && serial_data.rxed_data.ring && serial_data.rxed_data.pinky){
+        if(!allFingersWereTouchingBefore){
+          millisWhenAllFingersAreTogether = millis();
+          allFingersWereTouchingBefore = true;
+          preparingCalibration = true;
+          // Serial.println("Preparing calibration");
+        }
+      } else {
+        allFingersWereTouchingBefore = false;
+        preparingCalibration = false;
+      }
+
+      if(preparingCalibration && millis() - millisWhenAllFingersAreTogether > 5000){
+        // Serial.println("run calibration");
+        runningCalibration = true;
+        preparingCalibration = false;
+      }
+    } else {
+      runSplayCalibration();
+
+      controller_data.index_curl = 0;
+      controller_data.index_splay = 512;
+      controller_data.middle_curl = 0;
+      controller_data.middle_splay = 512;
+      controller_data.ring_curl = 0;
+      controller_data.ring_splay = 512; 
+      controller_data.pinky_curl = 0;
+      controller_data.pinky_splay = 512;
+    }
+
+    // controller_data.index_curl = 0;
+    // controller_data.middle_curl = 0;
+    // controller_data.ring_curl = 0;
+    // controller_data.pinky_curl = 0;
+    // static int i = 0;
+    // if(i == 0){
+    //   controller_data.index_splay = 512;
+    //   controller_data.middle_splay = 512;
+    //   controller_data.ring_splay = 0; 
+    //   controller_data.pinky_splay = 1023;
+    //   i++;
+    // } else if(i == 1){
+    //   controller_data.index_splay = 512;
+    //   controller_data.middle_splay = 512;
+    //   controller_data.ring_splay = 512; 
+    //   controller_data.pinky_splay = 1023;
+    //   i++;
+    // } else if(i == 2){
+    //   controller_data.index_splay = 512;
+    //   controller_data.middle_splay = 512;
+    //   controller_data.ring_splay = 1023; 
+    //   controller_data.pinky_splay = 1023;
+    //   i = 0;
+    // }
+
+    send_data_to_the_tracker();
+
+    // Serial.println(debugTransitions);
+    // Serial.println(a_btn);
+    // Serial.println(serial_data.rxed_data.ring);
+    // Serial.println(" ");
+    // if(disableInputs) Serial.println("Inputs disabled");
+
+
+    // if(controller_data.thumb_curl == 700) thumbCurlUp = false;
+    // else if(controller_data.thumb_curl == 520) thumbCurlUp = true;
+    // if(controller_data.index_curl == 700) indexCurlUp = false;
+    // else if(controller_data.index_curl == 520) indexCurlUp = true;
+    // if(controller_data.middle_curl == 700) middleCurlUp = false;
+    // else if(controller_data.middle_curl == 520) middleCurlUp = true;
+    // if(controller_data.ring_curl == 700) ringCurlUp = false;
+    // else if(controller_data.ring_curl == 520) ringCurlUp = true;
+    // if(controller_data.pinky_curl == 700) pinkyCurlUp = false;
+    // else if(controller_data.pinky_curl == 520) pinkyCurlUp = true;
+
+    // if(thumbCurlUp) controller_data.thumb_curl++; 
+    // else controller_data.thumb_curl--;
+    // if(indexCurlUp) controller_data.index_curl++; 
+    // else controller_data.index_curl--;
+    // if(middleCurlUp) controller_data.middle_curl++; 
+    // else controller_data.middle_curl--;
+    // if(ringCurlUp) controller_data.ring_curl++; 
+    // else controller_data.ring_curl--;
+    // if(pinkyCurlUp) controller_data.pinky_curl++; 
+    // else controller_data.pinky_curl--;
+
+    // if(controller_data.thumb_splay == 700) thumbSplayUp = false;
+    // else if(controller_data.thumb_splay == 520) thumbSplayUp = true;
+    // if(controller_data.index_splay == 700) indexSplayUp = false;
+    // else if(controller_data.index_splay == 520) indexSplayUp = true;
+    // if(controller_data.middle_splay == 700) middleSplayUp = false;
+    // else if(controller_data.middle_splay == 520) middleSplayUp = true;
+    // if(controller_data.ring_splay == 700) ringSplayUp = false;
+    // else if(controller_data.ring_splay == 520) ringSplayUp = true;
+    // if(controller_data.pinky_splay == 700) pinkySplayUp = false;
+    // else if(controller_data.pinky_splay == 520) pinkySplayUp = true;
+
+    // if(thumbSplayUp) controller_data.thumb_splay++; 
+    // else controller_data.thumb_splay--;
+    // if(indexSplayUp) controller_data.index_splay++; 
+    // else controller_data.index_splay--;
+    // if(middleSplayUp) controller_data.middle_splay++; 
+    // else controller_data.middle_splay--;
+    // if(ringSplayUp) controller_data.ring_splay++; 
+    // else controller_data.ring_splay--;
+    // if(pinkySplayUp) controller_data.pinky_splay++; 
+    // else controller_data.pinky_splay--;
+
+    // printControllerData();
+
+    // if(controller_data.a) {
+    //   abtnCounter++;
+    //   Serial.print(abtnCounter);
+    //   Serial.print(" ");
+    //   Serial.println("a");
+    // } if(controller_data.b) {
+    //   bbtnCounter++;
+    //   Serial.print(bbtnCounter);
+    //   Serial.print(" ");
+    //   Serial.println("b");
+    // } if(controller_data.system) {
+    //   systembtnCounter++;
+    //   Serial.print(systembtnCounter);
+    //   Serial.print(" ");
+    //   Serial.println("system");
+    // } if(controller_data.triggerbtn) {
+    //   triggerbtnCounter++;
+    //   Serial.print(triggerbtnCounter);
+    //   Serial.print(" ");
+    //   Serial.println("trigger");
+    // } if(controller_data.thumbstick_click) {
+    //   thumbstickbtnCounter++;
+    //   Serial.print(thumbstickbtnCounter);
+    //   Serial.print(" ");
+    //   Serial.println("thumbstick");
+    // } 
+
+    // if(controller_data.thumb_curl == 0) controller_data.thumb_curl = 100;
+    // if(controller_data.index_curl == 0) controller_data.index_curl = 100;
+    // if(controller_data.middle_curl == 0) controller_data.middle_curl = 100;
+    // if(controller_data.ring_curl == 0) controller_data.ring_curl = 100;
+    // if(controller_data.pinky_curl == 0) controller_data.pinky_curl = 100;
+
+    // Serial.println(fingerIndex.toDegrees(fingerIndex.getYaw(fingerIndex.fingerQuaternion)));
+
+    // int thumb_axis = 800;
+    // int index_axis = 0;
+    // int middle_axis = 0;
+    // int ring_axis = 0;
+    // int pinky_axis = 0;
+    // int thumb_splay_axis = 1023;
+    // int index_splay_axis = 512;
+    // int middle_splay_axis = 512;
+    // int ring_splay_axis = 512;
+    // int pinky_splay_axis = 512;
+    // int trigger = 0;
+    // int joystick_x = 512;
+    // int joystick_y = 512;
+    // int thumbstick_click = 0;
+    // int triggerbtn = 0;
+    // int a = 0;
+    // int b = 0;
+    // int system = 0;
+
+    
+
+    // Serial.print(fingerIndex.splayDegrees);
+    // Serial.print(" ");
+    // Serial.print(fingerMiddle.splayDegrees);
+    // Serial.print(" ");
+    // Serial.print(fingerRing.splayDegrees);
+    // Serial.print(" ");
+    // Serial.println(fingerPinky.splayDegrees);
+  }
+}

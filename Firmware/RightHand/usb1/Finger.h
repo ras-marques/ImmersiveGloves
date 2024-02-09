@@ -11,19 +11,20 @@ class Finger {
     void computeAxesValues(Quaternion relativeQuaternion, Quaternion sensorQuaternion);
     // void calibrateCurlDegrees(float degreesMin, float degreesMid, float degreesMax);
     void calibrateSplayDegrees(float degreesMin, float degreesMid, float degreesMax);
+    float toDegrees(float angleRadians);
+    float getPitch(Quaternion q);
+    float getYaw(Quaternion q);
+    float getRoll(Quaternion q);
     
     float curlRadians, splayRadians;
     float curlDegrees, splayDegrees;
     float curlAxis, splayAxis;
     
     Quaternion toHandQuaternion;
+    Quaternion fingerQuaternion;
 
   private:
-    float toDegrees(float angleRadians);
     Quaternion quaternionFromAngle(float angle, int axis);
-    float getPitch(Quaternion q);
-    float getYaw(Quaternion q);
-    float getRoll(Quaternion q);
     
     void computeToHandQuaternion(Quaternion relativeQuaternion, Quaternion fingerQuaternion);
     void computeCurlDegrees(void);
@@ -32,7 +33,7 @@ class Finger {
     void computeSplayAxis(void);
 
     Quaternion handQuaternion;
-    Quaternion fingerQuaternion;
+    
     float curlDegreesMin, curlDegreesMid, curlDegreesMax;
     float splayDegreesMin, splayDegreesMid, splayDegreesMax;
 };

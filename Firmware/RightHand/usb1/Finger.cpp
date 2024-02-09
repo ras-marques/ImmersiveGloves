@@ -77,6 +77,7 @@ void Finger::computeSplayDegrees(){
     Quaternion decurledQuaternion = quaternion_multiply(curlQuaternion, fingerQuaternion);                                // rotate the indexQuaternion by the curl angle in the x axis
     Quaternion decurledToHandQuaternion = quaternion_multiply(handQuaternion, quaternion_conjugate(decurledQuaternion));  // get the relative quaternion between the reference IMU quaternion and the quaternion representing the index IMU rotated back by the curl angle
     splayRadians = getYaw(decurledToHandQuaternion);                                                                      // get the splay angle in radians from the quaternion calculated above
+    // splayRadians = getYaw(fingerQuaternion);                                                                      // get the splay angle in radians from the quaternion calculated above
     splayDegrees = toDegrees(splayRadians);                                                                               // convert the splay angle to degrees
     // rotate everything 180 degrees
     if(splayDegrees > 0) splayDegrees = 180 - splayDegrees;
