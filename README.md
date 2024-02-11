@@ -4,11 +4,11 @@ I want to share how I am making vr gloves using 2 Tundra Trackers, 2 interface b
 
 https://github.com/ras-marques/ImmersiveGloves/assets/6479742/3d3f5d54-22ea-44d6-a413-07e7460a17d0
 
-Everything is in a prototyping phase, but currently I have finger curl and splay working on all 5 fingers and an emulated joystick from thumb rotation. Now moving to custom boards that will make everything smaller, prettier and more robust.
+Hand tracking works with curl and splay on all fingers with 1 IMU on each finger. There is a joystick that is enabled by touching the thumb to the index finger and B, A and System buttons are available by touching the thumb to the middle, ring and pinky fingers respectively.
 
 ## Cost analysis
 
-You can refer to https://github.com/ras-marques/ImmersiveGloves/blob/main/CustomPCBs/cost_analysis.xlsx for the complete BOM, but in summary the current cost is described below:
+You can refer to https://github.com/ras-marques/ImmersiveGloves/blob/main/CustomPCBs/cost_analysis.ods for the complete BOM, but in summary the current cost is described below:
 - 4€/pair times 50 = 200€: Cost to make enough boards for exactly 50 pairs of these gloves
 - 170€/pair: Cost to source enough components and some spares for a pair of these gloves
 - 130€/pair times 50 = 6500€: Cost to source enough compoents for 50 pairs of these gloves
