@@ -2,11 +2,45 @@
 
 I want to share how I am making vr gloves using 2 Tundra Trackers, 2 interface boards and 12 inertial sensors.
 
-https://github.com/ras-marques/ImmersiveGloves/assets/6479742/3d3f5d54-22ea-44d6-a413-07e7460a17d0
+https://github.com/ras-marques/ImmersiveGloves/assets/6479742/4af1af61-4261-44ce-aa3d-e45de0df7709
+
+Check the full presentation on youtube https://www.youtube.com/watch?v=5OSYiYDkOE8
 
 Hand tracking works with curl and splay on all fingers with 1 IMU on each finger. There is a joystick that is enabled by touching the thumb to the index finger and B, A and System buttons are available by touching the thumb to the middle, ring and pinky fingers respectively.
 
+## Overall repository state
+
+Instructions are incomplete.
+The files for the main board and IMU boards are updated.
+There is only code for the right glove.
+3D printing files need tweaking.
+
+## Necessary equipment and skills
+
+ - Bare PCBs: https://github.com/ras-marques/ImmersiveGloves/tree/main/CustomPCBs/ReadyToTest
+ - Components for populating the PCBs: https://github.com/ras-marques/ImmersiveGloves/blob/main/CustomPCBs/cost_analysis.ods
+ - Solder paste
+ - Hot air gun or hot plate
+ - Soldering iron
+ - Hot glue gun or super glue
+ - 3d printer
+ - Pre-crimped JST 1.0mm silicon wire kit: https://www.amazon.es/gp/product/B07PDQKHJ2/ref=ppx_yo_dt_b_asin_title_o00_s00?ie=UTF8&psc=1
+
+The hardest part in this project is making the boards. I am currently not supplying boards, so you will need to order them from somewhere.
+
+The boards are 4 layer and have fine pitch components. Making the PCBs at home is out of the question, but you can order them from JLCPCB, PCBWAY, etc.
+
+I assembled the components on my glove by hand using a stencil to dispense solder paste and used a hot air gun for reflowing. A hot plate is better.
+
+If you don't have a 3d printer, you could order the models from somewhere or ask a friend.
+
+Currently everything is glued to the glove fabric, you could use hot glue or super glue.
+
+The pre-crimped JST wires are necessary to make the assembly process easier, more below.
+
 ## Cost analysis
+
+A realistic ballpark for cost is around 250€ per pair of gloves with component and shipping cost and assuming you already have all the tools like a 3d printer, and soldering tools.
 
 You can refer to https://github.com/ras-marques/ImmersiveGloves/blob/main/CustomPCBs/cost_analysis.ods for the complete BOM, but in summary the current cost is described below:
 - 4€/pair times 50 = 200€: Cost to make enough boards for exactly 50 pairs of these gloves
@@ -15,7 +49,7 @@ You can refer to https://github.com/ras-marques/ImmersiveGloves/blob/main/Custom
 
 ## Tracking method
 
-Why base these gloves around the Tundra Tracker? Using a Tundra Tracker and an expansion board avoids having to deal with batteries, since the Tundra Tracker can power everything. Also, the tracker takes care of transmiting the data from the gloves to the computer wirelessly. An RP2040 takes care of acquiring the data from the 6 inertial sensors, processing it and delivering it to the tracker.
+Why base these gloves around the Tundra Tracker? Using a Tundra Tracker and an expansion board avoids having to deal with batteries, since the Tundra Tracker can power everything. Also, the tracker takes care of transmiting the data from the gloves to the computer wirelessly. Two RP2040's take care of acquiring the data from the 6 inertial sensors, processing it and delivering it to the tracker.
 
 This project is for people that already have a laser tracked VR setup with base stations and ideally for people using Tundra Trackers for full body tracking. That said, if you don't have the Tundra Trackers yet, there are some options:
 - 400€: 2 bundles of individual tundra tracker and SW1 dongle (2 USB ports needed) https://unboundxr.eu/tundra-tracker?sqr=tundra + https://unboundxr.eu/tundra-sw1-dongle
@@ -26,10 +60,9 @@ On top of this, if you don't have base stations, those go for 159€ from valve 
 
 ## End goal for these gloves
 
-- ~~These will always use the Tundra Tracker unless another lighthouse based tracker is available that can send inputs to openvr like the Tundra can. I expect this to always be the largest part of the cost.~~
-- The Tundra Tracker is amazing, it's the smaller tracker available and it even supports sending sensor data to the computer. This is the intended way of using these gloves, but I want to make these more accessible for everyone, so I will want to support more tracking methods such as my own tracking method - looking at something similar to the original PSVR controller but with several cheap cameras mounted on the walls/shelves - or even cheaper, using your available controllers.
-- The inertial sensors are going to be next. We have used the Slime VR BNO085 boards that go for 12€ each, but I have designed a custom BNO085 that is smaller and am looking to designing an alternative IMU board that is cheaper based around the BMI270 and an added magnetometer.
-- My gloves have finger mobility and a low profile as top priorities, so I have no plans for implementing physical buttons unless absolutelly necessary nor force feedback, but vibration haptics are possible if small enough. I do encourage you to do so and share your own variation!
+- The Tundra Tracker is amazing, it's the smaller tracker available and it even supports sending sensor data to the computer. This is the ultimate tracker for these gloves, but I want to make these more accessible for everyone, so I will want to support more tracking methods, begining with using your available controllers just like LucidVR does. This will probably imply a redesign of the main board to make it possible to power it using an external battery.
+- I started this project with the Slime VR BNO085 boards and have since designed a custom BNO085 that is as small as I could make it. I didn't even include a JST connector and wires are soldered directly to it. To make it easier to assemble though, I am considering including the connector in my next IMU boards. I also want to explore using a cheaper IMU chip like the BMI270 with and without a magnetometer.
+- My gloves have finger mobility and a low profile as top priorities, so I have no plans for implementing physical buttons unless absolutelly necessary nor force feedback, but vibration haptics are possible if small enough. I do encourage you to do so and share your own version of these gloves!
 
 ## Steps to make the gloves:
 
