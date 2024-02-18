@@ -3,6 +3,7 @@
 #include "Finger.h"
 #include "Quaternion.h"
 #include <cmath>
+#include "madgwick.h"
 
 #include <hardware/pio.h>
 
@@ -688,6 +689,14 @@ void loop() {
     bnoMiddle.getReadings();
     bnoRing.getReadings();
     bnoPinky.getReadings();
+
+    if(bnoIndex.hasNewAccel || bnoIndex.hasNewMag){
+      // Serial.println("index");
+      uint8_t accuracy;
+      if(bnoIndex.hasNewAccel) bnoIndex.getAccel(bnoIndex.accel_x, bnoIndex.accel_y, bnoIndex.accel_z, accuracy);
+      if(bnoIndex.hasNewMag) bnoIndex.getMag(bnoIndex.mag_x, bnoIndex.mag_y, bnoIndex.mag_z, accuracy);
+      Quaternion sensorQuaternion;
+    }
 
     if(bnoIndex.hasNewQuaternion){
       // Serial.println("index");

@@ -122,6 +122,10 @@ class BNO085 {
     float qToFloat(int16_t fixedPointValue, uint8_t qPoint); //Given a Q value, converts fixed point floating to regular floating point number
     void getQuat(float &i, float &j, float &k, float &real, float &radAccuracy, uint8_t &accuracy);
     void getGameQuat(float &i, float &j, float &k, float &real, uint8_t &accuracy);
+    void getAccel(float &x, float &y, float &z, uint8_t &accuracy);
+    void getLinAccel(float &x, float &y, float &z, uint8_t &accuracy);
+    void getGyro(float &x, float &y, float &z, uint8_t &accuracy);
+    void getMag(float &x, float &y, float &z, uint8_t &accuracy);
 
     void setFeatureCommand(uint8_t reportID, uint16_t timeBetweenReports);
 	  void setFeatureCommand(uint8_t reportID, uint16_t timeBetweenReports, uint32_t specificConfig);
@@ -133,7 +137,12 @@ class BNO085 {
     uint8_t shtpData[MAX_PACKET_SIZE];
     uint8_t sequenceNumber[6] = {0, 0, 0, 0, 0, 0}; //There are 6 com channels. Each channel has its own seqnum
 
-    bool hasNewQuaternion, hasNewGameQuaternion, hasNewMagQuaternion, hasNewAccel_;
+    bool hasNewQuaternion, hasNewGameQuaternion, hasNewMagQuaternion;
+    bool hasNewAccel, hasNewLinAccel, hasNewGyro, hasNewMag;
+
+    float accel_x, accel_y, accel_z;
+    float gyro_x, gyro_y, gyro_z;
+    float mag_x, mag_y, mag_z;
   
   private:
     
