@@ -2,6 +2,10 @@
 #define BNO085_h
 
 #include <Arduino.h>
+#include <hardware/pio.h>
+#include "pio_i2c.h"
+
+#define USE_PIO
 
 //SH-2 Protocol (always starting with this)
 // Byte  Field                                 Example
@@ -88,7 +92,11 @@
 class BNO085 {
   public:
     BNO085();
+    #ifdef USE_PIO
+    bool begin(PIO pio, uint sm, uint8_t address);
+    #else
     bool begin(i2c_inst_t* i2cInterface, uint8_t address);
+    #endif
 
     void softReset();	  //Try to reset the IMU via software
 	  void waitForCompletedReset(uint32_t timeout);
@@ -127,7 +135,12 @@ class BNO085 {
 	  void setFeatureCommand(uint8_t reportID, uint16_t timeBetweenReports, uint32_t specificConfig);
 
     //Global Variables
+    #ifdef USE_PIO
+    PIO devicePio;
+    uint deviceSm;
+    #else
     i2c_inst_t* deviceInterface; // device interface (i2c0 or i2c1), initialized on begin
+    #endif
     uint8_t deviceAddress; // device address (0x4A or 0x4B), initialized on begin
     uint8_t shtpHeader[4]; //Each packet has a header of 4 bytes
     uint8_t shtpData[MAX_PACKET_SIZE];

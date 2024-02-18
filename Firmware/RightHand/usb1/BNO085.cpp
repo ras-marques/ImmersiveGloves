@@ -23,7 +23,11 @@ boolean BNO085::sendPacket(uint8_t channelNumber, uint8_t dataLength)
   for(uint8_t i = 1; i < packetLength; i++){
     sprintf(debug, "%s,%d", debug, packet[i]);
   }
+  #ifdef USE_PIO
+  uint8_t write_check = pio_i2c_write_blocking(devicePio, deviceSm, deviceAddress, packet, packetLength);
+  #else
   uint8_t write_check = i2c_write_blocking(deviceInterface, deviceAddress, packet, packetLength, false);
+  #endif
   // Serial.print("write_check: ");
   // Serial.println(write_check);
   if(write_check == PICO_ERROR_GENERIC) return false;
@@ -226,7 +230,11 @@ bool BNO085::getData(uint16_t bytesRemaining){
 		if (numberOfBytesToRead > (BNO_I2C_BUFFER_LENGTH - 4))
 			numberOfBytesToRead = (BNO_I2C_BUFFER_LENGTH - 4);
 
+    #ifdef USE_PIO
+    uint8_t read_check = pio_i2c_read_blocking(devicePio, deviceSm, deviceAddress, buffer, numberOfBytesToRead + 4);
+    #else
     uint8_t read_check = i2c_read_blocking(deviceInterface, deviceAddress, buffer, numberOfBytesToRead + 4, false);
+    #endif
     if(read_check == PICO_ERROR_GENERIC){
       Serial.println("ERROR READING DATA");
       return false;
@@ -251,7 +259,11 @@ bool BNO085::getData(uint16_t bytesRemaining){
 }
 
 bool BNO085::receivePacket(){
+  #ifdef USE_PIO
+  int8_t read_check = pio_i2c_read_blocking(devicePio, deviceSm, deviceAddress, shtpHeader, 4);
+  #else
   int8_t read_check = i2c_read_blocking(deviceInterface, deviceAddress, shtpHeader, 4, false);
+  #endif
 
   //Get the first four bytes, aka the packet header
   uint8_t packetLSB = shtpHeader[0];
@@ -284,8 +296,14 @@ bool BNO085::receivePacket(){
   return true;
 }
 
+#ifdef USE_PIO
+bool BNO085::begin(PIO pio, uint sm, uint8_t address){
+  devicePio = pio;
+  deviceSm = sm;
+#else
 bool BNO085::begin(i2c_inst_t* i2cInterface, uint8_t address){
   deviceInterface = i2cInterface;
+#endif
   deviceAddress = address;
   //Begin by resetting the IMU
 	softReset();

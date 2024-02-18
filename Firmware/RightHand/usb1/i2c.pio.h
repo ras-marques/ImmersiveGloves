@@ -67,7 +67,7 @@ static inline void i2c_program_init(PIO pio, uint sm, uint offset, uint pin_sda,
     sm_config_set_jmp_pin(&c, pin_sda);
     sm_config_set_out_shift(&c, false, true, 16);
     sm_config_set_in_shift(&c, false, true, 8);
-    float div = (float)clock_get_hz(clk_sys) / (32 * 100000);
+    float div = (float)clock_get_hz(clk_sys) / (32 * 400000);
     sm_config_set_clkdiv(&c, div);
     // Try to avoid glitching the bus while connecting the IOs. Get things set
     // up so that pin is driven down when PIO asserts OE low, and pulled up

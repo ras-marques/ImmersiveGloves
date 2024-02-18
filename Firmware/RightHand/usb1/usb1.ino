@@ -3,6 +3,7 @@
 #include "Finger.h"
 #include "Quaternion.h"
 #include <cmath>
+#include "pio_i2c.h"
 
 #include <hardware/pio.h>
 
@@ -294,20 +295,30 @@ void initialize_serial(){
 }
 
 PIO pio = pio0;
-uint offset;
-uint sm;
+uint sm0;
 
 void initialize_pio_for_spi_comms_with_tracker(){
-  offset = pio_add_program(pio, &spi_slave_program);
-  sm = pio_claim_unused_sm(pio, true);
+  uint offset = pio_add_program(pio, &spi_slave_program);
+  sm0 = pio_claim_unused_sm(pio, true);
   int mosi = 12;
   int cs = 13;
   int sclk = 14;
   int miso = 15;
-  spi_slave_init(pio, sm, offset, mosi, cs, sclk, miso);
+  spi_slave_init(pio, sm0, offset, mosi, cs, sclk, miso);
+}
+
+// PIO pio_1 = pio1;
+uint sm1;
+void initialize_pio_for_i2c_comms_with_imus(){
+  uint offset = pio_add_program(pio, &i2c_program);
+  sm1 = pio_claim_unused_sm(pio, true);
+  int sda = 0;
+  int scl = 1;
+  i2c_program_init(pio, sm1, offset, sda, scl);
 }
 
 void initialize_imus(){
+  #ifndef USE_PIO
   // Initialize I2C
   _i2c_init(i2c0, 400000);             // Init I2C0 peripheral at 400kHz
   gpio_set_function(0, GPIO_FUNC_I2C); // set pin 0 as an I2C pin (SDA in this case)
@@ -322,17 +333,26 @@ void initialize_imus(){
   gpio_pull_up(2);                     // use internal pull up on pin 2
   gpio_pull_up(3);                     // use internal pull up on pin 3
   Serial.println("I2C1 configured");
+  #endif
 
   delay(1000);                         // Give the IMUs time to boot up
 
   Serial.println("Initializing Index IMU");
-  bnoIndex.begin(i2c1, 0x4A);
-  Serial.println("Initializing Middle IMU");
-  bnoMiddle.begin(i2c1, 0x4B);
-  Serial.println("Initializing Ring IMU");
-  bnoRing.begin(i2c0, 0x4A);
-  Serial.println("Initializing Pinky IMU");
-  bnoPinky.begin(i2c0, 0x4B);
+  #ifdef USE_PIO
+  bnoIndex.begin(pio, sm1, 0x4B);
+  #else
+  bnoIndex.begin(i2c0, 0x4B);
+  #endif
+  // Serial.println("Initializing Middle IMU");
+  // #ifdef USE_PIO
+  // bnoIndex.begin(pio, sm1, 0x4B);
+  // #else
+  // bnoMiddle.begin(i2c1, 0x4B);
+  // #endif
+  // Serial.println("Initializing Ring IMU");
+  // bnoRing.begin(i2c0, 0x4A);
+  // Serial.println("Initializing Pinky IMU");
+  // bnoPinky.begin(i2c0, 0x4B);
 }
 
 void initialize_fingers(){
@@ -373,7 +393,8 @@ void setup() {
 
   initialize_serial();
 
-  initialize_pio_for_spi_comms_with_tracker();
+  // initialize_pio_for_spi_comms_with_tracker();
+  initialize_pio_for_i2c_comms_with_imus();
 
   // init I2C and setup sensors
   initialize_imus();
@@ -661,13 +682,13 @@ void send_data_to_the_tracker(){
   }
   data5 = (byte1Inverted << 24) + (byte2Inverted << 16) + (byte3Inverted << 8) + (byte4Inverted << 0);
 
-  pio_sm_put_blocking(pio, sm, header1);
-  pio_sm_put_blocking(pio, sm, header2);
-  pio_sm_put_blocking(pio, sm, data1);
-  pio_sm_put_blocking(pio, sm, data2);
-  pio_sm_put_blocking(pio, sm, data3);
-  pio_sm_put_blocking(pio, sm, data4);
-  pio_sm_put_blocking(pio, sm, data5);
+  pio_sm_put_blocking(pio, sm0, header1);
+  pio_sm_put_blocking(pio, sm0, header2);
+  pio_sm_put_blocking(pio, sm0, data1);
+  pio_sm_put_blocking(pio, sm0, data2);
+  pio_sm_put_blocking(pio, sm0, data3);
+  pio_sm_put_blocking(pio, sm0, data4);
+  pio_sm_put_blocking(pio, sm0, data5);
 
   frame_id++;
   if(frame_id > 255){
