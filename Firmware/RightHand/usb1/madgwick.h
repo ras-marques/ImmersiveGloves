@@ -1,7 +1,7 @@
 #ifndef _MADGWICK_H_
 #define _MADGWICK_H_
 
-//#include "helper_3dmath.h"
+#include "helper_3dmath.h"
 
 template<typename T>
 class Madgwick {

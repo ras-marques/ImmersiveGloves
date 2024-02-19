@@ -691,11 +691,28 @@ void loop() {
     bnoPinky.getReadings();
 
     if(bnoIndex.hasNewAccel || bnoIndex.hasNewMag){
+      Madgwick<float> madgwick;
+
+      float quaternionArray[4] = {0};
       // Serial.println("index");
       uint8_t accuracy;
       if(bnoIndex.hasNewAccel) bnoIndex.getAccel(bnoIndex.accel_x, bnoIndex.accel_y, bnoIndex.accel_z, accuracy);
+      if(bnoIndex.hasNewGyro) bnoIndex.getGyro(bnoIndex.gyro_x, bnoIndex.gyro_y, bnoIndex.gyro_z, accuracy);
       if(bnoIndex.hasNewMag) bnoIndex.getMag(bnoIndex.mag_x, bnoIndex.mag_y, bnoIndex.mag_z, accuracy);
+      int delta_t = micros() - bnoIndex.lastMicros;
+      bnoIndex.lastMicros = micros();
+      madgwick.update(
+        quaternionArray,
+        bnoIndex.accel_x,bnoIndex.accel_y,bnoIndex.accel_z,
+        bnoIndex.gyro_x,bnoIndex.gyro_y,bnoIndex.gyro_z,
+        bnoIndex.mag_x,bnoIndex.mag_y,bnoIndex.mag_z,
+        delta_t
+      );
       Quaternion sensorQuaternion;
+      sensorQuaternion.w = quaternionArray[0];
+      sensorQuaternion.x = quaternionArray[1];
+      sensorQuaternion.y = quaternionArray[2];
+      sensorQuaternion.z = quaternionArray[3];
     }
 
     if(bnoIndex.hasNewQuaternion){
