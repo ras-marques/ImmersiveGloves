@@ -310,12 +310,12 @@ void initialize_pio_for_spi_comms_with_tracker(){
 
 void initialize_imus(){
   // Initialize I2C
-  // _i2c_init(i2c0, 400000);             // Init I2C0 peripheral at 400kHz
-  // gpio_set_function(0, GPIO_FUNC_I2C); // set pin 0 as an I2C pin (SDA in this case)
-  // gpio_set_function(1, GPIO_FUNC_I2C); // set pin 1 as an I2C pin (SCL in this case)
-  // gpio_pull_up(0);                     // use internal pull up on pin 0
-  // gpio_pull_up(1);                     // use internal pull up on pin 1
-  // Serial.println("I2C0 configured");
+  _i2c_init(i2c0, 400000);             // Init I2C0 peripheral at 400kHz
+  gpio_set_function(0, GPIO_FUNC_I2C); // set pin 0 as an I2C pin (SDA in this case)
+  gpio_set_function(1, GPIO_FUNC_I2C); // set pin 1 as an I2C pin (SCL in this case)
+  gpio_pull_up(0);                     // use internal pull up on pin 0
+  gpio_pull_up(1);                     // use internal pull up on pin 1
+  Serial.println("I2C0 configured");
 
   _i2c_init(i2c1, 400000);             // Init I2C1 peripheral at 400kHz
   gpio_set_function(2, GPIO_FUNC_I2C); // set pin 2 as an I2C pin (SDA in this case)
@@ -328,12 +328,12 @@ void initialize_imus(){
 
   Serial.println("Initializing Index IMU");
   bnoIndex.begin(i2c1, 0x4A);
-  // Serial.println("Initializing Middle IMU");
-  // bnoMiddle.begin(i2c1, 0x4B);
-  // Serial.println("Initializing Ring IMU");
-  // bnoRing.begin(i2c0, 0x4A);
-  // Serial.println("Initializing Pinky IMU");
-  // bnoPinky.begin(i2c0, 0x4B);
+  Serial.println("Initializing Middle IMU");
+  bnoMiddle.begin(i2c1, 0x4B);
+  Serial.println("Initializing Ring IMU");
+  bnoRing.begin(i2c0, 0x4A);
+  Serial.println("Initializing Pinky IMU");
+  bnoPinky.begin(i2c0, 0x4B);
 }
 
 void initialize_fingers(){

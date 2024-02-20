@@ -7,6 +7,9 @@ class Quaternion {
   public:
     Quaternion();
     void printMe();
+    void printMyEulerAngles_pry();
+    void printMyEulerAngles_ypr();
+    void printMyEulerAngles_ryp();
     Quaternion rotateBy(Quaternion q);
     Quaternion getRelativeTo(Quaternion q);
 

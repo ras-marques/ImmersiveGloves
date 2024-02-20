@@ -24,11 +24,11 @@ boolean BNO085::sendPacket(uint8_t channelNumber, uint8_t dataLength)
     sprintf(debug, "%s,%d", debug, packet[i]);
   }
   uint8_t write_check = i2c_write_blocking(deviceInterface, deviceAddress, packet, packetLength, false);
-  Serial.print("write_check: ");
-  Serial.println(write_check);
+  // Serial.print("write_check: ");
+  // Serial.println(write_check);
   if(write_check == PICO_ERROR_GENERIC) return false;
 
-  Serial.println(debug);
+  // Serial.println(debug);
   return true;
 }
 
@@ -287,6 +287,11 @@ bool BNO085::receivePacket(){
 bool BNO085::begin(i2c_inst_t* i2cInterface, uint8_t address){
   deviceInterface = i2cInterface;
   deviceAddress = address;
+  quaternion.w = 1.0f;
+  quaternion.x = 0.0f;
+  quaternion.y = 0.0f;
+  quaternion.z = 0.0f;
+
   //Begin by resetting the IMU
 	softReset();
 
@@ -296,13 +301,13 @@ bool BNO085::begin(i2c_inst_t* i2cInterface, uint8_t address){
 
 	//Transmit packet on interface i2c0, address BNO_ADDRESS, channel CHANNEL_CONTROL, 2 bytes
   Serial.println("");
-  Serial.println("Getting Product ID");
+  // Serial.println("Getting Product ID");
 	sendPacket(CHANNEL_CONTROL, 2);
 
   uint32_t tInitialResetTimeMS = millis();
 	bool tBoardInfoReceived = false;
 
-  Serial.println("Getting ID...");
+  // Serial.println("Getting ID...");
 
 	// Wait max 2.5s for the product_id_response and ignore other packets received during that time.
 	while (millis() - tInitialResetTimeMS < 10000 && (!tBoardInfoReceived)) {
@@ -330,27 +335,28 @@ bool BNO085::begin(i2c_inst_t* i2cInterface, uint8_t address){
 
   if(!tBoardInfoReceived) Serial.println("BNO not detected!");
   else{
-    Serial.println("");
-    Serial.println("Enabling ARVR stabilized game rotation vector");
+    // Serial.println("");
+    // Serial.println("Enabling rotation vector");
     // enableARVRStabilizedGameRotationVector(10);
-    enableRotationVector(10);
+    // enableRotationVector(10);
     
-    // Serial.println("");
-    // Serial.println("Enabling raw accelerometer");
-    // enableRawAccelerometer(10);
+    Serial.println("");
+    Serial.println("Enabling accelerometer");
+    enableAccelerometer(10);
 
-    // Serial.println("");
-    // Serial.println("Enabling raw gyro");
-    // enableRawGyro(10);
+    Serial.println("");
+    Serial.println("Enabling gyro");
+    enableGyro(10);
     
-    // Serial.println("");
-    // Serial.println("Enabling raw magnetometer");
-    // enableRawMagnetometer(10);
+    Serial.println("");
+    Serial.println("Enabling magnetometer");
+    enableMagnetometer(10);
   }
 }
 
 uint16_t BNO085::parseInputReport(void)
 {
+  // Serial.println("parsing input report");
 	//Calculate the number of data bytes in this packet
 	int16_t dataLength = ((uint16_t)shtpHeader[1] << 8 | shtpHeader[0]);
 	dataLength &= ~(1 << 15); //Clear the MSbit. This bit indicates if this package is a continuation of the last.
@@ -392,7 +398,7 @@ uint16_t BNO085::parseInputReport(void)
 	//Store these generic values to their proper global variable
 	if (shtpData[5] == SENSOR_REPORTID_ACCELEROMETER || shtpData[5] == SENSOR_REPORTID_GRAVITY)
 	{
-		hasNewAccel_ = true;
+		hasNewAccel = true;
 		accelAccuracy = status;
 		rawAccelX = data1;
 		rawAccelY = data2;
@@ -400,6 +406,7 @@ uint16_t BNO085::parseInputReport(void)
 	}
 	else if (shtpData[5] == SENSOR_REPORTID_LINEAR_ACCELERATION)
 	{
+    hasNewLinAccel = true;
 		accelLinAccuracy = status;
 		rawLinAccelX = data1;
 		rawLinAccelY = data2;
@@ -407,6 +414,7 @@ uint16_t BNO085::parseInputReport(void)
 	}
 	else if (shtpData[5] == SENSOR_REPORTID_GYROSCOPE)
 	{
+    hasNewGyro = true;
 		gyroAccuracy = status;
 		rawGyroX = data1;
 		rawGyroY = data2;
@@ -414,6 +422,7 @@ uint16_t BNO085::parseInputReport(void)
 	}
 	else if (shtpData[5] == SENSOR_REPORTID_MAGNETIC_FIELD)
 	{
+    hasNewMag = true;
 		magAccuracy = status;
 		rawMagX = data1;
 		rawMagY = data2;
@@ -582,6 +591,50 @@ void BNO085::getGameQuat(float &i, float &j, float &k, float &real, uint8_t &acc
 	real = qToFloat(rawGameQuatReal, rotationVector_Q1);
 	accuracy = quatGameAccuracy;
 	hasNewGameQuaternion = false;
+}
+
+//Gets the full acceleration
+//x,y,z output floats
+void BNO085::getAccel(float &x, float &y, float &z, uint8_t &accuracy)
+{
+	x = qToFloat(rawAccelX, accelerometer_Q1);
+	y = qToFloat(rawAccelY, accelerometer_Q1);
+	z = qToFloat(rawAccelZ, accelerometer_Q1);
+	accuracy = accelAccuracy;
+	hasNewAccel = false;
+}
+
+//Gets the full lin acceleration
+//x,y,z output floats
+void BNO085::getLinAccel(float &x, float &y, float &z, uint8_t &accuracy)
+{
+	x = qToFloat(rawLinAccelX, linear_accelerometer_Q1);
+	y = qToFloat(rawLinAccelY, linear_accelerometer_Q1);
+	z = qToFloat(rawLinAccelZ, linear_accelerometer_Q1);
+	accuracy = accelLinAccuracy;
+  hasNewLinAccel = false;
+}
+
+//Gets the full gyro vector
+//x,y,z output floats
+void BNO085::getGyro(float &x, float &y, float &z, uint8_t &accuracy)
+{
+	x = qToFloat(rawGyroX, gyro_Q1);
+	y = qToFloat(rawGyroY, gyro_Q1);
+	z = qToFloat(rawGyroZ, gyro_Q1);
+	accuracy = gyroAccuracy;
+  hasNewGyro = false;
+}
+
+//Gets the full mag vector
+//x,y,z output floats
+void BNO085::getMag(float &x, float &y, float &z, uint8_t &accuracy)
+{
+	x = qToFloat(rawMagX, magnetometer_Q1);
+	y = qToFloat(rawMagY, magnetometer_Q1);
+	z = qToFloat(rawMagZ, magnetometer_Q1);
+	accuracy = magAccuracy;
+  hasNewMag = false;
 }
 
 uint16_t BNO085::getReadings(void){

@@ -62,6 +62,48 @@ Quaternion quaternion_multiply(Quaternion q1, Quaternion q2){
 
 Quaternion::Quaternion(){}
 
+void Quaternion::printMyEulerAngles_pry(){
+  Quaternion self;
+  self.w = w;
+  self.x = x;
+  self.y = y;
+  self.z = z;
+  Serial.print("pyr: p ");
+  Serial.print(getPitch_pry(self)*180/3.14);
+  Serial.print("\tr ");
+  Serial.print(getRoll_pry(self)*180/3.14);
+  Serial.print("\ty ");
+  Serial.println(getYaw_pry(self)*180/3.14);
+}
+
+void Quaternion::printMyEulerAngles_ypr(){
+  Quaternion self;
+  self.w = w;
+  self.x = x;
+  self.y = y;
+  self.z = z;
+  Serial.print("ypr: p ");
+  Serial.print(getPitch_ypr(self)*180/3.14);
+  Serial.print("\tr ");
+  Serial.print(getRoll_ypr(self)*180/3.14);
+  Serial.print("\ty ");
+  Serial.println(getYaw_ypr(self)*180/3.14);
+}
+
+void Quaternion::printMyEulerAngles_ryp(){
+  Quaternion self;
+  self.w = w;
+  self.x = x;
+  self.y = y;
+  self.z = z;
+  Serial.print("ryp: p ");
+  Serial.print(getPitch_ryp(self)*180/3.14);
+  Serial.print("\tr ");
+  Serial.print(getRoll_ryp(self)*180/3.14);
+  Serial.print("\ty ");
+  Serial.println(getYaw_ryp(self)*180/3.14);
+}
+
 void Quaternion::printMe(){
   Serial.print(w);
   Serial.print(",");

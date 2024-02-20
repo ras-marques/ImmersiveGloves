@@ -28,35 +28,6 @@ Quaternion thumbNeutralToHandQuaternion;
 Quaternion thumbNeutralToHandQuaternionForCurl;
 Quaternion thumbNeutralJoystickToHandQuaternion;
 
-Quaternion indexQuaternion;
-Quaternion middleQuaternion;
-Quaternion ringQuaternion;
-Quaternion pinkyQuaternion;
-
-// float getCurl(Quaternion q){
-//   return atan2(2 * (q.x * q.w - q.y * q.z), 1 - 2 * (q.x * q.x + q.y * q.y));
-// }
-
-// float getSplay(Quaternion q){
-//   return atan2(2 * (q.x * q.y + q.z * q.w), 1 - 2 * (q.y * q.y + q.z * q.z));
-// }
-
-// float getRoll(Quaternion q){
-//   return atan2(2 * (q.y * q.z + q.w * q.x), 1 - 2 * (q.x * q.x + q.y * q.y));
-// }
-
-// float getRoll(Quaternion q){
-//   return asin(2 * (q.x * q.y - q.w * q.z));
-// }
-
-// float getYaw(Quaternion q){
-//   return atan2(2 * (q.w * q.y + q.x * q.z), (q.w * q.w + q.x * q.x - q.y * q.y - q.z * q.z));
-// }
-
-// float getPitch(Quaternion q){
-//   return atan2(2 * (q.w * q.x + q.y * q.z), (q.w * q.w - q.x * q.x + q.y * q.y - q.z * q.z));
-// }
-
 Quaternion quaternionFromAngle(float angle, int axis){
   // angle is in radians, x axis is 0, y axis is 1, z axis is 2
   if (axis == 0){
@@ -105,53 +76,35 @@ serial_data_t serial_data;
 
 long microsOfTheLastMessageSent = 0;
 
-// the setup function runs once when you press reset or power the board
-void setup() {
-
+void initialize_serial(){
   Serial.begin(115200);
   // while(!Serial) // can't use this here, otherwise it only works with usb connected!
 
   delay(1000);
   Serial.println("ImmersiveGloves starting...");
   delay(3000); // wait 3 seconds, USB1 only waits 1 second, so that we are sure USB2 has UART aligned for now - probably will make this better later
+}
 
-
+void initialize_imus(){
   // Initialize I2C
   _i2c_init(i2c0, 400000);             // Init I2C0 peripheral at 400kHz
-  gpio_set_function(0, GPIO_FUNC_I2C); // set pin 4 as an I2C pin (SDA in this case)
-  gpio_set_function(1, GPIO_FUNC_I2C); // set pin 5 as an I2C pin (SCL in this case)
-  gpio_pull_up(0);                     // use internal pull up on pin 4
-  gpio_pull_up(1);                     // use internal pull up on pin 5
+  gpio_set_function(0, GPIO_FUNC_I2C); // set pin 0 as an I2C pin (SDA in this case)
+  gpio_set_function(1, GPIO_FUNC_I2C); // set pin 1 as an I2C pin (SCL in this case)
+  gpio_pull_up(0);                     // use internal pull up on pin 0
+  gpio_pull_up(1);                     // use internal pull up on pin 1
   Serial.println("I2C0 configured");
 
   // _i2c_init(i2c1, 400000);             // Init I2C1 peripheral at 400kHz
-  // gpio_set_function(14, GPIO_FUNC_I2C); // set pin 2 as an I2C pin (SDA in this case)
-  // gpio_set_function(15, GPIO_FUNC_I2C); // set pin 3 as an I2C pin (SCL in this case)
-  // gpio_pull_up(14);                     // use internal pull up on pin 2
-  // gpio_pull_up(15);                     // use internal pull up on pin 3
+  // gpio_set_function(2, GPIO_FUNC_I2C); // set pin 2 as an I2C pin (SDA in this case)
+  // gpio_set_function(3, GPIO_FUNC_I2C); // set pin 3 as an I2C pin (SCL in this case)
+  // gpio_pull_up(2);                     // use internal pull up on pin 2
+  // gpio_pull_up(3);                     // use internal pull up on pin 3
   // Serial.println("I2C1 configured");
-  
-  // Set up our UART with the required speed.
-  uart_init(uart1, 115200);
-  // Set the TX and RX pins by using the function select on the GPIO
-  // Set datasheet for more information on function select
-  gpio_set_function(4, GPIO_FUNC_UART);
-  gpio_set_function(5, GPIO_FUNC_UART);
-
-  // Reference functions below:
-  // uart_putc_raw(uart1, 'A');           // Send out a character without any conversions
-  // uart_putc(uart1, 'B');               // Send out a character but do CR/LF conversions
-  // uart_puts(uart1, " Hello, UART!\n"); // Send out a string, with CR/LF conversions
 
   delay(1000);                         // Give the IMUs time to boot up
 
   bnoRef.begin(i2c0, 0x4B);
   bnoThumb.begin(i2c0, 0x4A);
-  // bnoIndex.begin(i2c0, 0x4B);
-  // bnoMiddle.begin(i2c1, 0x4A);
-  // bnoRing.begin(i2c0, 0x4B);
-  // bnoPinky.begin(i2c1, 0x4A);
-
 
   handQuaternionThatWorks.w = 1;
   handQuaternionThatWorks.x = 0;
@@ -182,7 +135,23 @@ void setup() {
   thumbNeutralJoystickToHandQuaternion.x = 0.72;
   thumbNeutralJoystickToHandQuaternion.y = -0.13;
   thumbNeutralJoystickToHandQuaternion.z = -0.22;
+}
 
+void initialize_uart(){
+  // Set up our UART with the required speed.
+  uart_init(uart1, 115200);
+  // Set the TX and RX pins by using the function select on the GPIO
+  // Set datasheet for more information on function select
+  gpio_set_function(4, GPIO_FUNC_UART);
+  gpio_set_function(5, GPIO_FUNC_UART);
+
+  // Reference functions below:
+  // uart_putc_raw(uart1, 'A');           // Send out a character without any conversions
+  // uart_putc(uart1, 'B');               // Send out a character but do CR/LF conversions
+  // uart_puts(uart1, " Hello, UART!\n"); // Send out a string, with CR/LF conversions
+}
+
+void initialize_inputs(){
   // _gpio_init(22);
   // gpio_set_dir(22,false); // set GPIO22 as input
   pinMode(THUMB_CONTACT_PIN,OUTPUT);
@@ -191,6 +160,20 @@ void setup() {
   pinMode(MIDDLE_CONTACT_PIN,INPUT_PULLUP);
   pinMode(RING_CONTACT_PIN,INPUT_PULLUP);
   pinMode(PINKY_CONTACT_PIN,INPUT_PULLUP);
+}
+
+// the setup function runs once when you press reset or power the board
+void setup() {
+
+  initialize_serial();
+
+  // init I2C and setup sensors
+  initialize_imus();
+
+  initialize_uart();
+
+  // init gpio's for button and joystick
+  initialize_inputs();
 }
 
 bool joystickIsEnabled = false;
