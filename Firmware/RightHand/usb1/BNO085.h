@@ -1,6 +1,7 @@
 #ifndef BNO085_h
 #define BNO085_h
 
+#include "Quaternion.h"
 #include <Arduino.h>
 
 //SH-2 Protocol (always starting with this)
@@ -140,9 +141,10 @@ class BNO085 {
     bool hasNewQuaternion, hasNewGameQuaternion, hasNewMagQuaternion;
     bool hasNewAccel, hasNewLinAccel, hasNewGyro, hasNewMag;
 
-    float accel_x, accel_y, accel_z;
-    float gyro_x, gyro_y, gyro_z;
-    float mag_x, mag_y, mag_z;
+    Quaternion quaternion;
+    // float accel_x, accel_y, accel_z;
+    // float gyro_x, gyro_y, gyro_z;
+    // float mag_x, mag_y, mag_z;
     int lastMicros;
   
   private:

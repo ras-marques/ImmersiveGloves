@@ -287,6 +287,11 @@ bool BNO085::receivePacket(){
 bool BNO085::begin(i2c_inst_t* i2cInterface, uint8_t address){
   deviceInterface = i2cInterface;
   deviceAddress = address;
+  quaternion.w = 1.0f;
+  quaternion.x = 0.0f;
+  quaternion.y = 0.0f;
+  quaternion.z = 0.0f;
+
   //Begin by resetting the IMU
 	softReset();
 
