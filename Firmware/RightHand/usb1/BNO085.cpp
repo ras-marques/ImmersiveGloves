@@ -330,27 +330,28 @@ bool BNO085::begin(i2c_inst_t* i2cInterface, uint8_t address){
 
   if(!tBoardInfoReceived) Serial.println("BNO not detected!");
   else{
-    Serial.println("");
-    Serial.println("Enabling rotation vector");
+    // Serial.println("");
+    // Serial.println("Enabling rotation vector");
     // enableARVRStabilizedGameRotationVector(10);
     // enableRotationVector(10);
     
     Serial.println("");
-    Serial.println("Enabling raw accelerometer");
-    enableRawAccelerometer(10);
+    Serial.println("Enabling accelerometer");
+    enableAccelerometer(10);
 
     Serial.println("");
-    Serial.println("Enabling raw gyro");
-    enableRawGyro(10);
+    Serial.println("Enabling gyro");
+    enableGyro(10);
     
     Serial.println("");
-    Serial.println("Enabling raw magnetometer");
-    enableRawMagnetometer(10);
+    Serial.println("Enabling magnetometer");
+    enableMagnetometer(10);
   }
 }
 
 uint16_t BNO085::parseInputReport(void)
 {
+  // Serial.println("parsing input report");
 	//Calculate the number of data bytes in this packet
 	int16_t dataLength = ((uint16_t)shtpHeader[1] << 8 | shtpHeader[0]);
 	dataLength &= ~(1 << 15); //Clear the MSbit. This bit indicates if this package is a continuation of the last.

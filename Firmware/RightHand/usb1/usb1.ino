@@ -310,12 +310,12 @@ void initialize_pio_for_spi_comms_with_tracker(){
 
 void initialize_imus(){
   // Initialize I2C
-  _i2c_init(i2c0, 400000);             // Init I2C0 peripheral at 400kHz
-  gpio_set_function(0, GPIO_FUNC_I2C); // set pin 0 as an I2C pin (SDA in this case)
-  gpio_set_function(1, GPIO_FUNC_I2C); // set pin 1 as an I2C pin (SCL in this case)
-  gpio_pull_up(0);                     // use internal pull up on pin 0
-  gpio_pull_up(1);                     // use internal pull up on pin 1
-  Serial.println("I2C0 configured");
+  // _i2c_init(i2c0, 400000);             // Init I2C0 peripheral at 400kHz
+  // gpio_set_function(0, GPIO_FUNC_I2C); // set pin 0 as an I2C pin (SDA in this case)
+  // gpio_set_function(1, GPIO_FUNC_I2C); // set pin 1 as an I2C pin (SCL in this case)
+  // gpio_pull_up(0);                     // use internal pull up on pin 0
+  // gpio_pull_up(1);                     // use internal pull up on pin 1
+  // Serial.println("I2C0 configured");
 
   _i2c_init(i2c1, 400000);             // Init I2C1 peripheral at 400kHz
   gpio_set_function(2, GPIO_FUNC_I2C); // set pin 2 as an I2C pin (SDA in this case)
@@ -328,12 +328,12 @@ void initialize_imus(){
 
   Serial.println("Initializing Index IMU");
   bnoIndex.begin(i2c1, 0x4A);
-  Serial.println("Initializing Middle IMU");
-  bnoMiddle.begin(i2c1, 0x4B);
-  Serial.println("Initializing Ring IMU");
-  bnoRing.begin(i2c0, 0x4A);
-  Serial.println("Initializing Pinky IMU");
-  bnoPinky.begin(i2c0, 0x4B);
+  // Serial.println("Initializing Middle IMU");
+  // bnoMiddle.begin(i2c1, 0x4B);
+  // Serial.println("Initializing Ring IMU");
+  // bnoRing.begin(i2c0, 0x4A);
+  // Serial.println("Initializing Pinky IMU");
+  // bnoPinky.begin(i2c0, 0x4B);
 }
 
 void initialize_fingers(){
@@ -368,7 +368,7 @@ void initialize_uart(){
   // uart_putc(uart1, 'B');               // Send out a character but do CR/LF conversions
   // uart_puts(uart1, " Hello, UART!\n"); // Send out a string, with CR/LF conversions
 }
-
+Quaternion Q_index;
 // the setup function runs once when you press reset or power the board
 void setup() {
 
@@ -394,6 +394,11 @@ void setup() {
   controller_data.middle_splay = 600;
   controller_data.ring_splay = 620;
   controller_data.pinky_splay = 640;
+
+  Q_index.w = 1.0f;
+  Q_index.x = 0.0f;
+  Q_index.y = 0.0f;
+  Q_index.z = 0.0f;
 }
 
 int indexCurl_angleDegrees, middleCurl_angleDegrees, ringCurl_angleDegrees, pinkyCurl_angleDegrees;
@@ -686,48 +691,84 @@ void loop() {
     hasSerialData = false;
 
     bnoIndex.getReadings();
-    bnoMiddle.getReadings();
-    bnoRing.getReadings();
-    bnoPinky.getReadings();
+    // bnoMiddle.getReadings();
+    // bnoRing.getReadings();
+    // bnoPinky.getReadings();
 
-    if(bnoIndex.hasNewAccel || bnoIndex.hasNewMag){
+    if(bnoIndex.hasNewAccel || bnoIndex.hasNewGyro || bnoIndex.hasNewMag){
       Madgwick<float> madgwick;
 
-      float quaternionArray[4] = {0};
+      float quaternionArray[4] = {Q_index.w, Q_index.x, Q_index.y, Q_index.z};
       // Serial.println("index");
       uint8_t accuracy;
+
+      bnoIndex.accel_x = 0;
+      bnoIndex.accel_y = 0;
+      bnoIndex.accel_z = 0;
+      bnoIndex.gyro_x = 0;
+      bnoIndex.gyro_y = 0;
+      bnoIndex.gyro_z = 0;
+      bnoIndex.mag_x = 0;
+      bnoIndex.mag_y = 0;
+      bnoIndex.mag_z = 0;
+
       if(bnoIndex.hasNewAccel) bnoIndex.getAccel(bnoIndex.accel_x, bnoIndex.accel_y, bnoIndex.accel_z, accuracy);
       if(bnoIndex.hasNewGyro) bnoIndex.getGyro(bnoIndex.gyro_x, bnoIndex.gyro_y, bnoIndex.gyro_z, accuracy);
       if(bnoIndex.hasNewMag) bnoIndex.getMag(bnoIndex.mag_x, bnoIndex.mag_y, bnoIndex.mag_z, accuracy);
-      int delta_t = micros() - bnoIndex.lastMicros;
+      // Gyro seems to work always, but accel and mag sometimes fail getting new values
+      // Serial.print(bnoIndex.accel_x);
+      // Serial.print(" ");
+      // Serial.print(bnoIndex.accel_y);
+      // Serial.print(" ");
+      // Serial.print(bnoIndex.accel_z);
+      // Serial.print(" ");
+      // Serial.print(bnoIndex.gyro_x);
+      // Serial.print(" ");
+      // Serial.print(bnoIndex.gyro_y);
+      // Serial.print(" ");
+      // Serial.print(bnoIndex.gyro_z);
+      // Serial.print(" ");
+      // Serial.print(bnoIndex.mag_x);
+      // Serial.print(" ");
+      // Serial.print(bnoIndex.mag_y);
+      // Serial.print(" ");
+      // Serial.println(bnoIndex.mag_z);
+      double deltat = (micros() - bnoIndex.lastMicros)/1000000.;
+      // Serial.println(delta_t);
       bnoIndex.lastMicros = micros();
       madgwick.update(
         quaternionArray,
         bnoIndex.accel_x,bnoIndex.accel_y,bnoIndex.accel_z,
         bnoIndex.gyro_x,bnoIndex.gyro_y,bnoIndex.gyro_z,
         bnoIndex.mag_x,bnoIndex.mag_y,bnoIndex.mag_z,
-        delta_t
+        deltat
       );
-      Quaternion sensorQuaternion;
-      sensorQuaternion.w = quaternionArray[0];
-      sensorQuaternion.x = quaternionArray[1];
-      sensorQuaternion.y = quaternionArray[2];
-      sensorQuaternion.z = quaternionArray[3];
-    }
+      Q_index.w = quaternionArray[0];
+      Q_index.x = quaternionArray[1];
+      Q_index.y = quaternionArray[2];
+      Q_index.z = quaternionArray[3];
 
-    if(bnoIndex.hasNewQuaternion){
-      // Serial.println("index");
-      Quaternion sensorQuaternion;
-      float radAccuracy;
-      uint8_t accuracy;
-      bnoIndex.getQuat(sensorQuaternion.x, sensorQuaternion.y, sensorQuaternion.z, sensorQuaternion.w, radAccuracy, accuracy);  // get the index IMU quaternion
+      Q_index.printMe();
 
-      fingerIndex.computeAxesValues(relativeQuaternion, sensorQuaternion);  // compute curl and splay axis from reference quaternion and finger quaternion
+      fingerIndex.computeAxesValues(relativeQuaternion, Q_index);  // compute curl and splay axis from reference quaternion and finger quaternion
 
       controller_data.index_curl = fingerIndex.curlAxis;
       controller_data.index_splay = fingerIndex.splayAxis;
-      // controller_data.index_splay = (fingerIndex.splayAxis * 0.8) + 200;
     }
+
+    // if(bnoIndex.hasNewQuaternion){
+    //   // Serial.println("index");
+    //   Quaternion sensorQuaternion;
+    //   float radAccuracy;
+    //   uint8_t accuracy;
+    //   bnoIndex.getQuat(sensorQuaternion.x, sensorQuaternion.y, sensorQuaternion.z, sensorQuaternion.w, radAccuracy, accuracy);  // get the index IMU quaternion
+
+    //   fingerIndex.computeAxesValues(relativeQuaternion, sensorQuaternion);  // compute curl and splay axis from reference quaternion and finger quaternion
+
+    //   controller_data.index_curl = fingerIndex.curlAxis;
+    //   controller_data.index_splay = fingerIndex.splayAxis;
+    //   // controller_data.index_splay = (fingerIndex.splayAxis * 0.8) + 200;
+    // }
 
     if(bnoMiddle.hasNewQuaternion){
       // Serial.println("middle");

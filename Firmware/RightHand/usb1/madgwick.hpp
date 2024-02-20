@@ -3,6 +3,26 @@
 template<typename T>
 void Madgwick<T>::update(T q[4], T ax, T ay, T az, T gx, T gy, T gz, T mx, T my, T mz, T deltat)
 {
+  // Serial.print(ax);
+  // Serial.print(" ");
+  // Serial.print(ay);
+  // Serial.print(" ");
+  // Serial.print(az);
+  // Serial.print(" ");
+  // Serial.print(gx);
+  // Serial.print(" ");
+  // Serial.print(gy);
+  // Serial.print(" ");
+  // Serial.print(gz);
+  // Serial.print(" ");
+  // Serial.print(mx);
+  // Serial.print(" ");
+  // Serial.print(my);
+  // Serial.print(" ");
+  // Serial.print(mz);
+  // Serial.print(" ");
+  // Serial.println(deltat);
+
     T recipNorm;
     T s0, s1, s2, s3;
     T qDot1, qDot2, qDot3, qDot4;
