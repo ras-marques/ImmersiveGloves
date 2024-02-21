@@ -1,6 +1,7 @@
 #include "BNO085.h"
 #include "Quaternion.h"
 #include <cmath>
+#include "madgwick.h"
 
 #define THUMB_CONTACT_PIN 22
 #define INDEX_CONTACT_PIN 23
@@ -206,15 +207,45 @@ void loop() {
   bnoRef.getReadings();
   bnoThumb.getReadings();
 
-  if(bnoRef.hasNewQuaternion){
-    // Serial.println("REF");
-    float radAccuracy;
+  if(bnoRef.hasNewAccel || bnoRef.hasNewGyro || bnoRef.hasNewMag){
+    Madgwick<float> madgwick;
+
+    float quaternionArray[4] = {bnoRef.quaternion.w, bnoRef.quaternion.x, bnoRef.quaternion.y, bnoRef.quaternion.z};
+    // Serial.println("index");
     uint8_t accuracy;
-    bnoRef.getQuat(handQuaternion.x, handQuaternion.y, handQuaternion.z, handQuaternion.w, radAccuracy, accuracy);
-    // handQuaternion.printMyEulerAngles_pry();
-    // handQuaternion = quaternion_multiply(hackyHandRotation, handQuaternion);
-    // handQuaternion.printMe();
-    // relativeQuaternion = quaternion_multiply(handQuaternionThatWorks, quaternion_conjugate(handQuaternion)); // get the relative quaternion between the reference IMU quaternion and the coordinate frame where my calculations work
+
+    float accel_x = 0;
+    float accel_y = 0;
+    float accel_z = 0;
+    float gyro_x = 0;
+    float gyro_y = 0;
+    float gyro_z = 0;
+    float mag_x = 0;
+    float mag_y = 0;
+    float mag_z = 0;
+
+    if(bnoRef.hasNewAccel) bnoRef.getAccel(accel_x, accel_y, accel_z, accuracy);
+    if(bnoRef.hasNewGyro) bnoRef.getGyro(gyro_x, gyro_y, gyro_z, accuracy);
+    if(bnoRef.hasNewMag) bnoRef.getMag(mag_x, mag_y, mag_z, accuracy);
+    // Gyro seems to work always, but accel and mag sometimes fail getting new values
+    double deltat = (micros() - bnoRef.lastMicros)/1000000.;
+    // Serial.println(delta_t);
+    bnoRef.lastMicros = micros();
+    madgwick.update(
+      quaternionArray,
+      accel_x, accel_y, accel_z,
+      gyro_x, gyro_y, gyro_z,
+      mag_x, mag_y, mag_z,
+      deltat
+    );
+    bnoRef.quaternion.w = quaternionArray[0];
+    bnoRef.quaternion.x = quaternionArray[1];
+    bnoRef.quaternion.y = quaternionArray[2];
+    bnoRef.quaternion.z = quaternionArray[3];
+
+    Serial.print("ref "); bnoRef.quaternion.printMe();
+
+    handQuaternion = bnoRef.quaternion;
     relativeQuaternion = handQuaternion.getRelativeTo(handQuaternionThatWorks);
     relativeQuaternionForMainMCU = handQuaternion.getRelativeTo(handQuaternionThatWorksForMainMCU);
     // relativeQuaternionForMainMCU = handQuaternion.getRelativeTo(handQuaternionThatWorks);
@@ -223,13 +254,93 @@ void loop() {
     // handQuaternion.printMe();                                                                                // from here on, handQuaternion is the same as handQuaternionThatWorks
   }
 
-  if(bnoThumb.hasNewQuaternion){
-    // Serial.println("THUMB");
-    float radAccuracy;
+  if(bnoRef.hasNewAccel || bnoRef.hasNewGyro || bnoRef.hasNewMag){
+    Madgwick<float> madgwick;
+
+    float quaternionArray[4] = {bnoRef.quaternion.w, bnoRef.quaternion.x, bnoRef.quaternion.y, bnoRef.quaternion.z};
+    // Serial.println("index");
     uint8_t accuracy;
-    bnoThumb.getQuat(thumbQuaternion.x, thumbQuaternion.y, thumbQuaternion.z, thumbQuaternion.w, radAccuracy, accuracy);           // get the thumb IMU quaternion
-    thumbQuaternion = thumbQuaternion.rotateBy(relativeQuaternion);
-    Quaternion relativeThumbQuaternion = thumbQuaternion.getRelativeTo(handQuaternion);
+
+    float accel_x = 0;
+    float accel_y = 0;
+    float accel_z = 0;
+    float gyro_x = 0;
+    float gyro_y = 0;
+    float gyro_z = 0;
+    float mag_x = 0;
+    float mag_y = 0;
+    float mag_z = 0;
+
+    if(bnoRef.hasNewAccel) bnoRef.getAccel(accel_x, accel_y, accel_z, accuracy);
+    if(bnoRef.hasNewGyro) bnoRef.getGyro(gyro_x, gyro_y, gyro_z, accuracy);
+    if(bnoRef.hasNewMag) bnoRef.getMag(mag_x, mag_y, mag_z, accuracy);
+    // Gyro seems to work always, but accel and mag sometimes fail getting new values
+    double deltat = (micros() - bnoRef.lastMicros)/1000000.;
+    // Serial.println(delta_t);
+    bnoRef.lastMicros = micros();
+    madgwick.update(
+      quaternionArray,
+      accel_x, accel_y, accel_z,
+      gyro_x, gyro_y, gyro_z,
+      mag_x, mag_y, mag_z,
+      deltat
+    );
+    bnoRef.quaternion.w = quaternionArray[0];
+    bnoRef.quaternion.x = quaternionArray[1];
+    bnoRef.quaternion.y = quaternionArray[2];
+    bnoRef.quaternion.z = quaternionArray[3];
+
+    Serial.print("ref "); bnoRef.quaternion.printMe();
+
+    handQuaternion = bnoRef.quaternion;
+    relativeQuaternion = handQuaternion.getRelativeTo(handQuaternionThatWorks);
+    relativeQuaternionForMainMCU = handQuaternion.getRelativeTo(handQuaternionThatWorksForMainMCU);
+    // relativeQuaternionForMainMCU = handQuaternion.getRelativeTo(handQuaternionThatWorks);
+    // relativeQuaternion.printMe();
+    handQuaternion = handQuaternion.rotateBy(relativeQuaternion);                                // rotate the handQuaternion to be in the coordinate frame where my calculations work
+    // handQuaternion.printMe();                                                                                // from here on, handQuaternion is the same as handQuaternionThatWorks
+  }
+
+  if(bnoThumb.hasNewAccel || bnoThumb.hasNewGyro || bnoThumb.hasNewMag){
+    Madgwick<float> madgwick;
+
+    float quaternionArray[4] = {bnoThumb.quaternion.w, bnoThumb.quaternion.x, bnoThumb.quaternion.y, bnoThumb.quaternion.z};
+    // Serial.println("index");
+    uint8_t accuracy;
+
+    float accel_x = 0;
+    float accel_y = 0;
+    float accel_z = 0;
+    float gyro_x = 0;
+    float gyro_y = 0;
+    float gyro_z = 0;
+    float mag_x = 0;
+    float mag_y = 0;
+    float mag_z = 0;
+
+    if(bnoThumb.hasNewAccel) bnoThumb.getAccel(accel_x, accel_y, accel_z, accuracy);
+    if(bnoThumb.hasNewGyro) bnoThumb.getGyro(gyro_x, gyro_y, gyro_z, accuracy);
+    if(bnoThumb.hasNewMag) bnoThumb.getMag(mag_x, mag_y, mag_z, accuracy);
+    // Gyro seems to work always, but accel and mag sometimes fail getting new values
+    double deltat = (micros() - bnoThumb.lastMicros)/1000000.;
+    // Serial.println(delta_t);
+    bnoThumb.lastMicros = micros();
+    madgwick.update(
+      quaternionArray,
+      accel_x, accel_y, accel_z,
+      gyro_x, gyro_y, gyro_z,
+      mag_x, mag_y, mag_z,
+      deltat
+    );
+    bnoThumb.quaternion.w = quaternionArray[0];
+    bnoThumb.quaternion.x = quaternionArray[1];
+    bnoThumb.quaternion.y = quaternionArray[2];
+    bnoThumb.quaternion.z = quaternionArray[3];
+
+    Serial.print("thumb "); bnoThumb.quaternion.printMe();
+
+    thumbQuaternion = bnoThumb.quaternion.rotateBy(relativeQuaternion);
+    Quaternion relativeThumbQuaternion = bnoThumb.quaternion.getRelativeTo(handQuaternion);
     // relativeThumbQuaternion.printMe();
     // relativeThumbQuaternion.printMyEulerAngles_pry();
     Quaternion relativeThumbToNeutralQuaternion = relativeThumbQuaternion.getRelativeTo(thumbNeutralToHandQuaternion);
@@ -302,12 +413,114 @@ void loop() {
       
       joystickIsEnabled = false;
     }
-    
-    // Serial.print("x: ");
-    // Serial.print(joystick_x);
-    // Serial.print("\ty: ");
-    // Serial.println(joystick_y);
+
+    // fingerThumb.computeAxesValues(relativeQuaternion, bnoThumb.quaternion);  // compute curl and splay axis from reference quaternion and finger quaternion
+
+    // controller_data.index_curl = fingerIndex.curlAxis;
+    // controller_data.index_splay = fingerIndex.splayAxis;
   }
+  // if(bnoRef.hasNewQuaternion){
+  //   // Serial.println("REF");
+  //   float radAccuracy;
+  //   uint8_t accuracy;
+  //   bnoRef.getQuat(handQuaternion.x, handQuaternion.y, handQuaternion.z, handQuaternion.w, radAccuracy, accuracy);
+  //   // handQuaternion.printMyEulerAngles_pry();
+  //   // handQuaternion = quaternion_multiply(hackyHandRotation, handQuaternion);
+  //   // handQuaternion.printMe();
+  //   // relativeQuaternion = quaternion_multiply(handQuaternionThatWorks, quaternion_conjugate(handQuaternion)); // get the relative quaternion between the reference IMU quaternion and the coordinate frame where my calculations work
+  //   relativeQuaternion = handQuaternion.getRelativeTo(handQuaternionThatWorks);
+  //   relativeQuaternionForMainMCU = handQuaternion.getRelativeTo(handQuaternionThatWorksForMainMCU);
+  //   // relativeQuaternionForMainMCU = handQuaternion.getRelativeTo(handQuaternionThatWorks);
+  //   // relativeQuaternion.printMe();
+  //   handQuaternion = handQuaternion.rotateBy(relativeQuaternion);                                // rotate the handQuaternion to be in the coordinate frame where my calculations work
+  //   // handQuaternion.printMe();                                                                                // from here on, handQuaternion is the same as handQuaternionThatWorks
+  // }
+
+  // if(bnoThumb.hasNewQuaternion){
+  //   // Serial.println("THUMB");
+  //   float radAccuracy;
+  //   uint8_t accuracy;
+  //   bnoThumb.getQuat(thumbQuaternion.x, thumbQuaternion.y, thumbQuaternion.z, thumbQuaternion.w, radAccuracy, accuracy);           // get the thumb IMU quaternion
+  //   thumbQuaternion = thumbQuaternion.rotateBy(relativeQuaternion);
+  //   Quaternion relativeThumbQuaternion = thumbQuaternion.getRelativeTo(handQuaternion);
+  //   // relativeThumbQuaternion.printMe();
+  //   // relativeThumbQuaternion.printMyEulerAngles_pry();
+  //   Quaternion relativeThumbToNeutralQuaternion = relativeThumbQuaternion.getRelativeTo(thumbNeutralToHandQuaternion);
+  //   Quaternion relativeThumbToNeutralQuaternionForCurl = relativeThumbQuaternion.getRelativeTo(thumbNeutralToHandQuaternionForCurl);
+    
+  //   // relativeThumbToNeutralQuaternion.printMyEulerAngles_pry();
+
+  //   float thumbCurl_angleRadians = getPitch_pry(relativeThumbToNeutralQuaternionForCurl);
+  //   // float thumbCurl_angleRadians = getPitch_ryp(relativeThumbToNeutralQuaternion);
+  //   // float thumbCurl_angleRadians = getPitch_ypr(relativeThumbToNeutralQuaternion);
+  //   float thumbCurl_angleDegrees = thumbCurl_angleRadians*180/3.14;
+  //   // Serial.println(thumbCurl_angleDegrees); // -90 to 90
+  //   thumbCurl_angleDegrees += 90;
+  //   thumb_axis = 1023*thumbCurl_angleDegrees/180.;
+  //   if (thumb_axis < 0)
+  //       thumb_axis = 0;
+  //   else if (thumb_axis > 1023)
+  //       thumb_axis = 1023;
+  //   // Serial.println(thumb_axis);
+    
+  //   // Serial.println("");
+  //   // relativeThumbToNeutralQuaternion.printMyEulerAngles_pry();
+  //   // relativeThumbToNeutralQuaternion.printMyEulerAngles_ryp();
+  //   // relativeThumbToNeutralQuaternion.printMyEulerAngles_ypr();
+  //   // delay(100);
+
+  //   float thumbSplay_angleRadians = getRoll_ryp(relativeThumbToNeutralQuaternion);
+  //   float thumbSplay_angleDegrees = thumbSplay_angleRadians*180/3.14;
+  //   // Serial.println(thumbSplay_angleDegrees); // -25 to 35
+  //   thumbSplay_angleDegrees += 25;
+  //   thumb_splay_axis = 1023*thumbSplay_angleDegrees/60.;
+  //   if (thumb_splay_axis < 0)
+  //     thumb_splay_axis = 0;
+  //   else if (thumb_splay_axis > 1023)
+  //     thumb_splay_axis = 1023;
+  //   // Serial.println(thumb_splay_axis);
+    
+  //   // inverted logic, this is when the joystick is enabled
+  //   if (!digitalRead(INDEX_CONTACT_PIN)){
+  //       // Serial.println(thumbSplay_angleDegrees);
+  //       Quaternion relativeJoystickQuaternion = relativeThumbQuaternion.getRelativeTo(thumbNeutralJoystickToHandQuaternion);
+  //       float joystick_x_angleRadians = getRoll_pry(relativeJoystickQuaternion);
+  //       float joystick_x_angleDegrees = joystick_x_angleRadians*180/3.14;
+  //       // Serial.print("x: ");
+  //       // Serial.println(joystick_x_angleDegrees); // -20 to 20
+  //       joystick_x_angleDegrees += 20;
+  //       // Serial.println(joystick_x_angleDegrees);
+  //       joystick_x = 1023 - joystick_x_angleDegrees*1023/40.;
+  //       if (joystick_x < 0)
+  //           joystick_x = 0;
+  //       else if (joystick_x > 1023)
+  //           joystick_x = 1023;
+        
+  //       float joystick_y_angleRadians = getPitch_pry(relativeJoystickQuaternion);
+  //       float joystick_y_angleDegrees = joystick_y_angleRadians*180/3.14;
+  //       // Serial.print("\ty: ");
+  //       // Serial.println(joystick_y_angleDegrees); // -20 to 20
+  //       joystick_y_angleDegrees += 40;
+  //       joystick_y = joystick_y_angleDegrees*1023/40.;
+  //       if (joystick_y < 0)
+  //           joystick_y = 0;
+  //       else if (joystick_y > 1023)
+  //           joystick_y = 1023;
+        
+  //       joystickIsEnabled = true;
+  //   }
+  //   else{
+  //     joystick_x = 512;
+  //     joystick_y = 512;
+      
+  //     joystickIsEnabled = false;
+  //   }
+    
+  //   // Serial.print("x: ");
+  //   // Serial.print(joystick_x);
+  //   // Serial.print("\ty: ");
+  //   // Serial.println(joystick_y);
+  // }
 
   serial_data.pinky = !digitalRead(PINKY_CONTACT_PIN);
   serial_data.ring = !digitalRead(RING_CONTACT_PIN);
