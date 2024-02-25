@@ -1,0 +1,5 @@
+(sym_lib_table
+  (version 7)
+  (lib (name "BSS138BKS_115")(type "KiCad")(uri "${REPO_ROOT}/CustomPCBs/ComponentLibraries/BSS138BKS_115.kicad_sym")(options "")(descr ""))
+  (lib (name "BSS138W-7-F")(type "KiCad")(uri "${REPO_ROOT}/CustomPCBs/ComponentLibraries/BSS138W-7-F.kicad_sym")(options "")(descr ""))
+)

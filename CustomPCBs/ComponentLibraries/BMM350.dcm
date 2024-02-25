@@ -1,0 +1,9 @@
+EESchema-DOCLIB  Version 2.0
+#
+$CMP BMM350
+D Board Mount Hall Effect / Magnetic Sensors High-Performance Magnometer
+K
+F https://www.bosch-sensortec.com/media/boschsensortec/downloads/datasheets/bst-bmm350-ds001.pdf
+$ENDCMP
+#
+#End Doc Library
