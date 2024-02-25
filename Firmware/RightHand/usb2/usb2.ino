@@ -1,7 +1,8 @@
 #include "BNO085.h"
 #include "Quaternion.h"
 #include <cmath>
-#include "madgwick.h"
+// #include "madgwick.h"
+#include "mahony.h"
 
 #define THUMB_CONTACT_PIN 22
 #define INDEX_CONTACT_PIN 23
@@ -208,7 +209,8 @@ void loop() {
   bnoThumb.getReadings();
 
   if(bnoRef.hasNewAccel || bnoRef.hasNewGyro || bnoRef.hasNewMag){
-    Madgwick<float> madgwick;
+    // Madgwick<float> madgwick;
+    Mahony<float> mahony;
 
     float quaternionArray[4] = {bnoRef.quaternion.w, bnoRef.quaternion.x, bnoRef.quaternion.y, bnoRef.quaternion.z};
     // Serial.println("index");
@@ -231,7 +233,14 @@ void loop() {
     double deltat = (micros() - bnoRef.lastMicros)/1000000.;
     // Serial.println(delta_t);
     bnoRef.lastMicros = micros();
-    madgwick.update(
+    // madgwick.update(
+    //   quaternionArray,
+    //   accel_x, accel_y, accel_z,
+    //   gyro_x, gyro_y, gyro_z,
+    //   mag_x, mag_y, mag_z,
+    //   deltat
+    // );
+    mahony.update(
       quaternionArray,
       accel_x, accel_y, accel_z,
       gyro_x, gyro_y, gyro_z,
@@ -243,54 +252,8 @@ void loop() {
     bnoRef.quaternion.y = quaternionArray[2];
     bnoRef.quaternion.z = quaternionArray[3];
 
-    Serial.print("ref "); bnoRef.quaternion.printMe();
-
-    handQuaternion = bnoRef.quaternion;
-    relativeQuaternion = handQuaternion.getRelativeTo(handQuaternionThatWorks);
-    relativeQuaternionForMainMCU = handQuaternion.getRelativeTo(handQuaternionThatWorksForMainMCU);
-    // relativeQuaternionForMainMCU = handQuaternion.getRelativeTo(handQuaternionThatWorks);
-    // relativeQuaternion.printMe();
-    handQuaternion = handQuaternion.rotateBy(relativeQuaternion);                                // rotate the handQuaternion to be in the coordinate frame where my calculations work
-    // handQuaternion.printMe();                                                                                // from here on, handQuaternion is the same as handQuaternionThatWorks
-  }
-
-  if(bnoRef.hasNewAccel || bnoRef.hasNewGyro || bnoRef.hasNewMag){
-    Madgwick<float> madgwick;
-
-    float quaternionArray[4] = {bnoRef.quaternion.w, bnoRef.quaternion.x, bnoRef.quaternion.y, bnoRef.quaternion.z};
-    // Serial.println("index");
-    uint8_t accuracy;
-
-    float accel_x = 0;
-    float accel_y = 0;
-    float accel_z = 0;
-    float gyro_x = 0;
-    float gyro_y = 0;
-    float gyro_z = 0;
-    float mag_x = 0;
-    float mag_y = 0;
-    float mag_z = 0;
-
-    if(bnoRef.hasNewAccel) bnoRef.getAccel(accel_x, accel_y, accel_z, accuracy);
-    if(bnoRef.hasNewGyro) bnoRef.getGyro(gyro_x, gyro_y, gyro_z, accuracy);
-    if(bnoRef.hasNewMag) bnoRef.getMag(mag_x, mag_y, mag_z, accuracy);
-    // Gyro seems to work always, but accel and mag sometimes fail getting new values
-    double deltat = (micros() - bnoRef.lastMicros)/1000000.;
-    // Serial.println(delta_t);
-    bnoRef.lastMicros = micros();
-    madgwick.update(
-      quaternionArray,
-      accel_x, accel_y, accel_z,
-      gyro_x, gyro_y, gyro_z,
-      mag_x, mag_y, mag_z,
-      deltat
-    );
-    bnoRef.quaternion.w = quaternionArray[0];
-    bnoRef.quaternion.x = quaternionArray[1];
-    bnoRef.quaternion.y = quaternionArray[2];
-    bnoRef.quaternion.z = quaternionArray[3];
-
-    Serial.print("ref "); bnoRef.quaternion.printMe();
+    // Serial.print("ref "); bnoRef.quaternion.printMe();
+    bnoRef.quaternion.printMe();
 
     handQuaternion = bnoRef.quaternion;
     relativeQuaternion = handQuaternion.getRelativeTo(handQuaternionThatWorks);
@@ -302,7 +265,8 @@ void loop() {
   }
 
   if(bnoThumb.hasNewAccel || bnoThumb.hasNewGyro || bnoThumb.hasNewMag){
-    Madgwick<float> madgwick;
+    // Madgwick<float> madgwick;
+    Mahony<float> mahony;
 
     float quaternionArray[4] = {bnoThumb.quaternion.w, bnoThumb.quaternion.x, bnoThumb.quaternion.y, bnoThumb.quaternion.z};
     // Serial.println("index");
@@ -325,7 +289,14 @@ void loop() {
     double deltat = (micros() - bnoThumb.lastMicros)/1000000.;
     // Serial.println(delta_t);
     bnoThumb.lastMicros = micros();
-    madgwick.update(
+    // madgwick.update(
+    //   quaternionArray,
+    //   accel_x, accel_y, accel_z,
+    //   gyro_x, gyro_y, gyro_z,
+    //   mag_x, mag_y, mag_z,
+    //   deltat
+    // );
+    mahony.update(
       quaternionArray,
       accel_x, accel_y, accel_z,
       gyro_x, gyro_y, gyro_z,
@@ -337,7 +308,7 @@ void loop() {
     bnoThumb.quaternion.y = quaternionArray[2];
     bnoThumb.quaternion.z = quaternionArray[3];
 
-    Serial.print("thumb "); bnoThumb.quaternion.printMe();
+    // Serial.print("thumb "); bnoThumb.quaternion.printMe();
 
     thumbQuaternion = bnoThumb.quaternion.rotateBy(relativeQuaternion);
     Quaternion relativeThumbQuaternion = bnoThumb.quaternion.getRelativeTo(handQuaternion);
