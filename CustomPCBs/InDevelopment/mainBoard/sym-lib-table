@@ -1,0 +1,4 @@
+(sym_lib_table
+  (version 7)
+  (lib (name "MOUDLE-SEEEDUINO-XIAO-ESP32C3")(type "KiCad")(uri "J:/repositories/ImmersiveGloves/CustomPCBs/ComponentLibraries/MOUDLE-SEEEDUINO-XIAO-ESP32C3.kicad_sym")(options "")(descr ""))
+)

@@ -1,0 +1,17 @@
+"Id";"Designator";"Footprint";"Quantity";"Designation";"Supplier and ref";
+1;"R1,R8";"R_0402_1005Metric";2;"200";;;
+2;"R6,R5";"R_0402_1005Metric";2;"2k2";;;
+3;"USB2,USB1,FINGER5R1,FINGER4,FINGER1,FINGER3,FINGER5L1,FINGER2";"JST_SH_SM04B-SRSS-TB_1x04-1MP_P1.00mm_Horizontal";8;"Conn_01x04";;;
+4;"C11,C19,C12,C21";"C_0402_1005Metric";4;"27p";;;
+5;"C28,C10,C23,C7,C1,C17";"C_0402_1005Metric";6;"2.2u";;;
+6;"R4,R3";"R_0402_1005Metric";2;"10k";;;
+7;"U1,U5";"QFN-56-1EP_7x7mm_P0.4mm_EP3.2x3.2mm";2;"RP2040";;;
+8;"C6,C25,C3,C18,C27,C8,C13,C22,C26,C20,C14,C9,C5,C4,C2,C24";"C_0402_1005Metric";16;"100n";;;
+9;"U4,U2";"SOIC-8_5.23x5.23mm_P1.27mm";2;"W25Q32JVSS";;;
+10;"R2,R9,R10,R7";"R_0402_1005Metric";4;"1k";;;
+11;"FingerAux1";"JST_SH_SM08B-SRSS-TB_1x08-1MP_P1.00mm_Horizontal";1;"Conn_01x08";;;
+12;"C16,C15";"C_0402_1005Metric";2;"22p";;;
+13;"Y1,Y2";"Crystal_SMD_3225-4Pin_3.2x2.5mm";2;"12.000MHz";;;
+14;"J1";"25PIN FRONT FLIP 0.6mm PITCH AYF332535A";1;"Conn_01x25";;;
+15;"U3";"LGA-28_5.2x3.8mm_P0.5mm";1;"~";;;
+16;"Y3";"Crystal_SMD_2012-2Pin_2.0x1.2mm";1;"32.768kHz";;;
