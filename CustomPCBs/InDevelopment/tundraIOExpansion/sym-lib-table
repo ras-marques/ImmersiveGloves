@@ -1,0 +1,4 @@
+(sym_lib_table
+  (version 0)
+  (lib (name "tundraIOExpansion-altium-import")(type "KiCad")(uri "${KIPRJMOD}/tundraIOExpansion-altium-import.kicad_sym")(options "")(descr ""))
+)
