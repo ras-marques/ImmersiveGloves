@@ -1,0 +1,5 @@
+(sym_lib_table
+  (version 7)
+  (lib (name "BMI270")(type "KiCad")(uri "${REPO_ROOT}/CustomPCBs/ComponentLibraries/BMI270.kicad_sym")(options "")(descr ""))
+  (lib (name "HMC5883L-TR")(type "KiCad")(uri "${REPO_ROOT}/CustomPCBs/ComponentLibraries/HMC5883L-TR.kicad_sym")(options "")(descr ""))
+)
